@@ -90,7 +90,7 @@ class CoDec:
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
         hr = cv.pyrUp(img)
         
-        cv.imwrite("example2.png", hr, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
+        #cv.imwrite("example2.png", hr, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
 
         compressed = zlib.compress(hr, COMPRESSION_LEVEL)
 
