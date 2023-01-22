@@ -23,14 +23,6 @@ class CoDec(EC.CoDec):
     def __init__(self, args): # ??
         super().__init__(args)
 
-    def encode(self):
-        '''Read an image, quantize the image, and save it.'''
-        img = self.read()
-        k = self.quantize(img)
-        self.write(k)
-        rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
-        return rate
-
     def quantize(self, img):
         '''Quantize the image.'''
         logging.info(f"QSS = {self.args.QSS}")
@@ -57,14 +49,6 @@ class CoDec(EC.CoDec):
             k[..., c] = self.Q.encode(extended_img[..., c])
         return k
 
-    def decode(self):
-        #k = io.imread(self.args.input)
-        k = self.read()
-        y = self.dequantize(k)
-        self.write(y)
-        rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
-        return rate
-
     def dequantize(self, k):
         with open(f"{self.args.input}_QSS.txt", 'r') as f:
             QSS = int(f.read())
@@ -82,6 +66,22 @@ class CoDec(EC.CoDec):
             self.Q.set_representation_levels(centroids)
             y[..., c] = self.Q.decode(extended_k[..., c])
         return y
+        
+    def encode(self):
+        '''Read an image, quantize the image, and save it.'''
+        img = self.read()
+        k = self.quantize(img)
+        self.write(k)
+        rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        return rate
+
+    def decode(self):
+        #k = io.imread(self.args.input)
+        k = self.read()
+        y = self.dequantize(k)
+        self.write(y)
+        rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
+        return rate
 
 if __name__ == "__main__":
     main.main(EC.parser, logging, CoDec)

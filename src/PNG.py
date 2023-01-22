@@ -86,7 +86,7 @@ class CoDec:
         # Notice that the encoding algorithm depends on the output
         # file extension (PNG).
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-        cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
+        cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
         #if __debug__:
         #    len_output = os.path.getsize(fn)
         #    logging.info(f"Before optipng: {len_output} bytes")
@@ -99,7 +99,7 @@ class CoDec:
         # Notice that the encoding algorithm depends on the output
         # file extension (PNG).
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-        cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
+        cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
 
         #io.imsave(fn, img, check_contrast=False)
         #image = Image.fromarray(img.astype('uint8'), 'RGB')
