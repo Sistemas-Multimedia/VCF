@@ -11,6 +11,7 @@ import subprocess
 import cv2 as cv
 import main
 import urllib
+from os.path import exists
 
 def int_or_str(text):
     '''Helper function for argument parsing.'''
@@ -27,7 +28,7 @@ def decode(codec):
     return codec.decode()
 
 # Default IO images
-ENCODE_INPUT = "/home/root/templo_raw.png"
+ENCODE_INPUT = "/tmp/decoded.png"
 ENCODE_OUTPUT = "/tmp/encoded.png"
 DECODE_INPUT = ENCODE_OUTPUT
 DECODE_OUTPUT = "/tmp/decoded.png"
@@ -50,7 +51,8 @@ parser_decode.add_argument("-o", "--output", type=int_or_str, help=f"Output imag
 parser_decode.set_defaults(func=decode)
 
 COMPRESSION_LEVEL = 9
-
+COMPRESSED_PATH = "compressed"
+# https://docs.opencv.org/4.x/dc/dff/tutorial_py_pyramids.html
 class CoDec:
 
     def __init__(self, args):
@@ -82,35 +84,24 @@ class CoDec:
         logging.info(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
         return img
 
-    def _write_fn(self, img, fn):
-        '''Write to disk the image with filename <fn>.'''
-        # Notice that the encoding algorithm depends on the output
-        # file extension (PNG).
-        img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-        cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
-        #if __debug__:
-        #    len_output = os.path.getsize(fn)
-        #    logging.info(f"Before optipng: {len_output} bytes")
-        #subprocess.run(f"optipng {fn}", shell=True, capture_output=True)
-        self.output_bytes += os.path.getsize(fn)
-        logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
-
     def write_fn(self, img, fn):
         '''Write to disk the image with filename <fn>.'''
-        # Notice that the encoding algorithm depends on the output
-        # file extension (PNG).
-        zlib.compress(img, level=COMPRESSION_LEVEL)
-        img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-        cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
 
-        #io.imsave(fn, img, check_contrast=False)
-        #image = Image.fromarray(img.astype('uint8'), 'RGB')
-        #image.save(fn)
-        #subprocess.run(f"optipng -nc {fn}", shell=True, capture_output=True)
+        img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
+        hr = cv.pyrUp(img)
+        
+        cv.imwrite("example2.png", hr, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
+
+        compressed = zlib.compress(hr, COMPRESSION_LEVEL)
+
+        f = open(COMPRESSED_PATH, "wb")
+        f.write(compressed)
+        f.close()
+
         subprocess.run(f"pngcrush {fn} /tmp/pngcrush.png", shell=True, capture_output=True)
         subprocess.run(f"mv -f /tmp/pngcrush.png {fn}", shell=True, capture_output=True)
         self.output_bytes += os.path.getsize(fn)
-        logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {initial.shape} and type {initial.dtype}")
+        logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 
     def read(self):
         '''Read the image specified in the class attribute
@@ -125,7 +116,7 @@ class CoDec:
     def encode(self):
         '''Read an image and save it in the disk. The input can be
         online. This method is overriden in child classes.'''
-        img = self.read()         
+        img = self.read()
         self.write(img)
         logging.debug(f"output_bytes={self.output_bytes}, img.shape={img.shape}")
         rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
