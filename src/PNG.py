@@ -40,6 +40,7 @@ subparsers = parser.add_subparsers(help="You must specify one of the following s
 parser_encode = subparsers.add_parser("encode", help="Encode an image")
 parser_encode.add_argument("-i", "--input", type=int_or_str, help=f"Input image (default: {ENCODE_INPUT})", default=ENCODE_INPUT)
 parser_encode.add_argument("-o", "--output", type=int_or_str, help=f"Output image (default: {ENCODE_OUTPUT})", default=f"{ENCODE_OUTPUT}")
+parser_encode.add_argument("-hm", "--huffman", action='store_true', dest="huffman", help=f" (Use Huffamn as entropy codec")
 parser_encode.set_defaults(func=encode)
 
 # Decoder parser
@@ -86,7 +87,11 @@ class CoDec:
         # Notice that the encoding algorithm depends on the output
         # file extension (PNG).
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-        cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
+        
+        if self.args.huffman:
+            cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
+        else:
+            cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
         #if __debug__:
         #    len_output = os.path.getsize(fn)
         #    logging.info(f"Before optipng: {len_output} bytes")
@@ -99,7 +104,11 @@ class CoDec:
         # Notice that the encoding algorithm depends on the output
         # file extension (PNG).
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-        cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
+
+        if self.args.huffman:
+            cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
+        else:
+            cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
 
         #io.imsave(fn, img, check_contrast=False)
         #image = Image.fromarray(img.astype('uint8'), 'RGB')
