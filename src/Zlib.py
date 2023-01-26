@@ -6,12 +6,14 @@ import zlib
 
 import PNG as EC
 
+
 def int_or_str(text):
     '''Helper function for argument parsing.'''
     try:
         return int(text)
     except ValueError:
         return text
+
 
 def encode(codec):
     return codec.encode()
@@ -20,7 +22,9 @@ def encode(codec):
 def decode(codec):
     return codec.decode()
 
+
 COMPRESSION_LEVEL = 9
+
 
 class CoDec(EC.CoDec):
 

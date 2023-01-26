@@ -1,1 +1,1 @@
-source ~/enviroments/SM/bin/activate
+source ~/environments/SM/bin/activate
