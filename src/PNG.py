@@ -89,12 +89,17 @@ class CoDec:
         # file extension (PNG).
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
         
-        if self.args.huffman:
-            cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
-        elif self.args.aritmethic:
-            cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_FILTERED , COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html:
+        if hasattr(self.args, 'huffman'):
+            # Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
+            cv.imwrite(
+                fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL])
+        elif hasattr(self.args, 'aritmethic'):
+            # Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html:
+            cv.imwrite(
+                fn, img, [cv.IMWRITE_PNG_STRATEGY_FILTERED, COMPRESSION_LEVEL])
         else:
-            cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
+            cv.imwrite(
+                fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
         #if __debug__:
         #    len_output = os.path.getsize(fn)
         #    logging.info(f"Before optipng: {len_output} bytes")
@@ -108,10 +113,17 @@ class CoDec:
         # file extension (PNG).
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
 
-        if self.args.huffman:
-            cv.imwrite(fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL]) #Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
+        if hasattr(self.args, 'huffman'):
+            # Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html
+            cv.imwrite(
+                fn, img, [cv.IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY, COMPRESSION_LEVEL])
+        elif hasattr(self.args, 'aritmethic'):
+            # Actividad 1.1 https://docs.opencv.org/3.4/d8/d6a/group__imgcodecs__flags.html:
+            cv.imwrite(
+                fn, img, [cv.IMWRITE_PNG_STRATEGY_FILTERED, COMPRESSION_LEVEL])
         else:
-            cv.imwrite(fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
+            cv.imwrite(
+                fn, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
         
         #io.imsave(fn, img, check_contrast=False)
         #image = Image.fromarray(img.astype('uint8'), 'RGB')
