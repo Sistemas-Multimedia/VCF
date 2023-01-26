@@ -26,7 +26,7 @@ class CoDec(CT.CoDec):
     def __init__(self, args):
         super().__init__(args)
         self.levels = args.levels
-        logging.info(f"levels={self.levels}")
+        logging.info(f"levels = {self.levels}")
         if self.encoding:
             self.wavelet = pywt.Wavelet(args.wavelet)
             with open(f"{args.output}_wavelet_name.txt", "w") as f:
@@ -36,7 +36,7 @@ class CoDec(CT.CoDec):
         else:
             with open(f"{args.input}_wavelet_name.txt", "r") as f:
                 wavelet_name = f.read()
-                logging.info(f"Read wavelet=\"{wavelet_name}\" from {args.input}_wavelet_name.txt")
+                logging.info(f"Read wavelet = \"{wavelet_name}\" from {args.input}_wavelet_name.txt")
                 self.wavelet = pywt.Wavelet(wavelet_name)
             logging.info(f"wavelet={wavelet_name} ({self.wavelet})")
 
