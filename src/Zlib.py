@@ -6,11 +6,8 @@ import zlib
 import PIL.Image as Image
 import io as readIO
 from skimage import io  # pip install scikit-image
-import subprocess
 import os
 import argparse
-
-import PNG as EC
 
 
 def int_or_str(text):
@@ -64,17 +61,6 @@ COMPRESSION_LEVEL = 9
 
 
 class CoDec():
-
-    def __init__(self, args):
-        self.args = args
-        logging.debug(f"args = {self.args}")
-        if args.subparser_name == "encode":
-            self.encoding = True
-        else:
-            self.encoding = False
-        logging.debug(f"encoding = {self.encoding}")
-        self.input_bytes = 0
-        self.output_bytes = 0
 
     def encode(self):
         '''Read an image and save it in the disk.'''

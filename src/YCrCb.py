@@ -1,6 +1,5 @@
 '''Exploiting color (perceptual) redundancy with the YCrCb transform.'''
 
-import argparse
 from skimage import io  # pip install scikit-image
 import numpy as np
 import logging
@@ -18,7 +17,7 @@ class CoDec(Q.CoDec):
 
     def encode(self):
         img = self.read()
-        img_128 = img.astype(np.int16) - 128
+        img_128 = img.astype(np.uint8) - 128
         YCrCb_img = from_RGB(img_128)
         k = self.quantize(YCrCb_img)
         self.write(k)
@@ -28,9 +27,9 @@ class CoDec(Q.CoDec):
     def decode(self):
         k = self.read()
         YCrCb_img = self.dequantize(k)
-        # y_128 = to_RGB(YCrCb_img.astype(np.int16))
-        y_128 = to_RGB(YCrCb_img)
-        y = (y_128.astype(np.int16) + 128)
+        y_128 = to_RGB(YCrCb_img.astype(np.uint8))
+        # y_128 = to_RGB(YCrCb_img)
+        y = (y_128.astype(np.uint8) + 128)
         y = np.clip(y, 0, 255).astype(np.uint8)
         self.write(y)
         rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
