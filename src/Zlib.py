@@ -3,6 +3,12 @@
 import logging
 import main
 import zlib
+import PIL.Image as Image
+import io as readIO
+from skimage import io  # pip install scikit-image
+import subprocess
+import os
+import argparse
 
 import PNG as EC
 
@@ -23,10 +29,41 @@ def decode(codec):
     return codec.decode()
 
 
+# Default IO images
+ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
+ENCODE_OUTPUT = "/tmp/encoded.bin"
+DECODE_INPUT = ENCODE_OUTPUT
+DECODE_OUTPUT = "/tmp/decoded.png"
+
+# Main parameter of the arguments parser: "encode" or "decode"
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-g", "--debug", action="store_true",
+                    help=f"Output debug information")
+subparsers = parser.add_subparsers(
+    help="You must specify one of the following subcomands:", dest="subparser_name")
+
+# Encoder parser
+parser_encode = subparsers.add_parser("encode", help="Encode an image")
+parser_encode.add_argument("-i", "--input", type=int_or_str,
+                           help=f"Input image (default: {ENCODE_INPUT})", default=ENCODE_INPUT)
+parser_encode.add_argument("-o", "--output", type=int_or_str,
+                           help=f"Output image (default: {ENCODE_OUTPUT})", default=f"{ENCODE_OUTPUT}")
+parser_encode.set_defaults(func=encode)
+
+# Decoder parser
+parser_decode = subparsers.add_parser("decode", help='Decode an image')
+parser_decode.add_argument("-i", "--input", type=int_or_str,
+                           help=f"Input image (default: {DECODE_INPUT})", default=f"{DECODE_INPUT}")
+parser_decode.add_argument("-o", "--output", type=int_or_str,
+                           help=f"Output image (default: {DECODE_OUTPUT})", default=f"{DECODE_OUTPUT}")
+parser_decode.set_defaults(func=decode)
+
+
 COMPRESSION_LEVEL = 9
 
 
-class CoDec(EC.CoDec):
+class CoDec():
 
     def __init__(self, args):
         self.args = args
@@ -40,26 +77,28 @@ class CoDec(EC.CoDec):
         self.output_bytes = 0
 
     def encode(self):
-        '''Read an image and save it in the disk. The input can be
-        online. This method is overriden in child classes.'''
-        img = self.read_fn(self.args.input)
-        compressed_data = zlib.compress(img)
-        self.write_fn(self.args.output, compressed_data)
-        self.write(img)
-        logging.debug(
-            f"output_bytes={self.output_bytes}, img.shape={img.shape}")
-        rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        '''Read an image and save it in the disk.'''
+        img_temp = io.imread(self.args.input)
+        io.imsave("temp.png", img_temp)
+        img = open("temp.png", 'rb').read()
+
+        compressed_data = zlib.compress(img, COMPRESSION_LEVEL)
+        with open(self.args.output, 'wb') as out_file:
+            out_file.write(compressed_data)
+        self.output_bytes = img_temp.size*8
+        rate = self.output_bytes/(img_temp.shape[0]*img_temp.shape[1])
         return rate
 
     def decode(self):
-        '''Read an image and save it in the disk. Notice that we are
-        using the PNG image format for both, decode and encode an
-        image. For this reason, both methods do exactly the same.
-        This method is overriden in child classes.
-
-        '''
-        return self.encode()
+        compressed_data = open(self.args.input, 'rb').read()
+        decompressed_data = zlib.decompress(compressed_data)
+        img = Image.open(readIO.BytesIO(decompressed_data))
+        img.save(self.args.output)
+        self.input_bytes = os.path.getsize(self.args.output)
+        logging.info(
+            f"Written {self.input_bytes} bytes in {self.args.output}")
+        return self.input_bytes*8/(img.size[0]*img.size[1])
 
 
 if __name__ == "__main__":
-    main.main(EC.parser, logging, CoDec)
+    main.main(parser, logging, CoDec)
