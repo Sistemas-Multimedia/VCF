@@ -1,4 +1,4 @@
-'''Image quantization using a LloydMax quantizer.'''
+'''Image quantization using a vectorial quantizator based on K-N.'''
 
 # Some work could be done with the encoded histograms!
 
@@ -9,12 +9,9 @@ import numpy as np
 import gzip
 import logging
 import main
-import sklearn as cluster
-
+from sklearn import cluster
+import imageio.v2 as imageio
 # pip install "scalar_quantization @ git+https://github.com/vicente-gonzalez-ruiz/scalar_quantization"
-from scalar_quantization.LloydMax_quantization import LloydMax_Quantizer as Quantizer
-from scalar_quantization.LloydMax_quantization import name as quantizer_name
-
 import PNG as EC # Entropy Coding
 
 #Default value
@@ -33,15 +30,15 @@ class CoDec(EC.CoDec):
     def quantize(self, img):
         with open(f"{self.args.output}_QSS.txt", 'w') as f:
             f.write(f"{self.args.QSS}")
-
-        x = img.reshape(img)
-        kmeans = cluster.KNmeans(n_clusters = num_clusters, n_init=4, random_state=5)
+        x = img
+        x = x.reshape((-1, 1))
+        kmeans = cluster.KMeans(n_clusters = num_clusters, n_init=4, random_state=5)
         kmeans.fit(x)
-        centroids = kmeans.cluster_centers.squeeze()
-        labels = kmeans.labels_
-        image_compressed = np.choose(labels, centroids).reshape(img.shape)
+        compressed_image = kmeans.cluster_centers_[kmeans.labels_]
+        compressed_image = np.clip(compressed_image.astype('uint8'), 0, 255)
+        compressed_image = compressed_image.reshape(img.shape)
 
-        return image_compressed
+        return compressed_image
 
     def dequantize(self, k):
 
@@ -71,6 +68,7 @@ class CoDec(EC.CoDec):
         # We have to perform vector (Going to implement learning VQ)
         #STEP 1. Inicializa los pesos
         #STEP 2. Sele
+
         img = self.read()
         k = self.quantize(img)
         self.write(k)
@@ -85,6 +83,15 @@ class CoDec(EC.CoDec):
         rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
         return rate
 
+    def read(self):
+
+        file="/tmp/vq-entry.png"
+        io.imsave(file, self.read_fn(self.args.input))
+        
+        self.input_bytes = os.path.getsize(file)
+        return imageio.imread(file)
+
 if __name__ == "__main__":
+    quantizer_name = "Vectorial Q. KN"
     main.main(EC.parser, logging, CoDec)
     logging.info(f"quantizer = {quantizer_name}")
