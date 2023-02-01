@@ -62,6 +62,17 @@ COMPRESSION_LEVEL = 9
 
 class CoDec():
 
+    def __init__(self, args):
+        self.args = args
+        logging.debug(f"args = {self.args}")
+        if args.subparser_name == "encode":
+            self.encoding = True
+        else:
+            self.encoding = False
+        logging.debug(f"encoding = {self.encoding}")
+        self.input_bytes = 0
+        self.output_bytes = 0
+
     def encode(self):
         '''Read an image and save it in the disk.'''
         img_temp = io.imread(self.args.input)
@@ -71,6 +82,7 @@ class CoDec():
         compressed_data = zlib.compress(img, COMPRESSION_LEVEL)
         with open(self.args.output, 'wb') as out_file:
             out_file.write(compressed_data)
+        os.remove("temp.png")
         self.output_bytes = img_temp.size*8
         rate = self.output_bytes/(img_temp.shape[0]*img_temp.shape[1])
         return rate
