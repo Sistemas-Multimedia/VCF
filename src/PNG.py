@@ -1,7 +1,7 @@
 '''Entropy Encoding of images using PNG (Portable Network Graphics).'''
 
-import argparse
-import os
+import argparse # used for parse arguments to the module
+import os # used to compute the size of a file
 from skimage import io # pip install scikit-image
 from PIL import Image # pip install 
 import numpy as np
