@@ -7,18 +7,34 @@ import logging
 import main
 
 import PNG as EC
-import deadzone as Q
+import deadzone as Q1
+import LloydMax as Q2
 
 from color_transforms.YCoCg import from_RGB # pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
 from color_transforms.YCoCg import to_RGB
 
-class CoDec(Q.CoDec):
+EC.parser.add_argument("-lm", "--lloydmax", action='store_true', dest="lloydmax", help=f"Lloyd Max Quantizer")
+EC.parser.add_argument("-dz", "--deadzone", action='store_true', dest="deadzone", help=f"Deadzone Quantizer")
+
+class CoDec(EC.CoDec):
+
+    def quantize(self, img):
+        if hasattr(self.args, "lloydmax"):
+            return Q2.CoDec.quantize(self, img)
+        else:
+            return Q1.CoDec.quantize(self, img)
+
+    def dequantize(self, k):
+        if hasattr(self.args, "lloydmax"):
+            return Q2.CoDec.dequantize(self, k)
+        else:
+            return Q1.CoDec.dequantize(self, k)
 
     def encode(self):
         img = self.read()
-        img_128 = img.astype(np.int16) - 128
-        YCoCg_img = from_RGB(img_128)
-        k = self.quantize(YCoCg_img)
+        #img_128 = img.astype(np.int16) - 128
+        #YCoCg_img = from_RGB(img_128)
+        k = self.quantize(img)
         self.write(k)
         rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
         return rate
