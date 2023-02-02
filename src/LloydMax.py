@@ -16,8 +16,6 @@ from scalar_quantization.LloydMax_quantization import name as quantizer_name
 
 import PNG as EC # Entropy Coding
 
-EC.parser_encode.add_argument("-q", "--QSS", type=EC.int_or_str, help=f"Quantization step size (default: 32)", default=32)
-
 class CoDec(EC.CoDec):
     
     def __init__(self, args): # ??
