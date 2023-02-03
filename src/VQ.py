@@ -77,7 +77,7 @@ class CoDec(EC.CoDec):
         labels = labels.reshape(sizes[0][0]//block_height, sizes[0][1]//block_width)
         centroids = centroids.reshape(sizes[1][0], sizes[1][1])
         #Use data
-        img_dequantized = np.empty([sizes[0][0], sizes[0][1], sizes[0][2]], dtype=int)
+        img_dequantized = np.empty([sizes[0][0], sizes[0][1], sizes[0][2]], dtype='uint8')
         for i in range(0, sizes[0][0], block_width):
             for j in range(0, sizes[0][1], block_height):
                 img_dequantized[i:i + block_width, j:j + block_height] = centroids[labels[i//block_width,j//block_height]].reshape(block_height, block_width, n_components)
@@ -101,7 +101,7 @@ class CoDec(EC.CoDec):
         sizes=np.loadtxt(dir_config, dtype=int)
         k=self.dequantize(sizes=sizes, labels=label, centroids=centroids)
         self.write(k)
-        rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        rate = (self.output_bytes*8)/(sizes[0][0]*sizes[0][1])
         return rate
 
 if __name__ == "__main__":
