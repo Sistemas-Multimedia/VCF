@@ -5,9 +5,8 @@
   "customizations": {
     "vscode": {
       "extensions": [
-		"ms-python.python",
-		"ms-python.autopep8"
-	]
+        "ms-python.python"
+      ]
     }
   },
   "forwardPorts": []
