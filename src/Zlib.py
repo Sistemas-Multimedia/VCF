@@ -60,6 +60,7 @@ parser_decode.set_defaults(func=decode)
 COMPRESSION_LEVEL = 9
 
 
+
 class CoDec():
 
     def __init__(self, args):
