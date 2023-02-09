@@ -22,7 +22,6 @@ class CoDec(Q.CoDec):
     def encode(self):
         img = self.read()
         if input==1:
-            #LlloydMax trabaja con enteros sin signo
             img_128 = img.astype(np.int16) - 128
             YCoCg_img = from_RGB(img_128)
         else:

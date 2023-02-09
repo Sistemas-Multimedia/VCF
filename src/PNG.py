@@ -26,10 +26,10 @@ def decode(codec):
     return codec.decode()
 
 # Default IO images
-ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
-ENCODE_OUTPUT = "/tmp/encoded.png"
+ENCODE_INPUT = "C:/Users/pma98/Desktop/SM/images/image.png"
+ENCODE_OUTPUT = "C:/Users/pma98/Desktop/SM/in/encoded.png"
 DECODE_INPUT = ENCODE_OUTPUT
-DECODE_OUTPUT = "/tmp/decoded.png"
+DECODE_OUTPUT = "C:/Users/pma98/Desktop/SM/out/decoded.png"
 
 # Main parameter of the arguments parser: "encode" or "decode"
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
