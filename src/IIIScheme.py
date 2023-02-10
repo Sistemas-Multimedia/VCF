@@ -4,7 +4,7 @@ from PIL import Image
 import zlib
 
 # Load image
-img = Image.open(r"C:/Users/pma98/Desktop/SM/images/image.png").convert('L')
+img = Image.open(r"lena.png").convert('L')
 
 # Convert to numpy array and reshape to 2D array of size (height, width)
 imgArray = np.array(img).reshape((img.height, img.width))

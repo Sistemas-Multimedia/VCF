@@ -34,7 +34,7 @@ class CoDec(deadzone.CoDec):
                     #Lee un archivo de entrada y crea una copia de la imagen para que los cambios
                     #realizados sobre la imagen no afecten el archivo original.
                     next_img = cv2.imread(input_file)
-                    copy_image = next_img.copy()
+                    copy_image = np.copy(next_img)
                     subtract = np.clip(np.subtract(next_img.astype(np.int16), current_img.astype(np.int16)) + 128, 0, 255).astype(np.uint8)                    
                     cv2.imwrite(f'encoded/{index}.png', subtract)
                     self.args.input = f'encoded/{index}.png'
