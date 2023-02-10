@@ -12,8 +12,8 @@ import PNG as EC
 import YCoCg as CT # Color Transform
 
 #from DWT import color_dyadic_DWT as DWT
-from DWT.color_dyadic_DWT import analyze as space_analyze # pip install "DWT @ git+https://github.com/vicente-gonzalez-ruiz/DWT"
-from DWT.color_dyadic_DWT import synthesize as space_synthesize
+from DWT2D.color_dyadic_DWT import analyze as space_analyze # pip install "DWT @ git+https://github.com/vicente-gonzalez-ruiz/DWT"
+from DWT2D.color_dyadic_DWT import synthesize as space_synthesize
 
 from color_transforms import DCT as color_DCT
 
