@@ -122,7 +122,7 @@ class CoDec(EVC.CoDec):
         self.N_channels = len(img_0.mode)
 
         img_counter = 0
-        #print(imgs)
+        print(imgs)
         for i in imgs:
             img = Image.open(i).convert('RGB')
             logging.info(f"Decoding frame {img_counter} into {self.args.output}")

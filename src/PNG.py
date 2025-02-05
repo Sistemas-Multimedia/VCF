@@ -31,7 +31,7 @@ parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help
 
 COMPRESSION_LEVEL = 9
 
-import png
+#import png
 
 class CoDec(EIC.CoDec):
 
