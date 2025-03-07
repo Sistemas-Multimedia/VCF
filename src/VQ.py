@@ -9,6 +9,7 @@ with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
 import parser
 from sklearn import cluster  # pip install scikit-learn
 
+import blur as denoiser
 import entropy_image_coding as EIC
 import importlib
 
@@ -18,8 +19,8 @@ default_block_size = 4
 default_EIC = "PNG"
 default_N_clusters = 256
 
-parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
+#parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
+#parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 parser.parser_encode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
 parser.parser_decode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
 parser.parser_encode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
@@ -53,10 +54,22 @@ class CoDec(EC.CoDec):
         #compressed_centroids = self.decode_read_fn(self.input + "_centroids")
         #compressed_k = self.decode_read_fn(self.input + "_labels")
         #centroids = self.decompress(compressed_centroids)
-        k = self.decompress(compressed_k)
+        k = EC.CoDec.decompress(self, compressed_k)
         #y = self.dequantize(k, centroids)
         y = self.dequantize(k)
+        #print(dir(denoiser.CoDec))
+        y = denoiser.CoDec.filter(self, y)
         self.decode_write(y)
+
+    def ___compress(self, img):
+        k = self.quantize(img)
+        compressed_k = super().compress(k)
+        return compressed_k
+
+    def ___decompress(self, compressed_k):
+        k = super().decompress(compressed_k)
+        y = self.dequantize(k)
+        return y
 
     def quantize(self, img):
         blocks = []

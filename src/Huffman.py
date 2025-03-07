@@ -15,6 +15,7 @@ import pickle
 from bitarray import bitarray
 import os
 import math
+from huffman_coding import huffman_coding # pip install --ignore-installed "huffman_coding @ git+https://github.com/vicente-gonzalez-ruiz/huffman_coding"
 
 # Default IO images
 ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
@@ -32,6 +33,7 @@ parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help
 
 #parser.parser.parse_known_args()
 
+'''
 class HuffmanNode:
     def __init__(self, value, freq):
         self.value = value
@@ -89,7 +91,7 @@ def decode_data(encoded_data, root):
             node = root
     #print("-------------_", len(data))
     return data
-
+'''
 class CoDec (EIC.CoDec):
 
     def __init__(self, args):
@@ -104,11 +106,11 @@ class CoDec (EIC.CoDec):
         flattened_img = img.flatten().tolist()
 
         # Build Huffman Tree and generate the Huffman codes
-        root = build_huffman_tree(flattened_img)
-        codes = generate_huffman_codes(root)
+        root = huffman_coding.build_huffman_tree(flattened_img)
+        codes = huffman_coding.generate_huffman_codes(root)
 
         # Encode the flattened array
-        encoded_img = encode_data(flattened_img, codes)
+        encoded_img = huffman_coding.encode_data(flattened_img, codes)
 
         # Write encoded image and original shape to compressed_img
         compressed_img.write(encoded_img.tobytes())  # Save encoded data as bytes
@@ -138,7 +140,7 @@ class CoDec (EIC.CoDec):
         encoded_data.frombytes(compressed_img.read())
     
         # Decode the image
-        decoded_data = decode_data(encoded_data, root)
+        decoded_data = huffman_coding.decode_data(encoded_data, root)
         if math.prod(shape) < len(decoded_data):
             decoded_data = decoded_data[:math.prod(shape) - len(decoded_data)] # Sometimes, when the alphabet size is small, some extra symbols are decoded :-/
 

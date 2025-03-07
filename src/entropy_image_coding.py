@@ -13,6 +13,7 @@ import subprocess
 import cv2 as cv # pip install opencv-python
 import main
 import urllib
+import blur
 
 from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 
@@ -50,6 +51,7 @@ class CoDec:
 
     def encode(self):
         img = self.encode_read()
+        logging.debug(f"img.shape={img.shape} img.dtype={img.dtype} img.max={np.max(img)} img.min={np.min(img)}")
         compressed_img = self.compress(img)
         self.encode_write(compressed_img)
         #logging.info(f"BPP = {BPP}")
@@ -58,6 +60,7 @@ class CoDec:
     def decode(self):
         compressed_img = self.decode_read()
         img = self.decompress(compressed_img)
+        logging.debug(f"img.shape={img.shape} img.dtype={img.dtype}")        
         #compressed_img_diskimage = io.BytesIO(compressed_img)
         #img = np.load(compressed_img_diskimage)['a']
         #decompressed_data = zlib.decompress(compressed_img)
@@ -72,8 +75,12 @@ class CoDec:
         '''Read the image specified in the class attribute <args.input>.'''
         img = self.encode_read_fn(self.args.input)
         if __debug__:
-            self.decode_write_fn(img, "/tmp/original.png") # Save a copy for comparing later
-            self.output_bytes = 0
+            fn = "/tmp/original.png"
+            #self.decode_write_fn(img, "/tmp/original.png") # Save a copy for comparing later
+            try:
+                skimage_io.imsave(fn, img)
+            except Exception as e:
+                logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
         self.img_shape = img.shape
         return img
 
@@ -123,7 +130,11 @@ class CoDec:
         self.output_bytes += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn}")
 
+    def filter(self, img):
+        return img
+
     def decode_write_fn(self, img, fn):
+        img = self.filter(img)
         try:
             skimage_io.imsave(fn, img)
         except Exception as e:
