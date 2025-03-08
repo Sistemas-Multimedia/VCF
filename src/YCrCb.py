@@ -1,4 +1,4 @@
-'''Exploiting color (perceptual) redundancy with the YCoCg transform.'''
+'''Exploiting color (perceptual) redundancy with the YCrCb transform.'''
 
 import numpy as np
 import logging
