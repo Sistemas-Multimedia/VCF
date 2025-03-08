@@ -31,14 +31,14 @@ class CoDec(Q.CoDec):
         else:
             self.offset = 0
 
-    def _compress(self, img):
+    def ignoreme_compress(self, img):
         img = img.astype(np.int16)
         img -= 128
         YCrCb_img = from_RGB(img)
         compressed_k = super().compress(YCrCb_img)
         return compressed_k
 
-    def _decompress(self, compressed_k):
+    def ignoreme_decompress(self, compressed_k):
         YCrCb_y = super().decompress(compressed_k)
         y = to_RGB(YCrCb_y)
         y = np.clip(y, 0, 255)
