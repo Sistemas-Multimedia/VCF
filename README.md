@@ -31,7 +31,7 @@ Supposing a Python interpreter and Git available:
    
 ## Programming
 
-### Classes organization
+### Codecs organization
 
 +---------------------+
 | temporal transforms |
@@ -41,19 +41,22 @@ Supposing a Python interpreter and Git available:
 |  color transforms   |
 +---------------------+
 |     quantizers      |
-+---------------------+
-|      filters        |
-+---------------------+
++---------+           |
+| filters |           |
++---------+-----------+
 |   entropy codecs    |
 +---------------------+
 
-temporal transforms: III, IPP, IBP, MCTF.
-color transforms: YCoCg*, color-DCT, YCrCb, color-VQ, 
-quantizers: deadzone*, Lloyd-Max, VQ.
-filter: blur.
+
+temporal transforms: III, (IPP), (IBP), (MCTF).
+spatial transforms: 2D-DCT, 2D-DWT.
+color transforms: YCoCg*, color-DCT, YCrCb, color-VQ. 
+quantizers: deadzone*, LloydMax, VQ.
+filters: none*, gaussian, median, blur.
 entropy codecs: PNG*, TIFF, Huffman, PNM.
 
-(* = default)
+...* = default codec
+(...) = to be implemented
 
 Typically, you will need to develop a new encoding scheme for image or
 video.
