@@ -44,7 +44,7 @@ Supposing a Python interpreter and Git available:
 +---------------------+
 |      filters        |
 +---------------------+
-|    entroy codecs    |
+|   entropy codecs    |
 +---------------------+
 
 temporal transforms: III, IPP, IBP, MCTF.
@@ -53,7 +53,7 @@ quantizers: deadzone*, Lloyd-Max, VQ.
 filter: blur.
 entropy codecs: PNG*, TIFF, Huffman, PNM.
 
-default*
+(* = default)
 
 Typically, you will need to develop a new encoding scheme for image or
 video.

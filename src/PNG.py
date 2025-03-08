@@ -2,13 +2,14 @@
 
 import io
 from skimage import io as skimage_io # pip install scikit-image
-import main
 import logging
 import numpy as np
 import cv2 as cv # pip install opencv-python
 with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
     f.write(__doc__)
+
 import parser
+import main
 import entropy_image_coding as EIC
 
 # Default IO images

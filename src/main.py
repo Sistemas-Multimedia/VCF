@@ -2,7 +2,7 @@ def main(parser, logging, CoDec):
     #parser.description = __doc__
     args = parser.parse_known_args()[0]
     #args = parser.parse_args()
-    print("main", args)
+    print("main", args) # Be careful, you cannot use logging here, because logging is configured below!
 
     if args.debug:
         #FORMAT = "%(asctime)s p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s"
@@ -30,4 +30,5 @@ def main(parser, logging, CoDec):
     #logging.info(f"BPP = {BPP} bits/pixel")
     #logging.info(f"RMSE = {RMSE}")
     #logging.info(f"rate = {args.func(codec)}")
+
     args.func(codec)

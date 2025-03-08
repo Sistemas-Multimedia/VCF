@@ -13,7 +13,6 @@ import subprocess
 import cv2 as cv # pip install opencv-python
 import main
 import urllib
-import blur
 
 from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 
@@ -51,7 +50,6 @@ class CoDec:
 
     def encode(self):
         img = self.encode_read()
-        logging.debug(f"img.shape={img.shape} img.dtype={img.dtype} img.max={np.max(img)} img.min={np.min(img)}")
         compressed_img = self.compress(img)
         self.encode_write(compressed_img)
         #logging.info(f"BPP = {BPP}")
@@ -60,7 +58,6 @@ class CoDec:
     def decode(self):
         compressed_img = self.decode_read()
         img = self.decompress(compressed_img)
-        logging.debug(f"img.shape={img.shape} img.dtype={img.dtype}")        
         #compressed_img_diskimage = io.BytesIO(compressed_img)
         #img = np.load(compressed_img_diskimage)['a']
         #decompressed_data = zlib.decompress(compressed_img)
