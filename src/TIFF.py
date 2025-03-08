@@ -1,4 +1,4 @@
-'''Entropy Encoding of images using PNG (Portable Network Graphics). '''
+'''Entropy Encoding of images using TIFF (Tag Image File Format). '''
 import tifffile
 import io as pyio  # Avoid conflict with skimage.io
 import main

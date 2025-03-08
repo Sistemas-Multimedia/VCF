@@ -53,12 +53,12 @@ class CoDec(denoiser.CoDec):
         self.Q = Quantizer(Q_step=self.QSS, min_val=min_index_val, max_val=max_index_val)
         self.output_bytes = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
 
-    def compress(self, img):
+    def __compress(self, img):
         k = self.quantize(img).astype(np.uint8)
         compressed_k = super().compress(k)
         return compressed_k
         
-    def __encode(self):
+    def encode(self):
         '''Read an image, quantize the image, and save it.'''
         img = self.encode_read()
         #img_128 = img.astype(np.int16) - 128
@@ -73,7 +73,7 @@ class CoDec(denoiser.CoDec):
         #rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
         #return rate
 
-    def decompress(self, compressed_k):
+    def __decompress(self, compressed_k):
         k = super().decompress(compressed_k)
         y = self.dequantize(k)#.astype(np.uint8)
         return y
@@ -86,7 +86,7 @@ class CoDec(denoiser.CoDec):
         return y
     '''
     
-    def __decode(self):
+    def decode(self):
         '''Read a quantized image, "dequantize", and save.'''
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
@@ -139,12 +139,12 @@ class CoDec(denoiser.CoDec):
         self.Q = Quantizer(Q_step=self.QSS, min_val=min_index_val, max_val=max_index_val)
         self.output_bytes = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
 
-    def compress(self, img):
+    def __compress(self, img):
         k = self.quantize(img).astype(np.uint8)
         compressed_k = super().compress(k)
         return compressed_k
         
-    def __encode(self):
+    def encode(self):
         '''Read an image, quantize the image, and save it.'''
         img = self.encode_read()
         #img_128 = img.astype(np.int16) - 128
@@ -159,7 +159,7 @@ class CoDec(denoiser.CoDec):
         #rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
         #return rate
 
-    def decompress(self, compressed_k):
+    def __decompress(self, compressed_k):
         k = super().decompress(compressed_k)
         y = self.dequantize(k)#.astype(np.uint8)
         return y
@@ -172,7 +172,7 @@ class CoDec(denoiser.CoDec):
         return y
     '''
     
-    def __decode(self):
+    def decode(self):
         '''Read a quantized image, "dequantize", and save.'''
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
