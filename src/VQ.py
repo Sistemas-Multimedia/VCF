@@ -14,9 +14,9 @@ import entropy_image_coding as EIC
 import importlib
 
 from information_theory import information  # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
-  
+
 default_block_size = 4
-default_EIC = "PNG"
+#default_EIC = "PNG"
 default_N_clusters = 256
 
 #parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)

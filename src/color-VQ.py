@@ -8,14 +8,15 @@ from sklearn import cluster  # pip install scikit-learn
 
 import parser
 from information_theory import information  # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
+import blur as denoiser
 import entropy_image_coding as EIC
 import importlib
 
-default_EIC = "PNG"
+#default_EIC = "PNG"
 default_N_clusters = 256
 
-parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
+#parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
+#parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 parser.parser_encode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 parser.parser_decode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 
@@ -47,6 +48,7 @@ class CoDec(EC.CoDec):
         self.input_bytes += os.path.getsize(fn)     
         centroids = np.load(file=fn)['a']           # Load the centroids (representative RGB values) from the previously saved .npz file
         img = self.dequantize(labels, centroids)    # Reconstruct the image by mapping the labels back to their corresponding centroids (RGB colors)
+        img = denoiser.CoDec.filter(self, img)
         self.decode_write(img)                      # Writes the reconstructed image to the output file
 
     def quantize(self, img):

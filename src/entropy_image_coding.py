@@ -127,11 +127,11 @@ class CoDec:
         self.output_bytes += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn}")
 
-    def filter(self, img):
-        return img
+    #def filter(self, img):
+    #    return img
 
     def decode_write_fn(self, img, fn):
-        img = self.filter(img)
+        #img = self.filter(img)
         try:
             skimage_io.imsave(fn, img)
         except Exception as e:
