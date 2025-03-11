@@ -44,7 +44,7 @@ class CoDec(EIC.CoDec):
     def compress(self, img):
         #skimage_io.use_plugin('freeimage')
         #compressed_img = img
-        logging.debug(f"img.dtype={img.dtype}")
+        logging.debug(f"Input to io.BytesIO() witn range [{np.min(img)}, {np.max(img)}]")
         assert (img.dtype == np.uint8) or (img.dtype == np.uint16), f"current type = {img.dtype}"
         #assert (img.dtype == np.uint8), f"current type = {img.dtype}"
         compressed_img = io.BytesIO()
@@ -68,6 +68,7 @@ class CoDec(EIC.CoDec):
         #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)
         #img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         img = skimage_io.imread(fname=compressed_img)
+        logging.debug(f"Output from skimage_io.imread() witn range [{np.min(img)}, {np.max(img)}]")
         logging.debug(f"img.dtype={img.dtype}")
         return img
 

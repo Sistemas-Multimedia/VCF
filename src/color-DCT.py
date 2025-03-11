@@ -21,63 +21,124 @@ Q = importlib.import_module(args.quantizer)
 
 class CoDec(Q.CoDec):
 
-    def __compress(self, img):
-        YCrCb_img = from_RGB(img)
-        compressed_k = super().compress(YCrCb_img)
-        return compressed_k
-
-    def __decompress(self, compressed_k):
-        YCrCb_y = super().decompress(compressed_k)
-        y = to_RGB(YCrCb_y)
-        y = np.clip(y, 0, 255)
-        y = y.astype(np.uint8)
-        return y
-
     def encode(self):
+        #
+        # Read the image.
+        #
         img = self.encode_read()#.astype(np.int16)
-        #img -= 128
+
+        #
+        # This provided numerical stability during to the transform
+        # because we will reduce the number of bits needed to
+        # represent the coefficients. Notice that most image codecs
+        # handle only positive integers.
+        #
         img = img.astype(np.int16) - 128
         #img = img.astype(np.uint8)
-        YCrCb_img = from_RGB(img)
-        k = self.quantize(YCrCb_img)
-        print("------------->", k.dtype, np.max(k), np.min(k))
-        k += 128
-        k = k.astype(np.uint16)
-        print("------------->", k.dtype, np.max(k), np.min(k))
-        if np.max(k) > 255:
-            logging.warning(f"k[{np.unravel_index(np.argmax(k),k.shape)}]={np.max(k)}")
-        if np.min(k) < 0:
-            logging.warning(f"k[{np.unravel_index(np.argmin(k),k.shape)}]={np.min(k)}")
-        #k = k.astype(np.uint16)
+        logging.debug(f"Input to color-DCT with range [{np.min(img)}, {np.max(img)}]")
+
+        #
+        # Transform the image. Coefficients are floats ideally (for
+        # the DCT) with mean 0.
+        #
+        coefs = from_RGB(img)
+
+        #
+        # The coefs can be positive and negative, but some quantizers
+        # (such as LloydMax) only input positive values. For those
+        # quantizers, the coefs must be shifted. After this, coefs
+        # should fit in [0, 255].
+        #
+        if (self.args.quantizer == "LloydMax"):
+            coefs += 128
+            if __debug__:
+                #assert (coefs < 256).all()
+                if np.max(coefs) > 255:
+                    logging.error(f"coefs[{np.unravel_index(np.argmax(coefs), coefs.shape)}]={np.max(coefs)} and LloydMax only accept values < 256. Quitting ...")
+                    quit()
+                #assert (coefs >= 0).all()
+                if np.min(coefs) > 255:
+                    logging.error(f"coefs[{np.unravel_index(np.argmin(coefs), coefs.shape)}]={np.min(coefs)} and LloydMax only accept values >= 0. Quitting ...")
+                    quit()
+        
+        #
+        # Quantize the coefficients. 
+        #
+        logging.debug(f"Input to quantizer with range [{np.min(coefs)}, {np.max(coefs)}]")
+        k = self.quantize(coefs)
+        
+        #
+        # The entropy codecs that we are using input input values in
+        # Z^+. Depending on the quantizer, the quantization indexes
+        # (always integers) can be positive or negative. Concretely:
+        #
+        # * Deadzone: output values in Z (and input values in Z).
+        #
+        # * LloydMax: output values in Z^+ (and input values in Z^+).
+        #
+        # * VQ: output values in Z^+ (and input vectors in Z^+^n).
+        #
+        if (self.args.quantizer == "deadzone"):
+            k = k.astype(np.int16)
+            k += 16384
+            k = k.astype(np.uint16)
+
+        #
+        # Compress and write to disk the quantized indexes. Remember
+        # that the entropy codecs require positive values at the
+        # input.
+        #
+        logging.debug(f"Input to entropy compressor with range [{np.min(k)}, {np.max(k)}]")
         compressed_k = self.compress(k)
         self.encode_write(compressed_k)
-        #self.BPP = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
-        #logging.info(f"BPP = {BPP}")
 
     def decode(self):
+        #
+        # Read and decompress the quantized indexes.
+        #
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
-        k = k.astype(np.int32)
-        k -= 128
+
+        #
+        # If the quantized indexes were shifted, let's restore the
+        # original values.
+        #
+        k = k.astype(np.int16)
+        if (self.args.quantizer == "deadzone"):
+            k -= 16384
+            
+        #k = k.astype(np.int16)
+        #k -= 128
         #k = self.read()
         #k -= 32768
-        print("------------->", k.dtype, np.max(k), np.min(k))
-        YCrCb_y = self.dequantize(k)
+        #print("------------->", k.dtype, np.max(k), np.min(k))
+
+        #
+        # Dequantize the indexes.
+        #
+        logging.debug(f"Input to dequantizer with range [{np.min(k)}, {np.max(k)}]")
+        coefs = self.dequantize(k)
+
+        #
+        # Inverse transform.
+        #
         #y_128 = to_RGB(YCoCg_y.astype(np.int16))
         #YCrCb_y = YCrCb_y.astype(np.uint8)
-        y = to_RGB(YCrCb_y)
-        y = y.astype(np.int16) + 128
-        #y += 128
-        #y = (y_128.astype(np.int16) + 128)
-        if np.max(y) > 255:
-            logging.warning(f"y[{np.unravel_index(np.argmax(y),y.shape)}]={np.max(y)}")
-        if np.min(y) < 0:
-            logging.warning(f"y[{np.unravel_index(np.argmin(y),y.shape)}]={np.min(y)}")
+        logging.debug(f"Input to inverse color-DCT with range [{np.min(coefs)}, {np.max(coefs)}]")
+        y = to_RGB(coefs)
+
+        #
+        # Reverse the pixels shift.
+        #
+        y = y + 128
+        
+
+        #
+        # Write the image.
+        #
+        logging.debug(f"Input to entropy decoder with range [{np.min(y)}, {np.max(y)}]")
         y = np.clip(y, 0, 255).astype(np.uint8)
         self.decode_write(y)
-        #self.BPP = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
-        #RMSE = distortion.RMSE(self.encode_read(), y)
-        #logging.info(f"RMSE = {RMSE}")
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

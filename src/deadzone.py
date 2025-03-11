@@ -61,12 +61,15 @@ class CoDec(denoiser.CoDec):
     def encode(self):
         '''Read an image, quantize the image, and save it.'''
         img = self.encode_read()
+        logging.debug(f"Input image with range [{np.min(img)}, {np.max(img)}]")
         img_128 = img.astype(np.int16) - 128
+        logging.debug(f"Input to quantizer with range [{np.min(img_128)}, {np.max(img_128)}]")
         k = self.quantize(img_128).astype(np.uint8)
         #k = self.quantize(img).astype(np.uint8)
         #k = img
         #print("---------------", np.max(k))
-        logging.debug(f"k.shape={k.shape} k.dtype={k.dtype} k.max={np.max(k)} k.min={np.min(k)}")
+        #logging.debug(f"k.shape={k.shape} k.dtype={k.dtype} k.max={np.max(k)} k.min={np.min(k)}")
+        logging.debug(f"Input to entropy compressor with range [{np.min(k)}, {np.max(k)}]")
         compressed_k = self.compress(k)
         self.encode_write(compressed_k)
         #self.save(img)
@@ -90,15 +93,17 @@ class CoDec(denoiser.CoDec):
         '''Read a quantized image, "dequantize", and save.'''
         compressed_k = self.decode_read()
         k_128 = self.decompress(compressed_k)
-        logging.debug(f"k_128.shape={k_128.shape} k.dtype={k_128.dtype}")        
+        logging.debug(f"Output from entropy decompressor with range [{np.min(k_128)}, {np.max(k_128)}]")
         #y_128 = self.dequantize(k)
         #y = (np.rint(y_128).astype(np.int16) + 128).astype(np.uint8)
         #y = self.dequantize(k).astype(np.uint8)
         y_128 = self.dequantize(k_128)
+        logging.debug(f"Output from dequantizer with range [{np.min(y_128)}, {np.max(y_128)}]")
         y = y_128 + 128 
         #y = k
         #print("---------------", np.max(y))
         logging.debug(f"y.shape={y.shape} y.dtype={y.dtype}")        
+        y = denoiser.CoDec.filter(self, y)
         self.decode_write(y)
         #rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
         #RMSE = distortion.RMSE(img, y)

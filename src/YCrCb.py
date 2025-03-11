@@ -21,6 +21,13 @@ Q = importlib.import_module(args.quantizer)
 
 class CoDec(Q.CoDec):
 
+    def __init__(self, args):
+        super().__init__(args)
+        if args.quantizer == "deadzone":
+            self.offset = 128
+        else:
+            self.offset = 0
+
     def _compress(self, img):
         YCrCb_img = from_RGB(img)
         compressed_k = super().compress(YCrCb_img)
@@ -71,6 +78,7 @@ class CoDec(Q.CoDec):
         if np.min(y) < 0:
             logging.warning(f"y[{np.unravel_index(np.argmin(y),y.shape)}]={np.min(y)}")
         y = np.clip(y, 0, 255).astype(np.uint8)
+        y = Q.denoiser.CoDec.filter(self, y)
         self.decode_write(y)
         #self.BPP = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
         #RMSE = distortion.RMSE(self.encode_read(), y)

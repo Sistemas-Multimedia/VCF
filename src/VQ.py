@@ -130,7 +130,7 @@ class CoDec(EC.CoDec):
         img_shape = (labels.shape[0]*self.BS, labels.shape[1]*self.BS, centroids.shape[2])
         _y = np.empty(shape=(labels.shape[0]*self.BS,
                              labels.shape[1]*self.BS,
-                             centroids.shape[2]), dtype=np.uint8)
+                             centroids.shape[2]), dtype=np.int16)
         for y in range(0, img_shape[0], self.BS):
             for x in range(0, img_shape[1], self.BS):
                 #print("---", labels)

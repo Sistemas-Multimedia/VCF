@@ -16,36 +16,57 @@ from scalar_quantization.LloydMax_quantization import name as quantizer_name # p
 
 #from quantization import EC
 
-import blur as denoiser
-#import entropy_image_coding as EIC
-#import importlib
+import entropy_image_coding as EIC
+import importlib
 
 default_QSS = 32
-#default_EIC = "PNG"
+default_EIC = "PNG"
 
-#parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-#parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
+parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
+parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 parser.parser_encode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"Quantization step size (default: {default_QSS})", default=default_QSS)
 parser.parser_decode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"Quantization step size (default: {default_QSS})", default=default_QSS)
 
 args = parser.parser.parse_known_args()[0]
-#EC = importlib.import_module(args.entropy_image_codec)
+EC = importlib.import_module(args.entropy_image_codec)
 
-class CoDec(denoiser.CoDec):
+class CoDec(EC.CoDec):
     
     def __init__(self, args): # ??
         super().__init__(args)
-        logging.debug(f"args = {self.args}")
 
-    def compress(self, img):
+    '''
+    def _compress(self, img):
         k = self.quantize(img)
+        #k = k.astype(np.uint8)
         compressed_k = super().compress(k)
         return compressed_k
+    '''
 
-    def decompress(self, compressed_k):
+    def encode(self):
+        img = self.encode_read()
+        k = self.quantize(img)
+        compressed_k = self.compress(k)
+        self.encode_write(compressed_k)
+        #rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        #return rate
+
+    def decode(self):
+        #k = io.imread(self.args.input)
+        compressed_k = self.decode_read()
+        k = self.decompress(compressed_k)
+        y = self.dequantize(k)
+        self.decode_write(y)
+        #rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
+        #return rate
+
+    '''
+    def _decompress(self, compressed_k):
         k = super().decompress(compressed_k)
+        #k = k.astype(np.uint8)
         y = self.dequantize(k)
         return y
+    '''
 
     def quantize(self, img):
         '''Quantize the image.'''
