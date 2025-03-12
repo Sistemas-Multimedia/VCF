@@ -24,6 +24,8 @@ from color_transforms.YCoCg import to_RGB
 
 from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 
+import cv2
+
 default_block_size = 8
 default_CT = "YCoCg"
 perceptual_quantization = False
@@ -50,11 +52,8 @@ class CoDec(CT.CoDec):
         logging.info(f"block_size = {self.block_size}")
         if args.perceptual_quantization:
             # See http://www.jatit.org/volumes/Vol70No3/24Vol70No3.pdf
-            if self.block_size == 8:
-                self.quantize_decom = self.perceptual_quantize_decom
-                logging.info("using perceptual quantization")
-                # Luma
-                self.Y_QSSs = np.array([[16, 11, 10, 16, 24, 40, 51, 61], 
+            # Luma
+            self.Y_QSSs = np.array([[16, 11, 10, 16, 24, 40, 51, 61], 
                                         [12, 12, 14, 19, 26, 58, 60, 55],
                                         [14, 13, 16, 24, 40, 57, 69, 56],
                                         [14, 17, 22, 29, 51, 87, 80, 62],
@@ -62,8 +61,8 @@ class CoDec(CT.CoDec):
                                         [24, 35, 55, 64, 81, 104, 113, 92],
                                         [49, 64, 78, 87, 103, 121, 120, 101],
                                         [72, 92, 95, 98, 112, 100, 103, 99]])
-                # Chroma
-                self.C_QSSs = np.array([[17, 18, 24, 47, 99, 99, 99, 99], 
+            # Chroma
+            self.C_QSSs = np.array([[17, 18, 24, 47, 99, 99, 99, 99], 
                                         [18, 21, 26, 66, 99, 99, 99, 99],
                                         [24, 26, 56, 99, 99, 99, 99, 99],
                                         [47, 66, 99, 99, 99, 99, 99, 99],
@@ -71,8 +70,21 @@ class CoDec(CT.CoDec):
                                         [99, 99, 99, 99, 99, 99, 99, 99],
                                         [99, 99, 99, 99, 99, 99, 99, 99],
                                         [99, 99, 99, 99, 99, 99, 99, 99]])
+            self.C_QSSs = self.C_QSSs.astype(np.uint8)
+            self.Y_QSSs = self.Y_QSSs.astype(np.uint8)
+            if (self.block_size < 8):
+                inter=cv2.INTER_AREA
             else:
-                logging.warning("sorry, perceptual quantization is only available for block_size=8")
+                inter=cv2.INTER_LINEAR
+            self.C_QSSs = cv2.resize(self.C_QSSs, (self.block_size,self.block_size), interpolation=inter)
+            self.Y_QSSs = cv2.resize(self.Y_QSSs, (self.block_size,self.block_size), interpolation=inter)
+            #self.quantize_DCT = self.perceptual_quantize_decom
+            #self.dequantize_DCT = self.perceptual_dequantize_decom
+        else:
+            pass
+            #self.quantize_DCT = self.quantize_decom
+            #self.dequantize_DCT = self.dequantize_decom
+
         if self.encoding:
             if args.Lambda is not None:
                 if not args.perceptual_quantization:
@@ -83,7 +95,7 @@ class CoDec(CT.CoDec):
                 else:
                     logging.warning("sorry, perceptual quantization is only available for block_size=8")
         if args.quantizer == "deadzone":
-            self.offset = 128
+            self.offset = 128 # Ojo con esto
         else:
             self.offset = 0
 
@@ -242,24 +254,77 @@ class CoDec(CT.CoDec):
         return unpadded_img
 
     def encode(self):
+        #
+        # Read the image.
+        #
         img = self.encode_read().astype(np.float32)
+
+        #
+        # Images must have a size multiple of 8.
+        #
         self.original_shape = img.shape
         padded_img = self.pad_and_center_to_multiple_of_block_size(img)
-        #print("--->", self.original_shape, padded_img.shape)
         if padded_img.shape != img.shape:
             logging.info(f"Padding image from dimensions {img.shape} to new dimensions: {padded_img.shape}")
         with open(self.args.output + ".shape", "wb") as file:
             file.write(struct.pack("iii", *self.original_shape))
         img = padded_img
+
+        #
+        # Provides numperical stability to the DCT.
+        #
         img -= self.offset
+        logging.debug(f"Input to color-DCT with range [{np.min(img)}, {np.max(img)}]")
+
+        #
+        # Color transform.
+        #
         CT_img = from_RGB(img)
+
+        #
+        # Spatial transform (DCT).
+        #
+        DCT_img = space_analyze(CT_img, self.block_size, self.block_size)
+
+        # Esto no hace falta aquí ##########################
         subband_y_size = int(img.shape[0]/self.block_size)
         subband_x_size = int(img.shape[1]/self.block_size)
         logging.info(f"subbband_y_size={subband_y_size}, subband_x_size={subband_x_size}")
-        DCT_img = space_analyze(CT_img, self.block_size, self.block_size)
+
+        #
+        # Perceptual quantization.
+        #
+        if args.perceptual_quantization:
+            logging.info(f"Using perceptual quantization with block_size = {self.block_size}")
+            blocks_in_y = int(img.shape[0]/self.block_size)
+            blocks_in_x = int(img.shape[1]/self.block_size)
+            for by in range(blocks_in_y):
+                for bx in range(blocks_in_x):
+                    block = DCT_img[by*self.block_size:(by+1)*self.block_size,
+                                    bx*self.block_size:(bx+1)*self.block_size,
+                                    :]
+                    block[..., 0] *= (self.Y_QSSs/121)
+                    block[..., 1] *= (self.C_QSSs/99)
+                    block[..., 2] *= (self.C_QSSs/99)
+                    DCT_img[by*self.block_size:(by+1)*self.block_size,
+                            bx*self.block_size:(bx+1)*self.block_size,
+                            :] = block
+
+        #
+        # Coefficients reordering in subbands. Improves entropy
+        # coding.
+        #
         decom_img = get_subbands(DCT_img, self.block_size, self.block_size)
-        print(decom_img, decom_img.shape)
+
+        #
+        # Quantization.
+        #
+        #decom_k = self.quantize_DCT(decom_img)
         decom_k = self.quantize_decom(decom_img)
+
+        #
+        # Make the quantization indexes positive.
+        #
         decom_k += self.offset
         logging.info(f"decom_k[{np.unravel_index(np.argmax(decom_k),decom_k.shape)}]={np.max(decom_k)}")
         logging.info(f"decom_k[{np.unravel_index(np.argmin(decom_k),decom_k.shape)}]={np.min(decom_k)}")
@@ -268,37 +333,103 @@ class CoDec(CT.CoDec):
         if np.min(decom_k) < 0:
             logging.warning(f"decom_k[{np.unravel_index(np.argmin(decom_k),decom_k.shape)}]={np.min(decom_k)}")
         #decom_k[0:subband_y_size, 0:subband_x_size, 0] -= 128
+
+        #
+        # Compress in memory.
+        #
         decom_k = decom_k.astype(np.uint8)
         #print("----------_", decom_k, decom_k.shape)
         #decom_k = np.clip(decom_k, 0, 255).astype(np.uint8)
         decom_k = self.compress(decom_k)
+
+        #
+        # Write the code-stream.
+        #
         self.encode_write(decom_k)
         #self.BPP = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
         #return rate
 
     def decode(self):
+        #
+        # Read the code-stream.
+        #
         decom_k = self.decode_read()
         with open(self.args.input + ".shape", "rb") as file:
             self.original_shape = struct.unpack("iii", file.read(12))
+
+        #
+        # Decompress the indexes.
+        #
         decom_k = self.decompress(decom_k)
         logging.info(f"original_shape={self.original_shape}, current_shape={decom_k.shape}")
+
+        #
+        # Restore original range of the quantization indexes.
+        #
         decom_k = decom_k.astype(np.int16)
         #print("----------_", decom_k, decom_k.shape)
         #subband_y_size = int(decom_k.shape[0]/self.block_size)
         #subband_x_size = int(decom_k.shape[1]/self.block_size)
         decom_k -= self.offset
+
+        #
+        # Dequantize the indexes to generate the coefficients (by
+        # subbands).
+        #
         #decom_k[0:subband_y_size, 0:subband_x_size, 0] += 128
+        #decom_y = self.dequantize_DCT(decom_k)
         decom_y = self.dequantize_decom(decom_k)
-        print(decom_y, decom_y.shape)
+        
+        #print(decom_y, decom_y.shape)
         DCT_y = get_blocks(decom_y, self.block_size, self.block_size)
+
+        #
+        # Perceptual de-quantization.
+        #
+        print("-------------->", DCT_y.dtype)
+        if args.perceptual_quantization:
+            logging.info(f"Using perceptual de-quantization with block_size = {self.block_size}")
+            blocks_in_y = int(DCT_y.shape[0]/self.block_size)
+            blocks_in_x = int(DCT_y.shape[1]/self.block_size)
+            for by in range(blocks_in_y):
+                for bx in range(blocks_in_x):
+                    block = DCT_y[by*self.block_size:(by+1)*self.block_size,
+                                  bx*self.block_size:(bx+1)*self.block_size,
+                                  :].astype(np.float32)
+                    block[..., 0] /= (self.Y_QSSs/121)
+                    block[..., 1] /= (self.C_QSSs/99)
+                    block[..., 2] /= (self.C_QSSs/99)
+                    DCT_y[by*self.block_size:(by+1)*self.block_size,
+                          bx*self.block_size:(bx+1)*self.block_size,
+                          :] = block
+
+        #
+        # Inverse spatial transform.
+        #
         CT_y = space_synthesize(DCT_y, self.block_size, self.block_size)
+        #
+        # Restore the original size of the image.
+        #
         CT_y = self.remove_padding(CT_y)
+
+        #
+        # Restore the RGB domain.
+        #
         y = to_RGB(CT_y)
+
+        #
+        # Restore the original range of values.
+        #
         y += self.offset
         if np.max(y) > 255:
             logging.warning(f"y[{np.unravel_index(np.argmax(y),y.shape)}]={np.max(y)}")
         if np.min(y) < 0:
             logging.warning(f"y[{np.unravel_index(np.argmin(y),y.shape)}]={np.min(y)}")
+
+
+        #
+        # Write the image.
+        #
         y = np.clip(y, 0, 255).astype(np.uint8)
         self.decode_write(y)
         #self.BPP = (self.input_bytes*8)/(y.shape[0]*y.shape[1])
@@ -313,6 +444,7 @@ class CoDec(CT.CoDec):
         return decom_y
     
     def perceptual_quantize_decom(self, decom):
+        logging.info(f"Using perceptual quantization with block_size = {self.block_size}")
         subbands_in_y = self.block_size
         subbands_in_x = self.block_size
         subband_y_size = int(decom.shape[0]/self.block_size)
@@ -336,6 +468,7 @@ class CoDec(CT.CoDec):
         return decom_k
 
     def perceptual_dequantize_decom(self, decom_k):
+        logging.info(f"Using perceptual dequantization with block_size = {self.block_size}")
         subbands_in_y = self.block_size
         subbands_in_x = self.block_size
         subband_y_size = int(decom_k.shape[0]/self.block_size)

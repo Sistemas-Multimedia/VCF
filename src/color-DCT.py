@@ -28,7 +28,7 @@ class CoDec(Q.CoDec):
         img = self.encode_read()#.astype(np.int16)
 
         #
-        # This provided numerical stability during to the transform
+        # This provides numerical stability during to the transform
         # because we will reduce the number of bits needed to
         # represent the coefficients. Notice that most image codecs
         # handle only positive integers.
