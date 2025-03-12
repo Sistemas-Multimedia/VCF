@@ -29,6 +29,7 @@ import cv2
 default_block_size = 8
 default_CT = "YCoCg"
 perceptual_quantization = False
+disable_subbands = False
 
 #_parser, parser_encode, parser_decode = parser.create_parser(description=__doc__)
 
@@ -40,6 +41,8 @@ parser.parser_encode.add_argument("-L", "--Lambda", type=parser.int_or_str, help
 parser.parser_decode.add_argument("-B", "--block_size_DCT", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
 parser.parser_decode.add_argument("-t", "--color_transform", type=parser.int_or_str, help=f"Color transform (default: \"{default_CT}\")", default=default_CT)
 parser.parser_decode.add_argument("-p", "--perceptual_quantization", action='store_true', help=f"Use perceptual dequantization (default: \"{perceptual_quantization}\")", default=perceptual_quantization)
+parser.parser_encode.add_argument("-a", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
+parser.parser_decode.add_argument("-a", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
 
 args = parser.parser.parse_known_args()[0]
 CT = importlib.import_module(args.color_transform)
@@ -314,7 +317,10 @@ class CoDec(CT.CoDec):
         # Coefficients reordering in subbands. Improves entropy
         # coding.
         #
-        decom_img = get_subbands(DCT_img, self.block_size, self.block_size)
+        if args.disable_subbands:
+            decom_img = DCT_img
+        else:
+            decom_img = get_subbands(DCT_img, self.block_size, self.block_size)
 
         #
         # Quantization.
@@ -381,7 +387,10 @@ class CoDec(CT.CoDec):
         decom_y = self.dequantize_decom(decom_k)
         
         #print(decom_y, decom_y.shape)
-        DCT_y = get_blocks(decom_y, self.block_size, self.block_size)
+        if args.disable_subbands:
+            DCT_y = decom_y
+        else:
+            DCT_y = get_blocks(decom_y, self.block_size, self.block_size)
 
         #
         # Perceptual de-quantization.
