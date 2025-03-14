@@ -100,14 +100,14 @@ class CoDec:
             input_size = int(f.headers['Content-Length'])
             self.input_bytes += input_size
             img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
-        logging.info(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
+        logging.debug(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
         return img
 
     def decode_read_fn(self, fn_without_extention):
         fn = fn_without_extention + self.file_extension
         input_size = os.path.getsize(fn)
         self.input_bytes += input_size
-        logging.info(f"Read {os.path.getsize(fn)} bytes from {fn}")
+        logging.debug(f"Read {os.path.getsize(fn)} bytes from {fn}")
         data = open(fn, "rb").read()
         return data
 
@@ -125,7 +125,7 @@ class CoDec:
         with open(fn, "wb") as output_file:
             output_file.write(data.read())
         self.output_bytes += os.path.getsize(fn)
-        logging.info(f"Written {os.path.getsize(fn)} bytes in {fn}")
+        logging.debug(f"Written {os.path.getsize(fn)} bytes in {fn}")
 
     #def filter(self, img):
     #    return img
@@ -137,5 +137,5 @@ class CoDec:
         except Exception as e:
             logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
         self.output_bytes += os.path.getsize(fn)
-        logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
+        logging.debug(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 

@@ -52,7 +52,7 @@ class CoDec(CT.CoDec):
     def __init__(self, args):
         super().__init__(args)
         self.block_size = args.block_size_DCT
-        logging.info(f"block_size = {self.block_size}")
+        logging.debug(f"block_size = {self.block_size}")
         if args.perceptual_quantization:
             # See http://www.jatit.org/volumes/Vol70No3/24Vol70No3.pdf
             # Luma
@@ -268,7 +268,7 @@ class CoDec(CT.CoDec):
         self.original_shape = img.shape
         padded_img = self.pad_and_center_to_multiple_of_block_size(img)
         if padded_img.shape != img.shape:
-            logging.info(f"Padding image from dimensions {img.shape} to new dimensions: {padded_img.shape}")
+            logging.debug(f"Padding image from dimensions {img.shape} to new dimensions: {padded_img.shape}")
         with open(self.args.output + ".shape", "wb") as file:
             file.write(struct.pack("iii", *self.original_shape))
         img = padded_img
@@ -292,13 +292,13 @@ class CoDec(CT.CoDec):
         # Esto no hace falta aquí ##########################
         subband_y_size = int(img.shape[0]/self.block_size)
         subband_x_size = int(img.shape[1]/self.block_size)
-        logging.info(f"subbband_y_size={subband_y_size}, subband_x_size={subband_x_size}")
+        logging.debug(f"subbband_y_size={subband_y_size}, subband_x_size={subband_x_size}")
 
         #
         # Perceptual quantization.
         #
         if args.perceptual_quantization:
-            logging.info(f"Using perceptual quantization with block_size = {self.block_size}")
+            logging.debug(f"Using perceptual quantization with block_size = {self.block_size}")
             blocks_in_y = int(img.shape[0]/self.block_size)
             blocks_in_x = int(img.shape[1]/self.block_size)
             for by in range(blocks_in_y):
@@ -332,8 +332,8 @@ class CoDec(CT.CoDec):
         # Make the quantization indexes positive.
         #
         decom_k += self.offset
-        logging.info(f"decom_k[{np.unravel_index(np.argmax(decom_k),decom_k.shape)}]={np.max(decom_k)}")
-        logging.info(f"decom_k[{np.unravel_index(np.argmin(decom_k),decom_k.shape)}]={np.min(decom_k)}")
+        logging.debug(f"decom_k[{np.unravel_index(np.argmax(decom_k),decom_k.shape)}]={np.max(decom_k)}")
+        logging.debug(f"decom_k[{np.unravel_index(np.argmin(decom_k),decom_k.shape)}]={np.min(decom_k)}")
         if np.max(decom_k) > 255:
             logging.warning(f"decom_k[{np.unravel_index(np.argmax(decom_k),decom_k.shape)}]={np.max(decom_k)}")
         if np.min(decom_k) < 0:
@@ -367,7 +367,7 @@ class CoDec(CT.CoDec):
         # Decompress the indexes.
         #
         decom_k = self.decompress(decom_k)
-        logging.info(f"original_shape={self.original_shape}, current_shape={decom_k.shape}")
+        logging.debug(f"original_shape={self.original_shape}, current_shape={decom_k.shape}")
 
         #
         # Restore original range of the quantization indexes.
@@ -397,7 +397,7 @@ class CoDec(CT.CoDec):
         #
         print("-------------->", DCT_y.dtype)
         if args.perceptual_quantization:
-            logging.info(f"Using perceptual de-quantization with block_size = {self.block_size}")
+            logging.debug(f"Using perceptual de-quantization with block_size = {self.block_size}")
             blocks_in_y = int(DCT_y.shape[0]/self.block_size)
             blocks_in_x = int(DCT_y.shape[1]/self.block_size)
             for by in range(blocks_in_y):
@@ -453,7 +453,7 @@ class CoDec(CT.CoDec):
         return decom_y
     
     def perceptual_quantize_decom(self, decom):
-        logging.info(f"Using perceptual quantization with block_size = {self.block_size}")
+        logging.debug(f"Using perceptual quantization with block_size = {self.block_size}")
         subbands_in_y = self.block_size
         subbands_in_x = self.block_size
         subband_y_size = int(decom.shape[0]/self.block_size)
@@ -477,7 +477,7 @@ class CoDec(CT.CoDec):
         return decom_k
 
     def perceptual_dequantize_decom(self, decom_k):
-        logging.info(f"Using perceptual dequantization with block_size = {self.block_size}")
+        logging.debug(f"Using perceptual dequantization with block_size = {self.block_size}")
         subbands_in_y = self.block_size
         subbands_in_x = self.block_size
         subband_y_size = int(decom_k.shape[0]/self.block_size)
@@ -542,7 +542,7 @@ class CoDec(CT.CoDec):
             y = np.clip(y, 0, 255).astype(np.uint8)
             RMSE = distortion.RMSE(img, y)
             J = rate + self.Lambda*RMSE
-            logging.info(f"J={J} for block_size={block_size}")
+            logging.debug(f"J={J} for block_size={block_size}")
             if J < min:
                 min = J
                 self.block_size = block_size
