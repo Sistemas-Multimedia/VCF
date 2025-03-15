@@ -326,6 +326,7 @@ class CoDec(CT.CoDec):
         # Quantization.
         #
         #decom_k = self.quantize_DCT(decom_img)
+        #print("----------------->", self.QSS)
         decom_k = self.quantize_decom(decom_img)
 
         #
