@@ -1,5 +1,4 @@
-'''Motion PNG. Inputs an AVI/OGV/MP4/MKV file and outputs a sequence of frames \
-encoded in PNG (Portable Network Graphics), and viceversa.'''
+'''III... coding: runs a 2D image codec to a sequence of images.'''
 
 import io
 import os
@@ -22,13 +21,17 @@ ENCODE_OUTPUT_PREFIX = "/tmp/encoded"
 DECODE_INPUT_PREFIX = ENCODE_OUTPUT_PREFIX
 DECODE_OUTPUT = "/tmp/decoded.mp4"
 
+N_FRAMES = 16
+
 # Encoder parser
 parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input video (default: {ENCODE_INPUT})", default=ENCODE_INPUT)
 parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Prefix of the output sequence of frames (default: {ENCODE_OUTPUT_PREFIX})", default=f"{ENCODE_OUTPUT_PREFIX}")
+parser.parser_encode.add_argument("-n", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to encode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
 # Decoder parser
 parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Prefix of the input sequence of frames (default: {DECODE_INPUT_PREFIX})", default=f"{DECODE_INPUT_PREFIX}")
 parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output video (default: {DECODE_OUTPUT})", default=f"{DECODE_OUTPUT}")    
+parser.parser_decode.add_argument("-n", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to decode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
 #parser.parser.parse_known_args()
 
@@ -59,9 +62,9 @@ class CoDec(EVC.CoDec):
                 if __debug__:
                     O_bytes = os.path.getsize(img_fn)
                     self.output_bytes += O_bytes
-                    logging.info(f"Generating frame {img_fn} {img.size} {img.mode} in={packet.size} out={O_bytes}")
+                    logging.info(f"Extracting frame {img_fn} {img.size} {img.mode} in={packet.size} out={O_bytes}")
                 else:
-                    logging.info(f"Generating frame {img_fn} {img.size} {img.mode} in={packet.size}")
+                    logging.info(f"Extracting frame {img_fn} {img.size} {img.mode} in={packet.size}")
         self.N_frames = img_counter
         self.width, self.height = img.size
         self.N_channels = len(img.mode)
