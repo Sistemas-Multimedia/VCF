@@ -75,11 +75,13 @@ class CoDec(EVC.CoDec):
         logging.info(f"Encoding {fn}")
         container = av.open(fn)
         img_counter = 0
+        exit = False
         for packet in container.demux():
             if __debug__:
                 self.input_bytes += packet.size
             for frame in packet.decode():
                 img = frame.to_image()
+                #img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
                 img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
                 img_fnNOPNG = f"{ENCODE_OUTPUT_PREFIX}_%04d" % img_counter
                 img.save(img_fn)
@@ -95,8 +97,13 @@ class CoDec(EVC.CoDec):
                 #logging.info(f"Generated {}")
                 self.transform_codec.encode()
                 img_counter += 1
+                print("--------------->", img_counter, args.number_of_frames)
+                if img_counter > args.number_of_frames:
+                    exit = True
                 img_fn = ""
                 img_fnNOPNG = ""
+            if exit:
+                break
         self.N_frames = img_counter
         self.width, self.height = img.size
         self.N_channels = len(img.mode)
