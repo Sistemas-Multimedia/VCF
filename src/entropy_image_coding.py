@@ -125,7 +125,7 @@ class CoDec:
         with open(fn, "wb") as output_file:
             output_file.write(data.read())
         self.output_bytes += os.path.getsize(fn)
-        logging.debug(f"Written {os.path.getsize(fn)} bytes in {fn}")
+        logging.info(f"Written {os.path.getsize(fn)} bytes in {fn}")
 
     #def filter(self, img):
     #    return img

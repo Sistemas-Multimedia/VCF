@@ -14,8 +14,6 @@ import entropy_video_coding as EVC
 from entropy_video_coding import Video
 import av  # pip install av
 from PIL import Image
-import importlib
-import re
 
 # Default IOs
 ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/videos/mobile_352x288x30x420x300.mp4"
@@ -23,52 +21,29 @@ ENCODE_OUTPUT_PREFIX = "/tmp/encoded"
 DECODE_INPUT_PREFIX = ENCODE_OUTPUT_PREFIX
 DECODE_OUTPUT = "/tmp/decoded.mp4"
 
-N_FRAMES = 1
-
-default_transform = "DCT"  # Can be "DCT" or "DWT"
+N_FRAMES = 16
 
 # Encoder parser
-parser.parser_encode.add_argument("-T", "--transform", type=str, 
-    help=f"Transform type ('DCT' or 'DWT', default: {default_transform})", 
-    default=default_transform, choices=['DCT', 'DWT'])
+parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input video (default: {ENCODE_INPUT})", default=ENCODE_INPUT)
+parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Prefix of the output sequence of frames (default: {ENCODE_OUTPUT_PREFIX})", default=f"{ENCODE_OUTPUT_PREFIX}")
 parser.parser_encode.add_argument("-n", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to encode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
 # Decoder parser
-parser.parser_decode.add_argument("-T", "--transform", type=str,
-    help=f"Transform type ('DCT' or 'DWT', default: {default_transform})", 
-    default=default_transform, choices=['DCT', 'DWT'])
+parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Prefix of the input sequence of frames (default: {DECODE_INPUT_PREFIX})", default=f"{DECODE_INPUT_PREFIX}")
+parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output video (default: {DECODE_OUTPUT})", default=f"{DECODE_OUTPUT}")    
 parser.parser_decode.add_argument("-n", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to decode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
-args = parser.parser.parse_known_args()[0]
+#parser.parser.parse_known_args()
 
-try:
-    if args.transform == "DCT":
-        transform = importlib.import_module("2D-DCT")
-    else:
-        transform = importlib.import_module("2D-DWT")
-except ImportError as e:
-    print(f"Error: Could not find {args.transform} module ({e})")
-    print(f"Make sure '2D-{args.transform}.py' is in the same directory as III.py")
-    sys.exit(1)
-
-def is_valid_name(name):
-        pattern = r'^encoded_\d{4}\.png$'
-        return bool(re.match(pattern, name))
+#COMPRESSION_LEVEL = 9
 
 class CoDec(EVC.CoDec):
 
     def __init__(self, args):
         super().__init__(args)
-        codec_args: any
-        codec_args = args
-        self.transform_codec = transform.CoDec(args)
-        logging.info(f"Using {args.transform} transform")
 
     def compress(self):
-        '''Input a file recognized by av (that can be also a single
-        image) and output one or more files depending on the 2D image
-        encoder.
-        '''
+        '''Input a H.264 AVI-file and output a sequence of PNG frames.'''
         fn = self.args.input
         logging.info(f"Encoding {fn}")
         container = av.open(fn)
@@ -78,28 +53,24 @@ class CoDec(EVC.CoDec):
                 self.input_bytes += packet.size
             for frame in packet.decode():
                 img = frame.to_image()
-                img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
-                img_fnNOPNG = f"{ENCODE_OUTPUT_PREFIX}_%04d" % img_counter
+                #img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % frame.index
+                #img_fn = f"{self.args.output}_%04d.png" % frame.index
+                img_fn = f"{self.args.output}_%04d.png" % img_counter
+                img_counter += 1
+                #print(img_fn)
                 img.save(img_fn)
                 if __debug__:
                     O_bytes = os.path.getsize(img_fn)
                     self.output_bytes += O_bytes
-                    logging.info(f"Extracted frame {img_fn} {img.size} {img.mode} in={packet.size} out={O_bytes}")
+                    logging.info(f"Extracting frame {img_fn} {img.size} {img.mode} in={packet.size} out={O_bytes}")
                 else:
-                    logging.info(f"Extracted frame {img_fn} {img.size} {img.mode} in={packet.size}")
-                self.transform_codec.args.input = img_fn
-                self.transform_codec.args.output = img_fnNOPNG
-                #self.transform_codec.encode_javi(img_array)
-                #logging.info(f"Generated {}")
-                self.transform_codec.encode()
-                img_counter += 1
-                img_fn = ""
-                img_fnNOPNG = ""
+                    logging.info(f"Extracting frame {img_fn} {img.size} {img.mode} in={packet.size}")
         self.N_frames = img_counter
         self.width, self.height = img.size
         self.N_channels = len(img.mode)
 
-    def no_sirve_compress(self, fn):
+    def _compress(self, fn):
+        
         logging.info(f"Encoding {fn}")
         container = av.open(fn)
         img_counter = 0
@@ -107,10 +78,9 @@ class CoDec(EVC.CoDec):
             img = frame.to_image()
             #print(type(frame))
             img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % frame.index
-            transform.encode(img, f"{self.args.output}_%04d.png" % img_counter)
             img_counter += 1
             #print(img_fn)
-            #img.save(img_fn)
+            img.save(img_fn)
             if __debug__:
                 I_bytes = len(frame.to_bytes())
                 O_bytes = os.path.getsize(img_fn)
@@ -127,34 +97,14 @@ class CoDec(EVC.CoDec):
         #return compressed_vid
 
     def decompress(self):
-        for file in os.listdir("/tmp"):
-            if is_valid_name(file):
-                print("FILE: " + file + " " + str(len(file)))
-                imgs = sorted(os.path.join("/tmp", file))
-
-        img_fns = []
-        for fn in os.listdir("/tmp/"):
-            if is_valid_name(fn):
-                img_fns.append(fn)
-        sorted_img_fns = sorted(img_fns)
-
-        print("------------------>", len(sorted_img_fns), sorted_img_fns)
-        print("------------------>", len(imgs), imgs)
-        img_counter = 0
-        #for img in imgs:
-        for i in range(len(sorted_img_fns)):
-            img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
-            logging.info(img_fn)
-            self.transform_codec.args.input = img_fn[:-4]
-            self.transform_codec.args.output= img_fn
-            logging.info(f"Decoding frame {self.transform_codec.args.input} into {self.transform_codec.args.output}")
-            self.transform_codec.decode()
-            img_counter += 1
-
-            #img.save(self.args.output)
-        # Open the output file container
+        '''Input a sequence of PNG images and output a H.264 AVI-file with lossless encoding.'''
+        imgs = sorted(os.path.join("/tmp", file)
+            for file in os.listdir("/tmp")
+                if file.lower().startswith("encoded".lower()) and file.lower().endswith(".png".lower()))
         
-        self.args.output = DECODE_OUTPUT
+        #imgs = [i for i in os.listdir(self.args.input) if i.lower().endswith('.png')]
+
+        # Open the output file container
         container = av.open(self.args.output, 'w', format='avi')
         video_stream = container.add_stream('libx264', rate=self.framerate)
 
@@ -165,11 +115,7 @@ class CoDec(EVC.CoDec):
         # Optionally set pixel format to ensure no color space conversion happens
         video_stream.pix_fmt = 'yuv444p'  # Working but lossy because the YCrCb is floating point-based
         #video_stream.pix_fmt = 'rgb24'  # Not work
-        imgs = []
-        for i in range(300):
-            #print("FILE: " + file + " " + str(len(file)))
-            imgs.append(f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % i)
-        print(imgs)
+    
         #img_0 = Image.open("/tmp/encoded_0000.png").convert('RGB')
         img_0 = Image.open(imgs[0]).convert('RGB')
         width, height = img_0.size
