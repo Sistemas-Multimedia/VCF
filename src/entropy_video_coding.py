@@ -2,7 +2,6 @@
 the input of encode and the output of decode) IO uses lossless H.264
 encapsulated in AVI. Videos are not loaded to memory, but only the
 required images.
-
 '''
 
 import os
@@ -46,6 +45,7 @@ class CoDec:
         self.input_bytes = 0
         self.output_bytes = 0
         self.framerate = 30
+        #self.N_frames = 1
 
     def __del__(self):
         logging.info(f"Total {self.input_bytes} bytes read")

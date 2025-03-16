@@ -1,5 +1,6 @@
 '''III... coding: runs a 2D image codec to a sequence of images.'''
 
+import sys
 import io
 import os
 from skimage import io as skimage_io # pip install scikit-image
@@ -30,22 +31,23 @@ default_transform = "DCT"  # Can be "DCT" or "DWT"
 # Encoder parser
 parser.parser_encode.add_argument("-T", "--transform", type=str, 
     help=f"Transform type ('DCT' or 'DWT', default: {default_transform})", 
-    default=default_transform, choices=['DCT', 'DWT'])
-parser.parser_encode.add_argument("-n", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to encode (default: {N_FRAMES})", default=f"{N_FRAMES}")
+    default=default_transform)
+parser.parser_encode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to encode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
 # Decoder parser
 parser.parser_decode.add_argument("-T", "--transform", type=str,
     help=f"Transform type ('DCT' or 'DWT', default: {default_transform})", 
-    default=default_transform, choices=['DCT', 'DWT'])
-parser.parser_decode.add_argument("-n", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to decode (default: {N_FRAMES})", default=f"{N_FRAMES}")
+    default=default_transform)
+parser.parser_decode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to decode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
 args = parser.parser.parse_known_args()[0]
 
+if __debug__:
+    if args.debug:
+        print(f"III: Importing {args.transform}")
+
 try:
-    if args.transform == "DCT":
-        transform = importlib.import_module("2D-DCT")
-    else:
-        transform = importlib.import_module("2D-DWT")
+    transform = importlib.import_module(args.transform)
 except ImportError as e:
     print(f"Error: Could not find {args.transform} module ({e})")
     print(f"Make sure '2D-{args.transform}.py' is in the same directory as III.py")
@@ -127,11 +129,12 @@ class CoDec(EVC.CoDec):
         #return compressed_vid
 
     def decompress(self):
+        '''
         for file in os.listdir("/tmp"):
             if is_valid_name(file):
                 print("FILE: " + file + " " + str(len(file)))
                 imgs = sorted(os.path.join("/tmp", file))
-
+        '''
         img_fns = []
         for fn in os.listdir("/tmp/"):
             if is_valid_name(fn):
@@ -139,7 +142,6 @@ class CoDec(EVC.CoDec):
         sorted_img_fns = sorted(img_fns)
 
         print("------------------>", len(sorted_img_fns), sorted_img_fns)
-        print("------------------>", len(imgs), imgs)
         img_counter = 0
         #for img in imgs:
         for i in range(len(sorted_img_fns)):
@@ -166,7 +168,7 @@ class CoDec(EVC.CoDec):
         video_stream.pix_fmt = 'yuv444p'  # Working but lossy because the YCrCb is floating point-based
         #video_stream.pix_fmt = 'rgb24'  # Not work
         imgs = []
-        for i in range(300):
+        for i in range(img_counter):
             #print("FILE: " + file + " " + str(len(file)))
             imgs.append(f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % i)
         print(imgs)

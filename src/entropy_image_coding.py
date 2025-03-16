@@ -39,14 +39,17 @@ class CoDec:
                 f.write(f"{BPP}")
         else:
             if __debug__:
-                img = self.encode_read_fn("file:///tmp/original.png")
-                y = self.encode_read_fn(self.args.output)
-                RMSE = distortion.RMSE(img, y)
-                logging.info(f"RMSE = {RMSE}")
-                with open(f"{self.args.input}_BPP.txt", 'r') as f:
-                    BPP = float(f.read())
-                J = BPP + RMSE
-                logging.info(f"J = R + D = {J}")
+                try:
+                    img = self.encode_read_fn("file:///tmp/original.png")
+                    y = self.encode_read_fn(self.args.output)
+                    RMSE = distortion.RMSE(img, y)
+                    logging.info(f"RMSE = {RMSE}")
+                    with open(f"{self.args.input}_BPP.txt", 'r') as f:
+                        BPP = float(f.read())
+                    J = BPP + RMSE
+                    logging.info(f"J = R + D = {J}")
+                except ValueError as e:
+                    logging.debug(f"Unable to read {self.args.output}")
 
     def encode(self):
         img = self.encode_read()
