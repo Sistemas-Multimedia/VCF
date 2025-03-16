@@ -33,7 +33,7 @@ parser.parser_decode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"
 #parser.parser_decode.add_argument("-s", "--filter_size", type=parser.int_or_str, help=f"Filter size (default: {default_filter_size})", default=default_filter_size)
 
 args = parser.parser.parse_known_args()[0]
-denoiser = importlib.import_module(blur)
+denoiser = importlib.import_module("blur")
 #EC = importlib.import_module(args.entropy_image_codec)
 #denoiser = importlib.import_module(blur)
 

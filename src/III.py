@@ -24,20 +24,20 @@ ENCODE_OUTPUT_PREFIX = "/tmp/encoded"
 DECODE_INPUT_PREFIX = ENCODE_OUTPUT_PREFIX
 DECODE_OUTPUT = "/tmp/decoded.mp4"
 
-N_FRAMES = 1
+N_FRAMES = 3
 
-default_transform = "DCT"  # Can be "DCT" or "DWT"
+DEFAULT_TRANSFORM = "2D-DCT"
 
 # Encoder parser
 parser.parser_encode.add_argument("-T", "--transform", type=str, 
-    help=f"Transform type ('DCT' or 'DWT', default: {default_transform})", 
-    default=default_transform)
+    help=f"2D-transform, default: {DEFAULT_TRANSFORM}", 
+    default=DEFAULT_TRANSFORM)
 parser.parser_encode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to encode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
 # Decoder parser
 parser.parser_decode.add_argument("-T", "--transform", type=str,
-    help=f"Transform type ('DCT' or 'DWT', default: {default_transform})", 
-    default=default_transform)
+    help=f"2D-transform, default: {DEFAULT_TRANSFORM}", 
+    default=DEFAULT_TRANSFORM)
 parser.parser_decode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to decode (default: {N_FRAMES})", default=f"{N_FRAMES}")
 
 args = parser.parser.parse_known_args()[0]
