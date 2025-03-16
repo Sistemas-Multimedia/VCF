@@ -63,8 +63,8 @@ parser = CustomArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpForma
                               description=description)
 parser.add_argument("-g", "--debug", action="store_true", help=f"Output debug information")
 subparser = parser.add_subparsers(help="You must specify one of the following subcomands:", dest="subparser_name")
-parser_encode = subparser.add_parser("encode", help="Encode an image")
-parser_decode = subparser.add_parser("decode", help="Decode an image")
+parser_encode = subparser.add_parser("encode", help="Encode an image or video")
+parser_decode = subparser.add_parser("decode", help="Decode an image or video")
 parser_encode.set_defaults(func=encode)
 parser_decode.set_defaults(func=decode)
 #    return parser, parser_encode, parser_decode
