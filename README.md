@@ -34,26 +34,18 @@ Supposing a Python interpreter and Git available:
 ### Codecs organization
 
 +---------------------+
-| temporal transforms |
+| temporal transforms | III, (IPP), (IBP), (MCTF).
 +---------------------+
-| spatial transforms  |
+| spatial transforms  | 2D-DCT, 2D-DWT.
 +---------------------+
-|  color transforms   |
+|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT, color-VQ.
 +---------------------+
-|     quantizers      |
-+---------+           |
-| filters |           |
-+---------+-----------+
-|   entropy codecs    |
+|     quantizers      | deadzone*, LloydMax, VQ.
++---------------------+ 
+|       filters       | gaussian, median, blur, none*.
 +---------------------+
-
-
-temporal transforms: III, (IPP), (IBP), (MCTF).
-spatial transforms: 2D-DCT, 2D-DWT.
-color transforms: YCoCg*, YCrCb, RGB2RGB, color-DCT, color-VQ. 
-quantizers: deadzone*, LloydMax, VQ.
-filters: none*, gaussian, median, blur.
-entropy codecs: PNG*, TIFF, Huffman, PNM.
+|   entropy codecs    | PNG*, TIFF, Huffman, PNM.
++---------------------+
 
 ...* = default codec
 (...) = to be implemented

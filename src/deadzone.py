@@ -13,8 +13,10 @@ from scalar_quantization.deadzone_quantization import name as quantizer_name # p
 from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 
 #import entropy_image_coding as EIC
-import blur as denoiser
-#import importlib
+#import blur as denoiser
+#import blur
+
+import importlib
   
 default_QSS = 32
 #default_EIC = "PNG"
@@ -31,6 +33,7 @@ parser.parser_decode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"
 #parser.parser_decode.add_argument("-s", "--filter_size", type=parser.int_or_str, help=f"Filter size (default: {default_filter_size})", default=default_filter_size)
 
 args = parser.parser.parse_known_args()[0]
+denoiser = importlib.import_module(blur)
 #EC = importlib.import_module(args.entropy_image_codec)
 #denoiser = importlib.import_module(blur)
 

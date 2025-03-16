@@ -9,10 +9,11 @@ with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
 import parser
 from sklearn import cluster  # pip install scikit-learn
 
-import blur as denoiser
+#import blur as denoiser
 #import entropy_image_coding as EIC
 import importlib
-
+#denoiser = importlib.import_module("blur")
+#coño
 from information_theory import information  # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 
 default_block_size = 4
@@ -25,7 +26,6 @@ parser.parser_encode.add_argument("-b", "--block_size_VQ", type=parser.int_or_st
 parser.parser_decode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
 parser.parser_encode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 parser.parser_decode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
-pardser.parser_encode.add_argument("-u", "--U", help="UUUU")
 
 args = parser.parser.parse_known_args()[0]
 EC = importlib.import_module(args.entropy_image_codec)
