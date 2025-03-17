@@ -28,9 +28,10 @@ parser.parser_encode.add_argument("-n", "--N_clusters", type=parser.int_or_str, 
 parser.parser_decode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 
 args = parser.parser.parse_known_args()[0]
-EC = importlib.import_module(args.entropy_image_codec)
+denoiser = importlib.import_module("blur")
+#EC = importlib.import_module(args.entropy_image_codec)
 
-class CoDec(EC.CoDec):
+class CoDec(denoiser.CoDec):
 
     def __init__(self, args, min_index_val=0, max_index_val=255):
         super().__init__(args)
@@ -55,7 +56,9 @@ class CoDec(EC.CoDec):
         #compressed_centroids = self.decode_read_fn(self.input + "_centroids")
         #compressed_k = self.decode_read_fn(self.input + "_labels")
         #centroids = self.decompress(compressed_centroids)
-        k = EC.CoDec.decompress(self, compressed_k)
+        #k = EC.CoDec.decompress(self, compressed_k)
+        #k = denoiser.CoDec.decompress(self, compressed_k)
+        k = self.decompress(compressed_k)
         #y = self.dequantize(k, centroids)
         y = self.dequantize(k)
         #print(dir(denoiser.CoDec))
