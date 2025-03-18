@@ -28,9 +28,11 @@ parser.parser_encode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"
 parser.parser_decode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"Quantization step size (default: {default_QSS})", default=default_QSS)
 
 args = parser.parser.parse_known_args()[0]
-EC = importlib.import_module(args.entropy_image_codec)
+denoiser = importlib.import_module("blur")
+#EC = importlib.import_module(args.entropy_image_codec)
 
-class CoDec(EC.CoDec):
+#class CoDec(EC.CoDec):
+class CoDec(denoiser.CoDec):
     
     def __init__(self, args): # ??
         super().__init__(args)

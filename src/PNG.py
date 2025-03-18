@@ -11,28 +11,17 @@ with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
 import parser
 import main
 import entropy_image_coding as EIC
-
-# Default IO images
-ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
-ENCODE_OUTPUT = "/tmp/encoded" # The file extension is decided in run-time
-DECODE_INPUT = ENCODE_OUTPUT
-DECODE_OUTPUT = "/tmp/decoded.png"
-
-#_parser, parser_encode, parser_decode = parser.create_parser(description=__doc__)
-
-# Encoder parser
-parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {ENCODE_INPUT})", default=ENCODE_INPUT)
-parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {ENCODE_OUTPUT})", default=f"{ENCODE_OUTPUT}")
-
-# Decoder parser
-parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {DECODE_INPUT})", default=f"{DECODE_INPUT}")
-parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {DECODE_OUTPUT})", default=f"{DECODE_OUTPUT}")    
-
-#parser.parser.parse_known_args()
+#import png
 
 COMPRESSION_LEVEL = 9
 
-#import png
+# Encoder parser
+parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.ENCODE_INPUT})", default=EIC.ENCODE_INPUT)
+parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.ENCODE_OUTPUT})", default=f"{EIC.ENCODE_OUTPUT}")
+
+# Decoder parser
+parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT})", default=f"{EIC.DECODE_INPUT}")
+parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.DECODE_OUTPUT})", default=f"{EIC.DECODE_OUTPUT}")    
 
 class CoDec(EIC.CoDec):
 
@@ -42,6 +31,18 @@ class CoDec(EIC.CoDec):
 
     # pip install imageio-freeimage (not necessary now)
     def compress(self, img):
+        """Compress an image.
+        
+        Args:
+
+        1. img: NumPY array with a RGB unsigned 8- or 16-bit/component
+        image.
+        
+        Returns:
+
+        1. A PNG code-stream (in memory).
+
+        """
         #skimage_io.use_plugin('freeimage')
         #compressed_img = img
         logging.debug(f"Input to io.BytesIO() witn range [{np.min(img)}, {np.max(img)}]")
@@ -64,6 +65,18 @@ class CoDec(EIC.CoDec):
         return compressed_img
 
     def decompress(self, compressed_img):
+        """Decompress an image.
+        
+        Args:
+
+        1. A PNG code-stream (in memory).
+        
+        Returns:
+
+        1. img: NumPY array with a RGB unsigned 8- or 16-bit/component
+        image.
+
+        """
         compressed_img = io.BytesIO(compressed_img)
         #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)
         #img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -72,13 +85,17 @@ class CoDec(EIC.CoDec):
         logging.debug(f"img.dtype={img.dtype}")
         return img
 
-    def _encode_write_fn(self, img, fn):
+    ##########
+    # UNUSED #
+    ##########
+    
+    def UNUSED_encode_write_fn(self, img, fn):
         '''Write to disk the image <img> with filename <fn>.'''
         skimage_io.imsave(fn, img)
         self.output_bytes += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 
-    def _write_fn(self, img, fn):
+    def UNUSED_write_fn(self, img, fn):
         '''Write to disk the image with filename <fn>.'''
         # Notice that the encoding algorithm depends on the output
         # file extension (PNG).
@@ -91,7 +108,7 @@ class CoDec(EIC.CoDec):
         self.output_bytes += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 
-    def _write_fn(self, img, fn):
+    def UNUSED_write_fn(self, img, fn):
         '''Write to disk the image with filename <fn>.'''
         # Notice that the encoding algorithm depends on the output
         # file extension (PNG).
@@ -108,7 +125,7 @@ class CoDec(EIC.CoDec):
         self.output_bytes += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 
-    def _decode(self):
+    def UNUSED_decode(self):
         '''Read an image and save it in the disk. Notice that we are
         using the PNG image format for both, decode and encode an
         image. For this reason, both methods do exactly the same.

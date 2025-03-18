@@ -87,18 +87,21 @@ class CoDec(EVC.CoDec):
                 img.save(img_fn)
                 if __debug__:
                     O_bytes = os.path.getsize(img_fn)
-                    self.output_bytes += O_bytes
+                    #self.output_bytes += O_bytes
                     logging.info(f"Extracted frame {img_fn} {img.size} {img.mode} in={packet.size} out={O_bytes}")
                 else:
                     logging.info(f"Extracted frame {img_fn} {img.size} {img.mode} in={packet.size}")
                 self.transform_codec.args.input = img_fn
                 self.transform_codec.args.output = img_fnNOPNG
+                #self.output = img_fnNOPNG
                 #self.transform_codec.encode_javi(img_array)
                 #logging.info(f"Generated {}")
                 self.transform_codec.encode()
+                #O_bytes = os.path.getsize(img_fnNOPNG + ".TIFF") # Esto no debería estar aqui!
+                #self.output_bytes += O_bytes
                 img_counter += 1
-                print("--------------->", img_counter, args.number_of_frames)
-                if img_counter > args.number_of_frames:
+                #print("--------------->", img_counter, args.number_of_frames)
+                if img_counter >= args.number_of_frames:
                     exit = True
                 img_fn = ""
                 img_fnNOPNG = ""
@@ -108,53 +111,23 @@ class CoDec(EVC.CoDec):
         self.width, self.height = img.size
         self.N_channels = len(img.mode)
 
-    def no_sirve_compress(self, fn):
-        logging.info(f"Encoding {fn}")
-        container = av.open(fn)
-        img_counter = 0
-        for frame in container.decode(video=0):
-            img = frame.to_image()
-            #print(type(frame))
-            img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % frame.index
-            transform.encode(img, f"{self.args.output}_%04d.png" % img_counter)
-            img_counter += 1
-            #print(img_fn)
-            #img.save(img_fn)
-            if __debug__:
-                I_bytes = len(frame.to_bytes())
-                O_bytes = os.path.getsize(img_fn)
-                self.output_bytes += O_bytes
-                self.input_bytes += I_bytes
-                logging.info(f"{img_fn} {img.size} {img.mode} {I_bytes} {O_bytes}")
-            else:
-                logging.info(f"{img_fn} {img.size} {img.mode}")
-            # cv2.imwrite(img_fn, img)
-        #compressed_vid = Video(img_counter, *vid.get_shape()[1:], ENCODE_OUTPUT_PREFIX)
-        self.N_frames = img_counter + 1
-        self.width, self.height = img.size
-        self.N_channels = len(img.mode)
-        #return compressed_vid
-
     def decompress(self):
-        '''
-        for file in os.listdir("/tmp"):
-            if is_valid_name(file):
-                print("FILE: " + file + " " + str(len(file)))
-                imgs = sorted(os.path.join("/tmp", file))
         '''
         img_fns = []
         for fn in os.listdir("/tmp/"):
             if is_valid_name(fn):
                 img_fns.append(fn)
         sorted_img_fns = sorted(img_fns)
+        '''
 
-        print("------------------>", len(sorted_img_fns), sorted_img_fns)
         img_counter = 0
         #for img in imgs:
-        for i in range(len(sorted_img_fns)):
+        #for i in range(len(sorted_img_fns)):
+        for i in range(self.args.number_of_frames):
             img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
             logging.info(img_fn)
             self.transform_codec.args.input = img_fn[:-4]
+            #self.input = img_fn[:-4]
             self.transform_codec.args.output= img_fn
             logging.info(f"Decoding frame {self.transform_codec.args.input} into {self.transform_codec.args.output}")
             self.transform_codec.decode()
@@ -173,7 +146,7 @@ class CoDec(EVC.CoDec):
 
         # Optionally set pixel format to ensure no color space conversion happens
         video_stream.pix_fmt = 'yuv444p'  # Working but lossy because the YCrCb is floating point-based
-        #video_stream.pix_fmt = 'rgb24'  # Not work
+        #video_stream.pix_fmt = 'rgb24'  # Does not work :-/
         imgs = []
         for i in range(img_counter):
             #print("FILE: " + file + " " + str(len(file)))

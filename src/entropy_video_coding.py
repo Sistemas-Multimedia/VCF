@@ -17,8 +17,11 @@ import urllib
 from urllib.parse import urlparse
 #import requests
 import av
+import math
 
 from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
+
+import entropy_image_coding as EIC
 
 class Video:
     '''A video is a sequence of files stored in "prefix".'''
@@ -32,10 +35,11 @@ class Video:
     def get_shape(self):
         return self.N_frames, self.height, self.width
 
-class CoDec:
+class CoDec(EIC.CoDec):
 
     def __init__(self, args):
         self.args = args
+        super().__init__(args)
         logging.debug(f"args = {self.args}")
         if args.subparser_name == "encode":
             self.encoding = True
@@ -43,21 +47,24 @@ class CoDec:
             self.encoding = False
         logging.debug(f"self.encoding = {self.encoding}")
         self.input_bytes = 0
-        self.output_bytes = 0
+        #self.output_bytes = 0
         self.framerate = 30
         #self.N_frames = 1
 
     def __del__(self):
         logging.info(f"Total {self.input_bytes} bytes read")
         logging.info(f"Total {self.output_bytes} bytes written")
-        logging.info(f"N_frames={self.N_frames}")
-        logging.info(f"width={self.width}")
-        logging.info(f"height={self.height}")
-        logging.info(f"N_channels={self.N_channels}")
+        logging.info(f"N_frames = {self.N_frames}")
+        logging.info(f"width = {self.width}")
+        logging.info(f"height = {self.height}")
+        logging.info(f"N_channels = {self.N_channels}")
         if __debug__:
             if self.encoding:
-                BPP = (self.output_bytes*8)/(self.N_frames*self.width*self.height)
+                #BPP = (self.output_bytes*8)/(self.N_frames*self.width*self.height)
+                #BPP = self.N_frames*self.width*self.height*self.N_channels/self.output_bytes
+                BPP = self.N_frames*self.width*self.height*self.N_channels/self.get_output_bytes()
                 logging.info(f"Encoding (output) rate = {BPP} bits/pixel")
+                # Deberíamos usar un fichero distinto del que usa entropy_image_coding
                 with open(f"{self.args.output}.txt", 'w') as f:
                     f.write(f"{self.args.input}\n")
                     f.write(f"{self.N_frames}\n")
@@ -65,11 +72,11 @@ class CoDec:
             else:
                 with open(f"{self.args.input}.txt", 'r') as f:
                     original_file = f.readline().strip()
-                    logging.info(f"original_file={original_file}")
+                    logging.info(f"original_file = {original_file}")
                     N_frames = float(f.readline().strip())
-                    logging.info(f"N_frames={N_frames}")
+                    logging.info(f"N_frames = {N_frames}")
                     BPP = float(f.readline().strip())
-                    logging.info(f"BPP={BPP}")
+                    logging.info(f"BPP = {BPP}")
                 container_x = av.open(original_file)
                 container_y = av.open(self.args.output)
                 img_counter = 0
@@ -84,19 +91,29 @@ class CoDec:
                     print(f"{img_counter}/{self.N_frames}", end='\r', flush=True)
                     img_counter += 1
                 RMSE = total_RMSE / self.N_frames
-                logging.info(f"\nRMSE = {RMSE}")
+                logging.info(f"RMSE = {RMSE}")
 
                 J = BPP + RMSE
                 logging.info(f"J = R + D = {J}")
+
+                logging.info(f"Output: {self.args.output}")
 
     def encode(self):
         #vid = self.encode_read()
         #compressed_vid = self.compress(vid)
         self.compress()
+        logging.info(f"output_bytes={self.get_output_bytes()}")
+
         #self.shape = compressed_vid.get_shape()
         #self.encode_write(compressed_vid)
 
-    def _encode_read(self):
+    def decode(self):
+        #compressed_vid = self.decode_read()
+        #vid = self.decompress(compressed_vid)
+        self.decompress()
+        #self.decode_write(vid)
+
+    def UNUSED_encode_read(self):
         '''"Read" the video specified in the class attribute args.input.'''
         vid = self.encode_read_fn(self.args.input)
         if __debug__:
@@ -104,14 +121,14 @@ class CoDec:
             self.output_bytes = 0
         return vid
 
-    def __is_http_url(self, url):
+    def UNUSED_is_http_url(self, url):
         try:
             result = urlparse(url)
             return all([result.scheme, result.netloc]) and result.scheme.lower() in ['http', 'https']
         except ValueError:
             return False
-        
-    def _encode_read_fn(self, fn):
+
+    def UNUSED_encode_read_fn(self, fn):
         '''"Read" the video <fn>, which can be a URL. The video is
         saved in "/tmp/<fn>".'''
 
@@ -155,11 +172,11 @@ class CoDec:
 
         return vid
 
-    def _encode_write(self, compressed_vid):
+    def UNUSED_encode_write(self, compressed_vid):
         '''Save to disk the video specified in the class attribute args.output.'''
         self.encode_write_fn(compressed_vid, self.args.output)
 
-    def _encode_write_fn(self, data, fn_without_extention):
+    def UNUSED_encode_write_fn(self, data, fn_without_extention):
         #data.seek(0)
         fn = fn_without_extention + self.file_extension
         with open(fn, "wb") as output_file:
@@ -167,20 +184,14 @@ class CoDec:
         self.output_bytes += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn}")
 
-    def decode(self):
-        #compressed_vid = self.decode_read()
-        #vid = self.decompress(compressed_vid)
-        self.decompress()
-        #self.decode_write(vid)
-
-    def _decode_read(self):
+    def UNUSED_decode_read(self):
         compressed_vid = self.decode_read_fn(self.args.input)
         return compressed_vid
 
-    def _decode_write(self, vid):
+    def UNUSED_decode_write(self, vid):
         return self.decode_write_fn(vid, self.args.output)
 
-    def _decode_read_fn(self, fn_without_extention):
+    def UNUSED_decode_read_fn(self, fn_without_extention):
         fn = fn_without_extention + self.file_extension
         input_size = os.path.getsize(fn)
         self.input_bytes += input_size
@@ -188,7 +199,7 @@ class CoDec:
         data = open(fn, "rb").read()
         return data
 
-    def _decode_write_fn(self, vid, fn):
+    def UNUSED_decode_write_fn(self, vid, fn):
         pass
         '''
         frames = [e for e in os.listdir(vid.prefix)]
@@ -200,7 +211,7 @@ class CoDec:
 
 ###################################################
 
-    def _encode_read_fn(self, fn):
+    def UNUSED_encode_read_fn(self, fn):
         '''Read the video <fn>.'''
 
     
@@ -228,7 +239,7 @@ class CoDec:
             cv2.imwrite(img_fn, img)
         return Video(N_frames, img.shape[0], img.shape[1], "/tmp/img_")
 
-    def _encode_read_fn(self, fn):
+    def UNUSED_encode_read_fn(self, fn):
         '''Read the video <fn>.'''
 
         from urllib.parse import urlparse
@@ -258,4 +269,3 @@ class CoDec:
             N_frames = len(reader)
             logging.info(f"")
         return Video(N_frames, img.shape[0], img.shape[1], "/tmp/frame_")
-
