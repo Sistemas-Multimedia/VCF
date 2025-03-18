@@ -25,11 +25,13 @@ COMPRESSION_LEVEL = 9
 class CoDec(EIC.CoDec):
 
     def __init__(self, args):
+        logging.debug("parse")
         super().__init__(args)
         self.file_extension = ".TIFF"
 
     # pip install imageio-freeimage (not necessary now)
     def compress(self, img):
+        logging.debug("parse")
         #skimage_io.use_plugin('freeimage')
         #compressed_img = img
         logging.debug(f"img.dtype={img.dtype}")
@@ -55,6 +57,7 @@ class CoDec(EIC.CoDec):
         return compressed_img
 
     def decompress(self, compressed_img):
+        logging.debug("parse")
         compressed_img = pyio.BytesIO(compressed_img)
         #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)
         #img = cv.cvtColor(img, cv.COLOR_BGR2RGB)

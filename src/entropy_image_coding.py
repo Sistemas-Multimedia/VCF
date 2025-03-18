@@ -23,6 +23,7 @@ DECODE_OUTPUT = "/tmp/decoded.png"
 class CoDec:
 
     def __init__(self, args):
+        logging.debug("parse")
         self.args = args
         logging.debug(f"args = {self.args}")
         if args.subparser_name == "encode":
@@ -34,6 +35,7 @@ class CoDec:
         self.output_bytes = 0
 
     def __del__(self):
+        logging.debug("parse")
         logging.info(f"Total {self.input_bytes} bytes read")
         logging.info(f"Total {self.output_bytes} bytes written")
         if self.encoding:
@@ -58,6 +60,7 @@ class CoDec:
                     logging.debug(f"Unable to read {self.args.output}")
 
     def get_output_bytes(self):
+        logging.debug("parse")
         #logging.info(f"output_bytes={self.output_bytes}")
         return self.output_bytes
 
@@ -74,6 +77,7 @@ class CoDec:
         1. The image code-stream.
 
         '''
+        logging.debug("parse")
         #img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         #img = Image.open(fn) # https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#using-the-image-class
         try:
@@ -98,13 +102,16 @@ class CoDec:
 
         1. self.args.input: The URL of the input image.
 
+        Modifies:
+        
+        1. self.img_shape: The shape of the image.
+
         Returns:
 
         1. The code-stream of the image.
         
-        2. self.img_shape: The shape of the image.
-
         '''
+        logging.debug("parse")
         img = self.encode_read_fn(self.args.input)
         '''
         if __debug__:
@@ -131,13 +138,16 @@ class CoDec:
         3. self.file_extension: The extension of the image. This will
         be determined by the selected entropy encoder.
 
+        Modifies:
+        
+        1. self.output_bytes: Number of bytes written.
+
         Returns:
 
         1. The file with the image codestream.
 
-        2. self.output_bytes: Number of bytes written.
-
         '''
+        logging.debug("parse")
         codestream.seek(0)
         fn = fn_without_extention + self.file_extension
         with open(fn, "wb") as output_file:
@@ -148,8 +158,8 @@ class CoDec:
         logging.info(f"Written {output_size} bytes in {fn}")
 
     def encode_write(self, compressed_img):
-        '''Save to disk the image specified in the class attribute <
-        self.args.output>.
+        '''Wrapper of encode_write_fn(). Save to disk the image
+        specified in <self.args.output>.
 
         Args:
 
@@ -157,15 +167,20 @@ class CoDec:
 
         2. self.args.output: THe name of the file.
 
+        Modifies:
+        
+        1. self.output_bytes: Number of bytes written.
+        
         Returns:
 
-        Nothing.
+        1. The file with the image codestream.
 
         '''
+        logging.debug("parse")
         self.encode_write_fn(compressed_img, self.args.output)
 
     def encode(self):
-        '''Read an image, encode it, and write to disk the
+        '''Read an image, compress it, and write to disk the
         code-stream.
 
         Args:
@@ -175,18 +190,136 @@ class CoDec:
         2. self.args.output + self.file_extension: The name of the
         output image.
 
-        Returns:
+        Modifies:
         
         1. self.output_bytes: Length in bytes of the output image.
+        
+        Returns:
 
+        1. The output image written on the disk.
+        
         '''
+        logging.debug("parse")
         img = self.encode_read()
         compressed_img = self.compress(img)
         self.encode_write(compressed_img)
 
+    def decode_read_fn(self, fn_without_extention):
+        '''Read from disk the code-stream of the image with name
+        <fn_without_extension> + <self.file_extension>.
+
+        Args:
+
+        1. fn_without_extention: The name of the file with the
+        code-stream.
+
+        2. self.file_extension: The extension of the input file,
+        determined by the used entropy codec.
+
+        Modifies:
+
+        1. self.input_bytes: Number of bytes read.        
+
+        Returns:
+
+        1. codestream: Code-stream of the image.
+
+        '''
+        logging.debug("parse")
+        fn = fn_without_extention + self.file_extension
+        input_size = os.path.getsize(fn)
+        self.input_bytes += input_size
+        logging.debug(f"Read {input_size} bytes from {fn}")
+        codestream = open(fn, "rb").read()
+        return codestream
+
+    def decode_read(self):
+        '''Wrapper for decode_read_fn(), where <fn_without_extention>
+        = <self.args.input>. Read from disk the code-stream of the
+        image with name <self.args.input> + <self.file_extension>, and
+        return the code-stream.
+
+        Args:
+
+        1. self.args.input: Name of the image to read.
+
+        2. self.file_extension: Extension of the image to read
+        (determined by the used entropy codec).
+
+        Modifies:
+        
+        1. The number of read bytes in <self.input_bytes>.
+        
+        Returns:
+
+        1. The code-stream.
+
+        '''
+        logging.debug("parse")
+        compressed_img = self.decode_read_fn(self.args.input)
+        return compressed_img
+
+    def decode_write_fn(self, img, fn):
+        '''Write an image to disk.
+
+        Args:
+
+        1. img: The image.
+
+        2. fn: The filename.
+
+        Modifies:
+
+        1. self.output_bytes.
+        '''
+        logging.debug("parse")
+        try:
+            skimage_io.imsave(fn, img)
+        except Exception as e:
+            logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
+        output_size = os.path.getsize(fn)
+        self.output_bytes += output_size
+        logging.debug(f"Written {output_size} bytes in {fn} with shape {img.shape} and type {img.dtype}")
+
+    def decode_write(self, img):
+        '''Wrapper for decode_write_fn(), where the writen image is
+        <self.args.output>.
+
+        Args.
+
+        1. img: The image.
+
+        2. self.args.output: The filename.
+
+        Modifies:
+
+        1. self.output_bytes.
+        
+        '''
+        logging.debug("parse")
+        return self.decode_write_fn(img, self.args.output)
+
     def decode(self):
-        '''Read the code-stream of an image, decode it, and write to
-        disk the decoded image.'''
+        '''Read the code-stream of an image, decompress it, and write to
+        disk the decoded image.
+
+        Args:
+
+        1. self.args.input: The URL of the input image.
+
+        2. self.args.output + self.file_extension: The name of the
+        output image.
+
+        Modifies:
+        
+        1. self.output_bytes: Length in bytes of the output image.
+
+        Returns:
+        
+        1. The output image written on the disk.
+
+        '''
+        logging.debug("parse")
         compressed_img = self.decode_read()
         img = self.decompress(compressed_img)
         #compressed_img_diskimage = io.BytesIO(compressed_img)
@@ -199,31 +332,6 @@ class CoDec:
         #return rate, 0
         #logging.info("RMSE = 0")
 
-
-    def decode_read(self):
-        compressed_img = self.decode_read_fn(self.args.input)
-        return compressed_img
-
-    def decode_read_fn(self, fn_without_extention):
-        fn = fn_without_extention + self.file_extension
-        input_size = os.path.getsize(fn)
-        self.input_bytes += input_size
-        logging.debug(f"Read {os.path.getsize(fn)} bytes from {fn}")
-        data = open(fn, "rb").read()
-        return data
-
-    def decode_write(self, img):
-        return self.decode_write_fn(img, self.args.output)
-
     #def filter(self, img):
     #    return img
-
-    def decode_write_fn(self, img, fn):
-        #img = self.filter(img)
-        try:
-            skimage_io.imsave(fn, img)
-        except Exception as e:
-            logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
-        self.output_bytes += os.path.getsize(fn)
-        logging.debug(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 

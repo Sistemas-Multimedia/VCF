@@ -60,6 +60,7 @@ def is_valid_name(name):
 class CoDec(EVC.CoDec):
 
     def __init__(self, args):
+        logging.debug("parse")
         super().__init__(args)
         codec_args: any
         codec_args = args
@@ -71,6 +72,7 @@ class CoDec(EVC.CoDec):
         image) and output one or more files depending on the 2D image
         encoder.
         '''
+        logging.debug("parse")
         fn = self.args.input
         logging.info(f"Encoding {fn}")
         container = av.open(fn)
@@ -119,7 +121,7 @@ class CoDec(EVC.CoDec):
                 img_fns.append(fn)
         sorted_img_fns = sorted(img_fns)
         '''
-
+        logging.debug("parse")
         img_counter = 0
         #for img in imgs:
         #for i in range(len(sorted_img_fns)):

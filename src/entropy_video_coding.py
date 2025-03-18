@@ -38,6 +38,7 @@ class Video:
 class CoDec(EIC.CoDec):
 
     def __init__(self, args):
+        logging.debug("parse")
         self.args = args
         super().__init__(args)
         logging.debug(f"args = {self.args}")
@@ -52,6 +53,7 @@ class CoDec(EIC.CoDec):
         #self.N_frames = 1
 
     def __del__(self):
+        logging.debug("parse")
         logging.info(f"Total {self.input_bytes} bytes read")
         logging.info(f"Total {self.output_bytes} bytes written")
         logging.info(f"N_frames = {self.N_frames}")
@@ -99,6 +101,7 @@ class CoDec(EIC.CoDec):
                 logging.info(f"Output: {self.args.output}")
 
     def encode(self):
+        logging.debug("parse")
         #vid = self.encode_read()
         #compressed_vid = self.compress(vid)
         self.compress()
@@ -108,10 +111,13 @@ class CoDec(EIC.CoDec):
         #self.encode_write(compressed_vid)
 
     def decode(self):
+        logging.debug("parse")
         #compressed_vid = self.decode_read()
         #vid = self.decompress(compressed_vid)
         self.decompress()
         #self.decode_write(vid)
+
+    #####################################################################3
 
     def UNUSED_encode_read(self):
         '''"Read" the video specified in the class attribute args.input.'''
