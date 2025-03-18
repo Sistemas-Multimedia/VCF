@@ -18,27 +18,17 @@ from PIL import Image
 import importlib
 import re
 
-# Default IOs
-ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/videos/mobile_352x288x30x420x300.mp4"
-ENCODE_OUTPUT_PREFIX = "/tmp/encoded"
-DECODE_INPUT_PREFIX = ENCODE_OUTPUT_PREFIX
-DECODE_OUTPUT = "/tmp/decoded.mp4"
-
-N_FRAMES = 3
-
-DEFAULT_TRANSFORM = "2D-DCT"
-
 # Encoder parser
 parser.parser_encode.add_argument("-T", "--transform", type=str, 
-    help=f"2D-transform, default: {DEFAULT_TRANSFORM}", 
-    default=DEFAULT_TRANSFORM)
-parser.parser_encode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to encode (default: {N_FRAMES})", default=f"{N_FRAMES}")
+    help=f"2D-transform, default: {EVC.DEFAULT_TRANSFORM}", 
+    default=EVC.DEFAULT_TRANSFORM)
+parser.parser_encode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to encode (default: {EVC.N_FRAMES})", default=f"{EVC.N_FRAMES}")
 
 # Decoder parser
 parser.parser_decode.add_argument("-T", "--transform", type=str,
-    help=f"2D-transform, default: {DEFAULT_TRANSFORM}", 
-    default=DEFAULT_TRANSFORM)
-parser.parser_decode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to decode (default: {N_FRAMES})", default=f"{N_FRAMES}")
+    help=f"2D-transform, default: {EVC.DEFAULT_TRANSFORM}", 
+    default=EVC.DEFAULT_TRANSFORM)
+parser.parser_decode.add_argument("-N", "--number_of_frames", type=parser.int_or_str, help=f"Number of frames to decode (default: {EVC.N_FRAMES})", default=f"{EVC.N_FRAMES}")
 
 args = parser.parser.parse_known_args()[0]
 
@@ -67,10 +57,11 @@ class CoDec(EVC.CoDec):
         self.transform_codec = transform.CoDec(args)
         logging.info(f"Using {args.transform} transform")
 
-    def compress(self):
+    def encode(self):
         '''Input a file recognized by av (that can be also a single
-        image) and output one or more files depending on the 2D image
-        encoder.
+        image) and output one or more files depending on the selected
+        2D image encoder.
+
         '''
         logging.debug("parse")
         fn = self.args.input
@@ -83,9 +74,9 @@ class CoDec(EVC.CoDec):
                 self.input_bytes += packet.size
             for frame in packet.decode():
                 img = frame.to_image()
-                #img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
-                img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
-                img_fnNOPNG = f"{ENCODE_OUTPUT_PREFIX}_%04d" % img_counter
+                #img_fn = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
+                img_fn = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
+                img_fnNOPNG = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d" % img_counter
                 img.save(img_fn)
                 if __debug__:
                     O_bytes = os.path.getsize(img_fn)
@@ -98,9 +89,9 @@ class CoDec(EVC.CoDec):
                 #self.output = img_fnNOPNG
                 #self.transform_codec.encode_javi(img_array)
                 #logging.info(f"Generated {}")
-                self.transform_codec.encode()
+                O_bytes = self.transform_codec.encode()
                 #O_bytes = os.path.getsize(img_fnNOPNG + ".TIFF") # Esto no debería estar aqui!
-                #self.output_bytes += O_bytes
+                self.output_bytes += O_bytes
                 img_counter += 1
                 #print("--------------->", img_counter, args.number_of_frames)
                 if img_counter >= args.number_of_frames:
@@ -113,7 +104,7 @@ class CoDec(EVC.CoDec):
         self.width, self.height = img.size
         self.N_channels = len(img.mode)
 
-    def decompress(self):
+    def decode(self):
         '''
         img_fns = []
         for fn in os.listdir("/tmp/"):
@@ -126,7 +117,7 @@ class CoDec(EVC.CoDec):
         #for img in imgs:
         #for i in range(len(sorted_img_fns)):
         for i in range(self.args.number_of_frames):
-            img_fn = f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
+            img_fn = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
             logging.info(img_fn)
             self.transform_codec.args.input = img_fn[:-4]
             #self.input = img_fn[:-4]
@@ -138,7 +129,7 @@ class CoDec(EVC.CoDec):
             #img.save(self.args.output)
         # Open the output file container
         
-        self.args.output = DECODE_OUTPUT
+        self.args.output = EVC.DECODE_OUTPUT
         container = av.open(self.args.output, 'w', format='avi')
         video_stream = container.add_stream('libx264', rate=self.framerate)
 
@@ -152,7 +143,7 @@ class CoDec(EVC.CoDec):
         imgs = []
         for i in range(img_counter):
             #print("FILE: " + file + " " + str(len(file)))
-            imgs.append(f"{ENCODE_OUTPUT_PREFIX}_%04d.png" % i)
+            imgs.append(f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % i)
         print(imgs)
         #img_0 = Image.open("/tmp/encoded_0000.png").convert('RGB')
         img_0 = Image.open(imgs[0]).convert('RGB')

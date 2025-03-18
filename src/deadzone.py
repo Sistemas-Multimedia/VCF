@@ -80,6 +80,7 @@ class CoDec(denoiser.CoDec):
         #self.save(img)
         #rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
         #return rate
+        return self.output_bytes
 
     def UNUSED_decompress(self, compressed_k):
         logging.debug("parse")

@@ -23,6 +23,16 @@ from information_theory import distortion # pip install "information_theory @ gi
 
 import entropy_image_coding as EIC
 
+# Default IOs
+ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/videos/mobile_352x288x30x420x300.mp4"
+ENCODE_OUTPUT_PREFIX = "/tmp/encoded"
+DECODE_INPUT_PREFIX = ENCODE_OUTPUT_PREFIX
+DECODE_OUTPUT = "/tmp/decoded.mp4"
+
+N_FRAMES = 3
+
+DEFAULT_TRANSFORM = "2D-DCT"
+
 class Video:
     '''A video is a sequence of files stored in "prefix".'''
 
@@ -48,9 +58,9 @@ class CoDec(EIC.CoDec):
             self.encoding = False
         logging.debug(f"self.encoding = {self.encoding}")
         self.input_bytes = 0
-        #self.output_bytes = 0
+        self.output_bytes = 0
         self.framerate = 30
-        #self.N_frames = 1
+        self.N_frames = 0
 
     def __del__(self):
         logging.debug("parse")
@@ -62,9 +72,9 @@ class CoDec(EIC.CoDec):
         logging.info(f"N_channels = {self.N_channels}")
         if __debug__:
             if self.encoding:
-                #BPP = (self.output_bytes*8)/(self.N_frames*self.width*self.height)
+                BPP = (self.output_bytes*8)/(self.N_frames*self.width*self.height)
                 #BPP = self.N_frames*self.width*self.height*self.N_channels/self.output_bytes
-                BPP = self.N_frames*self.width*self.height*self.N_channels/self.get_output_bytes()
+                #BPP = self.N_frames*self.width*self.height*self.N_channels/self.get_output_bytes()
                 logging.info(f"Encoding (output) rate = {BPP} bits/pixel")
                 # Deberíamos usar un fichero distinto del que usa entropy_image_coding
                 with open(f"{self.args.output}.txt", 'w') as f:
@@ -100,7 +110,9 @@ class CoDec(EIC.CoDec):
 
                 logging.info(f"Output: {self.args.output}")
 
-    def encode(self):
+    #####################################################################3
+
+    def UNUSED_encode(self):
         logging.debug("parse")
         #vid = self.encode_read()
         #compressed_vid = self.compress(vid)
@@ -110,14 +122,12 @@ class CoDec(EIC.CoDec):
         #self.shape = compressed_vid.get_shape()
         #self.encode_write(compressed_vid)
 
-    def decode(self):
+    def UNUSED_decode(self):
         logging.debug("parse")
         #compressed_vid = self.decode_read()
         #vid = self.decompress(compressed_vid)
         self.decompress()
         #self.decode_write(vid)
-
-    #####################################################################3
 
     def UNUSED_encode_read(self):
         '''"Read" the video specified in the class attribute args.input.'''

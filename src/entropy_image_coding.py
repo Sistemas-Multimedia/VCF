@@ -179,7 +179,7 @@ class CoDec:
         logging.debug("parse")
         self.encode_write_fn(compressed_img, self.args.output)
 
-    def encode(self):
+    def UNUSED_encode(self):
         '''Read an image, compress it, and write to disk the
         code-stream.
 
@@ -203,6 +203,7 @@ class CoDec:
         img = self.encode_read()
         compressed_img = self.compress(img)
         self.encode_write(compressed_img)
+        return self.output_bytes
 
     def decode_read_fn(self, fn_without_extention):
         '''Read from disk the code-stream of the image with name
@@ -299,7 +300,7 @@ class CoDec:
         logging.debug("parse")
         return self.decode_write_fn(img, self.args.output)
 
-    def decode(self):
+    def UNUSED_decode(self):
         '''Read the code-stream of an image, decompress it, and write to
         disk the decoded image.
 
