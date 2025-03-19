@@ -92,7 +92,7 @@ class CoDec(denoiser.CoDec):
                 np.save(file=f, arr=centroids)
             len_codebook = os.path.getsize(f"{self.args.output}_centroids_{c}.gz")
             logging.info(f"Written {len_codebook} bytes in {self.args.output}_centroids_{c}.gz")
-            self.output_bytes += len_codebook
+            self.total_output_size += len_codebook
             k[..., c] = self.Q.encode(extended_img[..., c])
         return k
 

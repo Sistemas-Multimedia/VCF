@@ -34,15 +34,15 @@ class CoDec (EIC.CoDec):
         #print(type(img), img.shape, img.dtype)
         return img
 
-    def ____encode_write_fn(self, compressed_img, fn):
+    def UNUSED_encode_write_fn(self, compressed_img, fn):
         '''Write to disk the image <compressed_img> with filename <fn>.'''
         compressed_img.seek(0)
         with open(fn, "wb") as output_file:
             output_file.write(compressed_img.read())
-        self.output_bytes += os.path.getsize(fn)
+        self.total_output_size += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn}")
 
-    def ____encode(self):
+    def UNUSED_encode(self):
         '''Read an image, compress it with zlib, and save it in the disk.
         '''
         img = self.encode_read()
@@ -57,11 +57,11 @@ class CoDec (EIC.CoDec):
         #    output_file.write(compressed_img)
         #x = zlib.decompress(compressed_img)
         self.encode_write(compressed_img)
-        logging.debug(f"output_bytes={self.output_bytes}, img.shape={img.shape}")
-        rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        logging.debug(f"output_bytes={self.total_output_size}, img.shape={img.shape}")
+        rate = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         return rate
 
-    def ____decode(self):
+    def UNUSED_decode(self):
         '''Read a compressed image, decompress it, and save it.'''
         compressed_img = self.decode_read()
         compressed_img_diskimage = io.BytesIO(compressed_img)
@@ -69,8 +69,8 @@ class CoDec (EIC.CoDec):
         #decompressed_data = zlib.decompress(compressed_img)
         #img = io.BytesIO(decompressed_data))
         self.decode_write(img)
-        logging.debug(f"output_bytes={self.output_bytes}, img.shape={img.shape}")
-        rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        logging.debug(f"total_output_bytes={self.total_output_size}, img.shape={img.shape}")
+        rate = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         return rate
 
 if __name__ == "__main__":

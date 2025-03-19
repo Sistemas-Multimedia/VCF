@@ -42,7 +42,7 @@ class CoDec(Q.CoDec):
 
     def encode(self):
         img = self.encode_read()#.astype(np.int16)
-        print("----------------->", img.dtype)
+        #print("----------------->", img.dtype)
         #img -= 128
         #img_128 = img.astype(np.int16) - 128
         #img = img.astype(np.uint8)

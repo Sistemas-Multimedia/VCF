@@ -181,7 +181,7 @@ class CoDec:
         output_size = self.encode_write_fn(compressed_img, self.args.output)
         return output_size
 
-    def UNUSED_encode(self):
+    def encode(self):
         '''Read an image, compress it, and write to disk the
         code-stream.
 
@@ -204,8 +204,8 @@ class CoDec:
         logging.debug("parse")
         img = self.encode_read()
         compressed_img = self.compress(img)
-        self.encode_write(compressed_img)
-        return self.total_output_size
+        output_size = self.encode_write(compressed_img)
+        return output_size
 
     def decode_read_fn(self, fn_without_extention):
         '''Read from disk the code-stream of the image with name
@@ -302,9 +302,9 @@ class CoDec:
         '''
         logging.debug("parse")
         output_size = self.decode_write_fn(img, self.args.output)
-        return ouitput_size
+        return output_size
 
-    def UNUSED_decode(self):
+    def decode(self):
         '''Read the code-stream of an image, decompress it, and write to
         disk the decoded image.
 
@@ -327,11 +327,12 @@ class CoDec:
         #img = np.load(compressed_img_diskimage)['a']
         #decompressed_data = zlib.decompress(compressed_img)
         #img = io.BytesIO(decompressed_data))
-        self.decode_write(img)
+        output_size = self.decode_write(img)
         #logging.debug(f"output_bytes={self.total_output_size}, img.shape={img.shape}")
         #self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate, 0
         #logging.info("RMSE = 0")
+        return output_size
 
     #def filter(self, img):
     #    return img

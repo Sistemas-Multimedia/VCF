@@ -60,5 +60,4 @@ class CoDec(EC.CoDec):
             return y
 
 if __name__ == "__main__":
-    printf("MAIN")
     main.main(parser.parser, logging, CoDec)

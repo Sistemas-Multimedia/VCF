@@ -72,7 +72,7 @@ class CoDec(CT.CoDec):
         #compressed_k = self.compress(k.astype(np.uint8))
         #self.encode_write(compressed_k)
 
-        self.BPP = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate
 
     def decode(self):
@@ -92,7 +92,7 @@ class CoDec(CT.CoDec):
         y = y_128# + 128
         y = np.clip(y, 0, 255).astype(np.uint8)
         self.decode_write(y)
-        self.BPP = (self.input_bytes*8)/(y.shape[0]*y.shape[1])
+        self.BPP = (self.total_input_size*8)/(y.shape[0]*y.shape[1])
         #return rate
 
     def quantize_decom(self, decom):
@@ -123,7 +123,7 @@ class CoDec(CT.CoDec):
             decom_y.append(tuple(spatial_resolution_y))
         return decom_y
 
-    def _quantize_decom(self, decom):
+    def UNUSED_quantize_decom(self, decom):
         decom_k = [self.quantize(decom[0])] # LL subband
         for spatial_resolution in decom[1:]:
             spatial_resolution_k = []
@@ -133,7 +133,7 @@ class CoDec(CT.CoDec):
             decom_k.append(tuple(spatial_resolution_k))
         return decom_k
 
-    def _dequantize_decom(self, decom_k):
+    def UNUSED_dequantize_decom(self, decom_k):
         decom_y = [self.dequantize(decom_k[0])]
         for spatial_resolution_k in decom_k[1:]:
             spatial_resolution_y = []
@@ -143,7 +143,7 @@ class CoDec(CT.CoDec):
             decom_y.append(tuple(spatial_resolution_y))
         return decom_y
 
-    def _quantize(self, subband):
+    def UNUSED_quantize(self, subband):
         '''Quantize the image.'''
         #k = self.Q.encode(subband)
         #k = super().quantize(subband)
@@ -153,7 +153,7 @@ class CoDec(CT.CoDec):
         logging.debug(f"k.shape={k.shape} k.dtype={k.dtype}")
         return k
 
-    def _dequantize(self, k):
+    def UNUSED_dequantize(self, k):
         '''"Dequantize" an image.'''
         k = k.astype(np.int16)
         k -= 32768

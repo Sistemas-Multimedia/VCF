@@ -38,11 +38,11 @@ Supposing a Python interpreter and Git available:
 +---------------------+
 | spatial transforms  | 2D-DCT, 2D-DWT.
 +---------------------+
-|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT, color-VQ.
+|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT.
 +---------------------+
-|     quantizers      | deadzone*, LloydMax, VQ.
+|     quantizers      | deadzone*, LloydMax, VQ, color-VQ.
 +---------------------+ 
-|       filters       | gaussian, median, blur, none*.
+|      denoisers      | blur
 +---------------------+
 |   entropy codecs    | PNG*, TIFF, Huffman, PNM.
 +---------------------+

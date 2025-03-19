@@ -93,6 +93,7 @@ class CoDec (EIC.CoDec):
         self.file_extension = ".huf"
 
     def compress(self, img):
+        logging.debug("parse")
         tree_fn = f"{self.args.output}_huffman_tree.pkl.gz"
         compressed_img = io.BytesIO()
 
@@ -116,11 +117,12 @@ class CoDec (EIC.CoDec):
 
         tree_length = os.path.getsize(tree_fn)
         logging.info(f"Length of the file \"{tree_fn}\" (Huffman tree + image shape) = {tree_length} bytes")
-        self.output_bytes += tree_length
+        self.total_output_size += tree_length
 
         return compressed_img
     
     def decompress(self, compressed_img):
+        logging.debug("parse")
         tree_fn = f"{self.args.input}_huffman_tree.pkl.gz"
         compressed_img = io.BytesIO(compressed_img)
         

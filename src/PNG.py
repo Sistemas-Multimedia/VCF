@@ -92,7 +92,7 @@ class CoDec(EIC.CoDec):
     def UNUSED_encode_write_fn(self, img, fn):
         '''Write to disk the image <img> with filename <fn>.'''
         skimage_io.imsave(fn, img)
-        self.output_bytes += os.path.getsize(fn)
+        self.total_output_size += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 
     def UNUSED_write_fn(self, img, fn):
@@ -105,7 +105,7 @@ class CoDec(EIC.CoDec):
         #    len_output = os.path.getsize(fn)
         #    logging.info(f"Before optipng: {len_output} bytes")
         #subprocess.run(f"optipng {fn}", shell=True, capture_output=True)
-        self.output_bytes += os.path.getsize(fn)
+        self.total_output_size += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 
     def UNUSED_write_fn(self, img, fn):
@@ -122,7 +122,7 @@ class CoDec(EIC.CoDec):
         subprocess.run(f"pngcrush {fn} /tmp/pngcrush.png", shell=True, capture_output=True)
         subprocess.run(f"mv -f /tmp/pngcrush.png {fn}", shell=True, capture_output=True)
         # Notice that pngcrush is not installed, these two previous steps do not make any effect!
-        self.output_bytes += os.path.getsize(fn)
+        self.total_output_size += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
 
     def UNUSED_decode(self):

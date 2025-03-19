@@ -31,14 +31,14 @@ class CoDec(Q.CoDec):
         else:
             self.offset = 0
 
-    def ignoreme_compress(self, img):
+    def UNUSED_compress(self, img):
         img = img.astype(np.int16)
         img -= 128
         YCrCb_img = from_RGB(img)
         compressed_k = super().compress(YCrCb_img)
         return compressed_k
 
-    def ignoreme_decompress(self, compressed_k):
+    def UNUSED_decompress(self, compressed_k):
         YCrCb_y = super().decompress(compressed_k)
         y = to_RGB(YCrCb_y)
         y = np.clip(y, 0, 255)
@@ -73,7 +73,7 @@ class CoDec(Q.CoDec):
         k = k.astype(np.uint16)
         compressed_k = self.compress(k)
         self.encode_write(compressed_k)
-        #self.BPP = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        #self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #logging.info(f"BPP = {BPP}")
 
     def decode(self):

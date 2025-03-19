@@ -357,7 +357,7 @@ class CoDec(CT.CoDec):
         # Write the code-stream.
         #
         self.encode_write(decom_k)
-        #self.BPP = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        #self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate
 
     def decode(self):

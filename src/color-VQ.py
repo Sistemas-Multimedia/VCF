@@ -21,14 +21,16 @@ parser.parser_encode.add_argument("-m", "--N_color_clusters", type=parser.int_or
 parser.parser_decode.add_argument("-m", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 
 args = parser.parser.parse_known_args()[0]
-EC = importlib.import_module(args.entropy_image_codec)
+denoiser = importlib.import_module("blur")
+#EC = importlib.import_module(args.entropy_image_codec)
 
-class CoDec(EC.CoDec):
+#class CoDec(EC.CoDec):
+class CoDec(denoiser.CoDec):
 
     def __init__(self, args, min_index_val=0, max_index_val=255):
         super().__init__(args)
         logging.debug(f"args = {self.args}")
-        self.N_clusters = args.N_clusters
+        self.N_clusters = args.N_color_clusters
         self.input = args.input
         self.output = args.output
 
@@ -39,13 +41,13 @@ class CoDec(EC.CoDec):
         self.encode_write(compressed_labels)        # Writes the compressed labels to the output file
         fn = self.output + "_centroids.npz"         
         np.savez_compressed(file=fn, a=centroids)   # Saves the centroids (representative RGB colors) as a compressed .npz file, which will be needed during decoding
-        self.output_bytes += os.path.getsize(fn)    # Updates the byte size of the output file 
+        self.total_output_size += os.path.getsize(fn)    # Updates the byte size of the output file 
 
     def decode(self):
         compressed_labels = self.decode_read()      # Read compressed labels
         labels = self.decompress(compressed_labels) # Decompresses the labels
         fn = self.input + "_centroids.npz"
-        self.input_bytes += os.path.getsize(fn)     
+        self.total_input_size += os.path.getsize(fn)     
         centroids = np.load(file=fn)['a']           # Load the centroids (representative RGB values) from the previously saved .npz file
         img = self.dequantize(labels, centroids)    # Reconstruct the image by mapping the labels back to their corresponding centroids (RGB colors)
         img = denoiser.CoDec.filter(self, img)
