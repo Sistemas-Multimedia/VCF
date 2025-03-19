@@ -55,7 +55,7 @@ class CoDec(denoiser.CoDec):
         #        logging.debug(f"Read QSS={self.QSS} from {self.args.output}_deadzone.txt")
         self.QSS = args.QSS
         self.Q = Quantizer(Q_step=self.QSS, min_val=min_index_val, max_val=max_index_val)
-        self.output_bytes = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
+        self.total_output_size = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
 
     def UNUSED_compress(self, img):
         k = self.quantize(img).astype(np.uint8)
@@ -76,11 +76,11 @@ class CoDec(denoiser.CoDec):
         #logging.debug(f"k.shape={k.shape} k.dtype={k.dtype} k.max={np.max(k)} k.min={np.min(k)}")
         logging.debug(f"Input to entropy compressor with range [{np.min(k)}, {np.max(k)}]")
         compressed_k = self.compress(k)
-        self.encode_write(compressed_k)
+        output_size = self.encode_write(compressed_k)
         #self.save(img)
-        #rate = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        #rate = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate
-        return self.output_bytes
+        return output_size
 
     def UNUSED_decompress(self, compressed_k):
         logging.debug("parse")

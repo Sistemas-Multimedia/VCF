@@ -31,18 +31,18 @@ class CoDec:
         else:
             self.encoding = False
         logging.debug(f"self.encoding = {self.encoding}")
-        self.input_bytes = 0
-        self.output_bytes = 0
+        self.total_input_size = 0
+        self.total_output_size = 0
 
     def __del__(self):
         logging.debug("parse")
-        logging.info(f"Total {self.input_bytes} bytes read")
-        logging.info(f"Total {self.output_bytes} bytes written")
+        logging.info(f"Total {self.total_input_size} bytes read")
+        logging.info(f"Total {self.total_output_size} bytes written")
         if self.encoding:
-            number_of_output_bits = self.output_bytes*8
+            number_of_output_bits = self.total_output_size*8
             number_of_pixels = self.img_shape[0]*self.img_shape[1]
             BPP = number_of_output_bits/number_of_pixels
-            logging.info(f"rate = {BPP} bits/pixel")
+            logging.info(f"Output bit-rate = {BPP} bits/pixel")
             with open(f"{self.args.output}_BPP.txt", 'w') as f:
                 f.write(f"{BPP}")
         else:
@@ -59,10 +59,10 @@ class CoDec:
                 except ValueError as e:
                     logging.debug(f"Unable to read {self.args.output}")
 
-    def get_output_bytes(self):
+    def UNUSED_get_output_bytes(self):
         logging.debug("parse")
-        #logging.info(f"output_bytes={self.output_bytes}")
-        return self.output_bytes
+        #logging.info(f"output_bytes={self.total_output_size}")
+        return self.total_output_size
 
     def encode_read_fn(self, fn):
         '''Read the image with URL <fn>, which can be stored in the
@@ -82,14 +82,14 @@ class CoDec:
         #img = Image.open(fn) # https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#using-the-image-class
         try:
             input_size = os.path.getsize(fn)
-            self.input_bytes += input_size 
+            self.total_input_size += input_size 
             img = cv.imread(fn, cv.IMREAD_UNCHANGED)
             img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         except:
             req = urllib.request.Request(fn, method='HEAD')
             f = urllib.request.urlopen(req)
             input_size = int(f.headers['Content-Length'])
-            self.input_bytes += input_size
+            self.total_input_size += input_size
             img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         logging.debug(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
         return img
@@ -140,7 +140,7 @@ class CoDec:
 
         Modifies:
         
-        1. self.output_bytes: Number of bytes written.
+        1. self.total_output_size: Number of bytes written.
 
         Returns:
 
@@ -153,9 +153,10 @@ class CoDec:
         with open(fn, "wb") as output_file:
             output_file.write(codestream.read())
         output_size = os.path.getsize(fn)
-        self.output_bytes += output_size
-        #print("*"*80, self.output_bytes)
+        self.total_output_size += output_size
+        #print("*"*80, self.total_output_size)
         logging.info(f"Written {output_size} bytes in {fn}")
+        return output_size
 
     def encode_write(self, compressed_img):
         '''Wrapper of encode_write_fn(). Save to disk the image
@@ -169,7 +170,7 @@ class CoDec:
 
         Modifies:
         
-        1. self.output_bytes: Number of bytes written.
+        1. self.total_output_size: Number of bytes written.
         
         Returns:
 
@@ -177,7 +178,8 @@ class CoDec:
 
         '''
         logging.debug("parse")
-        self.encode_write_fn(compressed_img, self.args.output)
+        output_size = self.encode_write_fn(compressed_img, self.args.output)
+        return output_size
 
     def UNUSED_encode(self):
         '''Read an image, compress it, and write to disk the
@@ -192,7 +194,7 @@ class CoDec:
 
         Modifies:
         
-        1. self.output_bytes: Length in bytes of the output image.
+        1. self.total_output_size: Length in bytes of the output image.
         
         Returns:
 
@@ -203,7 +205,7 @@ class CoDec:
         img = self.encode_read()
         compressed_img = self.compress(img)
         self.encode_write(compressed_img)
-        return self.output_bytes
+        return self.total_output_size
 
     def decode_read_fn(self, fn_without_extention):
         '''Read from disk the code-stream of the image with name
@@ -219,7 +221,7 @@ class CoDec:
 
         Modifies:
 
-        1. self.input_bytes: Number of bytes read.        
+        1. self.total_input_size: Number of bytes read.        
 
         Returns:
 
@@ -229,7 +231,7 @@ class CoDec:
         logging.debug("parse")
         fn = fn_without_extention + self.file_extension
         input_size = os.path.getsize(fn)
-        self.input_bytes += input_size
+        self.total_input_size += input_size
         logging.debug(f"Read {input_size} bytes from {fn}")
         codestream = open(fn, "rb").read()
         return codestream
@@ -249,7 +251,7 @@ class CoDec:
 
         Modifies:
         
-        1. The number of read bytes in <self.input_bytes>.
+        1. The number of read bytes in <self.total_input_size>.
         
         Returns:
 
@@ -271,7 +273,7 @@ class CoDec:
 
         Modifies:
 
-        1. self.output_bytes.
+        1. self.total_output_size.
         '''
         logging.debug("parse")
         try:
@@ -279,8 +281,9 @@ class CoDec:
         except Exception as e:
             logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
         output_size = os.path.getsize(fn)
-        self.output_bytes += output_size
+        self.total_output_size += output_size
         logging.debug(f"Written {output_size} bytes in {fn} with shape {img.shape} and type {img.dtype}")
+        return output_size
 
     def decode_write(self, img):
         '''Wrapper for decode_write_fn(), where the writen image is
@@ -294,11 +297,12 @@ class CoDec:
 
         Modifies:
 
-        1. self.output_bytes.
+        1. self.total_output_size.
         
         '''
         logging.debug("parse")
-        return self.decode_write_fn(img, self.args.output)
+        output_size = self.decode_write_fn(img, self.args.output)
+        return ouitput_size
 
     def UNUSED_decode(self):
         '''Read the code-stream of an image, decompress it, and write to
@@ -313,11 +317,7 @@ class CoDec:
 
         Modifies:
         
-        1. self.output_bytes: Length in bytes of the output image.
-
-        Returns:
-        
-        1. The output image written on the disk.
+        1. self.total_output_size: Length in bytes of the output image.
 
         '''
         logging.debug("parse")
@@ -328,8 +328,8 @@ class CoDec:
         #decompressed_data = zlib.decompress(compressed_img)
         #img = io.BytesIO(decompressed_data))
         self.decode_write(img)
-        #logging.debug(f"output_bytes={self.output_bytes}, img.shape={img.shape}")
-        #self.BPP = (self.output_bytes*8)/(img.shape[0]*img.shape[1])
+        #logging.debug(f"output_bytes={self.total_output_size}, img.shape={img.shape}")
+        #self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate, 0
         #logging.info("RMSE = 0")
 

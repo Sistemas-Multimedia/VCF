@@ -71,7 +71,7 @@ class CoDec(EVC.CoDec):
         exit = False
         for packet in container.demux():
             if __debug__:
-                self.input_bytes += packet.size
+                self.total_input_size += packet.size
             for frame in packet.decode():
                 img = frame.to_image()
                 #img_fn = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
@@ -80,7 +80,7 @@ class CoDec(EVC.CoDec):
                 img.save(img_fn)
                 if __debug__:
                     O_bytes = os.path.getsize(img_fn)
-                    #self.output_bytes += O_bytes
+                    #self.total_output_size += O_bytes
                     logging.info(f"Extracted frame {img_fn} {img.size} {img.mode} in={packet.size} out={O_bytes}")
                 else:
                     logging.info(f"Extracted frame {img_fn} {img.size} {img.mode} in={packet.size}")
@@ -90,8 +90,9 @@ class CoDec(EVC.CoDec):
                 #self.transform_codec.encode_javi(img_array)
                 #logging.info(f"Generated {}")
                 O_bytes = self.transform_codec.encode()
+                logging.info(f"O_bytes={O_bytes}")
                 #O_bytes = os.path.getsize(img_fnNOPNG + ".TIFF") # Esto no debería estar aqui!
-                self.output_bytes += O_bytes
+                self.total_output_size += O_bytes
                 img_counter += 1
                 #print("--------------->", img_counter, args.number_of_frames)
                 if img_counter >= args.number_of_frames:

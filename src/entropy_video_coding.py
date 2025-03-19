@@ -46,6 +46,7 @@ class Video:
         return self.N_frames, self.height, self.width
 
 class CoDec(EIC.CoDec):
+#class CoDec:
 
     def __init__(self, args):
         logging.debug("parse")
@@ -57,25 +58,25 @@ class CoDec(EIC.CoDec):
         else:
             self.encoding = False
         logging.debug(f"self.encoding = {self.encoding}")
-        self.input_bytes = 0
-        self.output_bytes = 0
+        self.total_input_size = 0
+        self.total_output_size = 0
         self.framerate = 30
         self.N_frames = 0
 
     def __del__(self):
         logging.debug("parse")
-        logging.info(f"Total {self.input_bytes} bytes read")
-        logging.info(f"Total {self.output_bytes} bytes written")
-        logging.info(f"N_frames = {self.N_frames}")
-        logging.info(f"width = {self.width}")
-        logging.info(f"height = {self.height}")
-        logging.info(f"N_channels = {self.N_channels}")
+        logging.info(f"Total {self.total_input_size} bytes read")
+        logging.info(f"Total {self.total_output_size} bytes written")
+        logging.info(f"Number of encoded frames = {self.N_frames}")
+        logging.info(f"Video height (rows) = {self.height}")
+        logging.info(f"Video width (columns) = {self.width}")
+        logging.info(f"Number of color components = {self.N_channels}")
         if __debug__:
             if self.encoding:
-                BPP = (self.output_bytes*8)/(self.N_frames*self.width*self.height)
-                #BPP = self.N_frames*self.width*self.height*self.N_channels/self.output_bytes
+                BPP = (self.total_output_size*8)/(self.N_frames*self.width*self.height)
+                #BPP = self.N_frames*self.width*self.height*self.N_channels/self.total_output_size
                 #BPP = self.N_frames*self.width*self.height*self.N_channels/self.get_output_bytes()
-                logging.info(f"Encoding (output) rate = {BPP} bits/pixel")
+                logging.info(f"Output bit-rate = {BPP} bits/pixel")
                 # Deberíamos usar un fichero distinto del que usa entropy_image_coding
                 with open(f"{self.args.output}.txt", 'w') as f:
                     f.write(f"{self.args.input}\n")
@@ -134,7 +135,7 @@ class CoDec(EIC.CoDec):
         vid = self.encode_read_fn(self.args.input)
         if __debug__:
             self.decode_write_fn(vid, "/tmp/original.avi") # Save a copy for comparing later
-            self.output_bytes = 0
+            self.total_output_size = 0
         return vid
 
     def UNUSED_is_http_url(self, url):
@@ -171,7 +172,7 @@ class CoDec(EIC.CoDec):
                 #input_size = int(f.headers['Content-Length'])
         else:
             input_size = os.path.getsize(fn)
-        self.input_bytes += input_size
+        self.total_input_size += input_size
 
         cap = cv2.VideoCapture(fn)
         N_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -197,7 +198,7 @@ class CoDec(EIC.CoDec):
         fn = fn_without_extention + self.file_extension
         with open(fn, "wb") as output_file:
             output_file.write(data.read())
-        self.output_bytes += os.path.getsize(fn)
+        self.total_output_size += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn}")
 
     def UNUSED_decode_read(self):
@@ -210,7 +211,7 @@ class CoDec(EIC.CoDec):
     def UNUSED_decode_read_fn(self, fn_without_extention):
         fn = fn_without_extention + self.file_extension
         input_size = os.path.getsize(fn)
-        self.input_bytes += input_size
+        self.total_input_size += input_size
         logging.info(f"Read {os.path.getsize(fn)} bytes from {fn}")
         data = open(fn, "rb").read()
         return data
@@ -221,7 +222,7 @@ class CoDec(EIC.CoDec):
         frames = [e for e in os.listdir(vid.prefix)]
         for i in frames:
             skimage_io.imsave(fn, img)
-        self.output_bytes += os.path.getsize(fn)
+        self.total_output_size += os.path.getsize(fn)
         logging.info(f"Written {os.path.getsize(fn)} bytes in {fn} with shape {img.shape} and type {img.dtype}")
         '''
 
@@ -238,7 +239,7 @@ class CoDec(EIC.CoDec):
                 input_size = len(fn)
         else:
             input_size = os.path.getsize(fn)
-        self.input_bytes += input_size 
+        self.total_input_size += input_size 
         cap = cv2.VideoCapture(fn)
         N_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         digits = len(str(N_frames))
@@ -268,7 +269,7 @@ class CoDec(EIC.CoDec):
                 input_size = len(fn)
         else:
             input_size = os.path.getsize(fn)
-        self.input_bytes += input_size
+        self.total_input_size += input_size
 
         cap = cv2.VideoCapture(fn)
         N_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
