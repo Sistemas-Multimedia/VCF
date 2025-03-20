@@ -29,20 +29,7 @@ class CoDec(EIC.CoDec):
         super().__init__(args)
         self.file_extension = ".png"
 
-    # pip install imageio-freeimage (not necessary now)
-    def compress(self, img):
-        """Compress an image.
-        
-        Args:
-
-        1. img: NumPY array with a RGB unsigned 8- or 16-bit/component
-        image.
-        
-        Returns:
-
-        1. A PNG code-stream (in memory).
-
-        """
+    def compress_fn(self, img, fn):
         #skimage_io.use_plugin('freeimage')
         #compressed_img = img
         logging.debug(f"Input to io.BytesIO() witn range [{np.min(img)}, {np.max(img)}]")
@@ -64,19 +51,8 @@ class CoDec(EIC.CoDec):
         #    writer.write(f, z2list)
         return compressed_img
 
-    def decompress(self, compressed_img):
-        """Decompress an image.
-        
-        Args:
-
-        1. A PNG code-stream (in memory).
-        
-        Returns:
-
-        1. img: NumPY array with a RGB unsigned 8- or 16-bit/component
-        image.
-
-        """
+    # pip install imageio-freeimage (not necessary now)
+    def decompress_fn(self, compressed_img, fn):
         compressed_img = io.BytesIO(compressed_img)
         #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)
         #img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -84,7 +60,7 @@ class CoDec(EIC.CoDec):
         logging.debug(f"Output from skimage_io.imread() witn range [{np.min(img)}, {np.max(img)}]")
         logging.debug(f"img.dtype={img.dtype}")
         return img
-
+    
     ##########
     # UNUSED #
     ##########

@@ -93,7 +93,7 @@ class CoDec(EIC.CoDec):
         super().__init__(args)
         self.file_extension = ".huf"
 
-    def bye(self):
+    def UNUSED_bye(self):
         logging.debug("trace")
         if self.encoding:
             # Write metadata
@@ -139,61 +139,9 @@ class CoDec(EIC.CoDec):
 
         return compressed_img
     
-    def compress(self, img):
-        logging.debug("trace")
-        tree_fn = f"{self.args.output}_huffman_tree.pkl.gz"
-        compressed_img = io.BytesIO()
-
-        # Flatten the array and convert to a list
-        flattened_img = img.flatten().tolist()
-
-        # Build Huffman Tree and generate the Huffman codes
-        root = huffman_coding.build_huffman_tree(flattened_img)
-        codes = huffman_coding.generate_huffman_codes(root)
-
-        # Encode the flattened array
-        encoded_img = huffman_coding.encode_data(flattened_img, codes)
-
-        # Write encoded image and original shape to compressed_img
-        compressed_img.write(encoded_img.tobytes())  # Save encoded data as bytes
-
-        # Compress and save shape and the Huffman Tree
-        with gzip.open(tree_fn, 'wb') as f:
-            np.save(f, img.shape)
-            pickle.dump(root, f)  # `gzip.open` compresses the pickle data
-
-        tree_length = os.path.getsize(tree_fn)
-        logging.info(f"Length of the file \"{tree_fn}\" (Huffman tree + image shape) = {tree_length} bytes")
-        #self.total_output_size += tree_length
-
-        return compressed_img
-    
     def decompress_fn(self, compressed_img, fn):
         logging.debug("trace")
         tree_fn = f"{fn}_huffman_tree.pkl.gz"
-        compressed_img = io.BytesIO(compressed_img)
-        
-        # Load the shape and the Huffman Tree from the compressed file
-        with gzip.open(tree_fn, 'rb') as f:
-            shape = np.load(f)
-            root = pickle.load(f)
-    
-        # Read encoded image data as binary
-        encoded_data = bitarray()
-        encoded_data.frombytes(compressed_img.read())
-    
-        # Decode the image
-        decoded_data = huffman_coding.decode_data(encoded_data, root)
-        if math.prod(shape) < len(decoded_data):
-            decoded_data = decoded_data[:math.prod(shape) - len(decoded_data)] # Sometimes, when the alphabet size is small, some extra symbols are decoded :-/
-
-        # Reshape decoded data to original shape
-        img = np.array(decoded_data).reshape(shape).astype(np.uint8)
-        return img
-
-    def decompress(self, compressed_img):
-        logging.debug("trace")
-        tree_fn = f"{self.args.input}_huffman_tree.pkl.gz"
         compressed_img = io.BytesIO(compressed_img)
         
         # Load the shape and the Huffman Tree from the compressed file

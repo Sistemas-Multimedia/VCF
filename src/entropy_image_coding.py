@@ -36,6 +36,19 @@ class CoDec:
 
     def bye(self):
         logging.debug("trace")
+        logging.debug("trace")
+        if self.encoding:
+            # Write metadata
+            with open(f"{self.args.output}_meta.txt", 'w') as f:
+                f.write(f"{self.img_shape[0]}\n")
+                f.write(f"{self.img_shape[1]}\n")
+        else:
+            # Read metadata
+            with open(f"{self.args.input}.txt", 'r') as f:
+                height = f.readline().strip()
+                logging.info(f"video height = {height} pixels")
+                width = f.readline().strip()
+                logging.info(f"video width = {width} pixels")
         logging.info(f"Total {self.total_input_size} bytes read")
         logging.info(f"Total {self.total_output_size} bytes written")
         if self.encoding:
@@ -58,6 +71,14 @@ class CoDec:
                     logging.info(f"J = R + D = {J}")
                 except ValueError as e:
                     logging.debug(f"Unable to read {self.args.output}")
+
+    def compress(self, img):
+        logging.debug("trace")
+        return self.compress_fn(img, fn = self.args.output)
+        
+    def decompress(self, compressed_img):
+        logging.debug("trace")
+        return self.decompress_fn(compressed_img, self.args.input)
 
     def UNUSED_get_output_bytes(self):
         logging.debug("trace")
