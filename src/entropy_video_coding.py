@@ -63,8 +63,8 @@ class CoDec:
 
     def bye(self):
         logging.debug("trace")
-        logging.info(f"Total {self.total_input_size} bytes read")
-        logging.info(f"Total {self.total_output_size} bytes written")
+        #logging.info(f"Total {self.total_input_size} bytes read")
+        #logging.info(f"Total {self.total_output_size} bytes written")
         #logging.info(f"Number of color components = {self.N_channels}")
         if __debug__:
             if self.encoding:
@@ -98,7 +98,6 @@ class CoDec:
                 for i in range(N_frames):
                     x = self.encode_read_fn(f"file:///tmp/original_{i:04d}.png")
                     y = self.encode_read_fn(f"file:///tmp/decoded_{i:04d}.png")
-                    print(y.shape)
                     img_RMSE = distortion.RMSE(x, y)
                     logging.debug(f"image RMSE = {img_RMSE}")
                     total_RMSE += img_RMSE
@@ -125,7 +124,6 @@ class CoDec:
                 for i in range(N_frames):
                     #print("FILE: " + file + " " + str(len(file)))
                     imgs.append(f"{DECODE_OUTPUT_PREFIX}_%04d.png" % i)
-                print(imgs)
                 #img_0 = Image.open("/tmp/encoded_0000.png").convert('RGB')
                 #img_0 = Image.open(imgs[0]).convert('RGB')
                 #width, height = img_0.size
@@ -135,10 +133,9 @@ class CoDec:
                 #self.N_channels = len(img_0.mode)
 
                 img_counter = 0
-                print(imgs)
                 for i in imgs:
                     img = Image.open(i).convert('RGB')
-                    logging.info(f"Decoding frame {img_counter} into {self.args.output}")
+                    logging.info(f"Re-encoding frame {img_counter} into {self.args.output}")
 
                     # Convert the image to a VideoFrame
                     frame = av.VideoFrame.from_image(img)
@@ -179,15 +176,15 @@ class CoDec:
         #img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         #img = Image.open(fn) # https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#using-the-image-class
         try:
-            #input_size = os.path.getsize(fn)
-            #self.total_input_size += input_size 
+            input_size = os.path.getsize(fn)
+            self.total_input_size += input_size 
             img = cv2.imread(fn, cv2.IMREAD_UNCHANGED)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         except:
             req = urllib.request.Request(fn, method='HEAD')
             f = urllib.request.urlopen(req)
-            #input_size = int(f.headers['Content-Length'])
-            #self.total_input_size += input_size
+            input_size = int(f.headers['Content-Length'])
+            self.total_input_size += input_size
             img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         logging.debug(f"Read {fn} with shape {img.shape} and type={img.dtype}")
         self.img_shape = img.shape
@@ -225,7 +222,7 @@ class CoDec:
         except ValueError:
             return False
 
-    def read_video(self, fn):
+    def UNUSED_read_video(self, fn):
         '''"Read" the video <fn>, which can be a URL. The video is
         saved in "/tmp/<fn>".'''
     
@@ -270,7 +267,7 @@ class CoDec:
         '''Save to disk the video specified in the class attribute args.output.'''
         self.encode_write_fn(compressed_vid, self.args.output)
 
-    def encode_write_fn(self, data, fn_without_extention):
+    def UNUSED_encode_write_fn(self, data, fn_without_extention):
         #data.seek(0)
         fn = fn_without_extention + self.file_extension
         with open(fn, "wb") as output_file:
@@ -285,7 +282,7 @@ class CoDec:
     def UNUSED_decode_write(self, vid):
         return self.decode_write_fn(vid, self.args.output)
 
-    def decode_read(self, fn_without_extention):
+    def UNUSED_decode_read(self, fn_without_extention):
         fn = fn_without_extention + self.file_extension
         input_size = os.path.getsize(fn)
         self.total_input_size += input_size
@@ -293,7 +290,7 @@ class CoDec:
         data = open(fn, "rb").read()
         return data
 
-    def decode_write(self, vid, fn):
+    def UNUNSED_decode_write(self, vid, fn):
         frames = [e for e in os.listdir(vid.prefix)]
         for i in frames:
             skimage_io.imsave(fn, img)

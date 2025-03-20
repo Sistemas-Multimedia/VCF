@@ -39,16 +39,16 @@ class CoDec:
         logging.debug("trace")
         if self.encoding:
             # Write metadata
-            with open(f"{self.args.output}_meta.txt", 'w') as f:
+            with open(f"{self.args.output}.txt", 'w') as f:
                 f.write(f"{self.img_shape[0]}\n")
                 f.write(f"{self.img_shape[1]}\n")
         else:
             # Read metadata
             with open(f"{self.args.input}.txt", 'r') as f:
                 height = f.readline().strip()
-                logging.info(f"video height = {height} pixels")
+                logging.info(f"image height = {height} pixels")
                 width = f.readline().strip()
-                logging.info(f"video width = {width} pixels")
+                logging.info(f"image width = {width} pixels")
         logging.info(f"Total {self.total_input_size} bytes read")
         logging.info(f"Total {self.total_output_size} bytes written")
         if self.encoding:
