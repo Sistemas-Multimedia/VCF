@@ -98,6 +98,7 @@ class CoDec:
                 for i in range(N_frames):
                     x = self.encode_read_fn(f"file:///tmp/original_{i:04d}.png")
                     y = self.encode_read_fn(f"file:///tmp/decoded_{i:04d}.png")
+                    print(y.shape)
                     img_RMSE = distortion.RMSE(x, y)
                     logging.debug(f"image RMSE = {img_RMSE}")
                     total_RMSE += img_RMSE

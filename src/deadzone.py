@@ -61,11 +61,10 @@ class CoDec(denoiser.CoDec):
         k = self.quantize(img).astype(np.uint8)
         compressed_k = super().compress(k)
         return compressed_k
-        
-    def encode(self):
-        '''Read an image, quantize the image, and save it.'''
+
+    def encode_fn(self, in_fn, out_fn):
         logging.debug("trace")
-        img = self.encode_read()
+        img = self.encode_read_fn(in_fn)
         logging.debug(f"Input image with range [{np.min(img)}, {np.max(img)}]")
         img_128 = img.astype(np.int16) - 128
         logging.debug(f"Input to quantizer with range [{np.min(img_128)}, {np.max(img_128)}]")
@@ -75,8 +74,8 @@ class CoDec(denoiser.CoDec):
         #print("---------------", np.max(k))
         #logging.debug(f"k.shape={k.shape} k.dtype={k.dtype} k.max={np.max(k)} k.min={np.min(k)}")
         logging.debug(f"Input to entropy compressor with range [{np.min(k)}, {np.max(k)}]")
-        compressed_k = self.compress(k)
-        output_size = self.encode_write(compressed_k)
+        compressed_k = self.compress_fn(k, in_fn)
+        output_size = self.encode_write_fn(compressed_k, out_fn)
         #self.save(img)
         #rate = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate
@@ -95,12 +94,11 @@ class CoDec(denoiser.CoDec):
         y = self.dequantize(k)
         return y
     '''
-    
-    def decode(self):
-        '''Read a quantized image, "dequantize", and save.'''
+
+    def decode_fn(self, in_fn, out_fn):
         logging.debug("trace")
-        compressed_k = self.decode_read()
-        k_128 = self.decompress(compressed_k)
+        compressed_k = self.decode_read_fn(in_fn)
+        k_128 = self.decompress_fn(compressed_k, in_fn)
         logging.debug(f"Output from entropy decompressor with range [{np.min(k_128)}, {np.max(k_128)}]")
         #y_128 = self.dequantize(k)
         #y = (np.rint(y_128).astype(np.int16) + 128).astype(np.uint8)
@@ -112,10 +110,11 @@ class CoDec(denoiser.CoDec):
         #print("---------------", np.max(y))
         logging.debug(f"y.shape={y.shape} y.dtype={y.dtype}")        
         y = denoiser.CoDec.filter(self, y)
-        self.decode_write(y)
+        output_size = self.decode_write_fn(y, out_fn)
         #rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
         #RMSE = distortion.RMSE(img, y)
         #return RMSE
+        return output_size
 
     def quantize(self, img):
         '''Quantize the image.'''
