@@ -41,14 +41,26 @@ class CoDec(EC.CoDec):
             self.filter = "none"
             self.filter_size = 0
 
-    def decode(self):
-        '''Read a quantized image, "dequantize", and save.'''
+    def decode_fn(self, in_fn, out_fn):
         logging.debug("trace")
+        compressed_k = self.decode_read_fn(in_fn)
+        k = self.decompress_fn(compressed_k, in_fn)
+        logging.debug(f"k.shape={k.shape} k.dtype={k.dtype}")        
+        y = self.filter(k)
+        output_size = self.decode_write_fn(y, out_fn)
+        return output_size
+            
+    def decode(self):
+        logging.debug("trace")
+        self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
+        '''
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
         logging.debug(f"k.shape={k.shape} k.dtype={k.dtype}")        
         y = self.filter(k)
-        self.decode_write(y)
+        output_size = self.decode_write(y)
+        return output_size
+        '''
             
     def filter(self, y):
         logging.debug("trace")
