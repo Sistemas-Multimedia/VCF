@@ -35,6 +35,7 @@ denoiser = importlib.import_module("blur")
 class CoDec(denoiser.CoDec):
     
     def __init__(self, args): # ??
+        logging.debug("trace")
         super().__init__(args)
 
     '''
@@ -46,6 +47,7 @@ class CoDec(denoiser.CoDec):
     '''
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read()
         k = self.quantize(img)
         compressed_k = self.compress(k)
@@ -54,6 +56,7 @@ class CoDec(denoiser.CoDec):
         #return rate
 
     def decode(self):
+        logging.debug("trace")
         #k = io.imread(self.args.input)
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
@@ -72,6 +75,7 @@ class CoDec(denoiser.CoDec):
 
     def quantize(self, img):
         '''Quantize the image.'''
+        logging.debug("trace")
         logging.info(f"QSS = {self.args.QSS}")
         with open(f"{self.args.output}_QSS.txt", 'w') as f:
             f.write(f"{self.args.QSS}")
@@ -97,6 +101,7 @@ class CoDec(denoiser.CoDec):
         return k
 
     def dequantize(self, k):
+        logging.debug("trace")
         with open(f"{self.args.input}_QSS.txt", 'r') as f:
             QSS = int(f.read())
         logging.info(f"Read QSS={QSS} from {self.args.output}_QSS.txt")

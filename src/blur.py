@@ -33,6 +33,7 @@ EC = importlib.import_module(args.entropy_image_codec)
 class CoDec(EC.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         logging.debug(f"args = {self.args}")
         self.args = args
@@ -42,6 +43,7 @@ class CoDec(EC.CoDec):
 
     def decode(self):
         '''Read a quantized image, "dequantize", and save.'''
+        logging.debug("trace")
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
         logging.debug(f"k.shape={k.shape} k.dtype={k.dtype}")        
@@ -49,6 +51,7 @@ class CoDec(EC.CoDec):
         self.decode_write(y)
             
     def filter(self, y):
+        logging.debug("trace")
         logging.info(f"Using filter {self.args.filter} with size {self.args.filter_size}")
         if self.args.filter == "gaussian":
             return cv2.GaussianBlur(y, (self.args.filter_size, self.args.filter_size), 0)

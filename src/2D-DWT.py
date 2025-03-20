@@ -39,6 +39,7 @@ CT = importlib.import_module(args.color_transform)
 class CoDec(CT.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         self.levels = args.levels
         logging.info(f"levels = {self.levels}")
@@ -56,6 +57,7 @@ class CoDec(CT.CoDec):
         #    logging.info(f"wavelet={wavelet_name} ({self.wavelet})")
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read().astype(np.int16)
         img_128 = img #- 128 # To use the deadzone
         CT_img = from_RGB(img_128)
@@ -76,6 +78,7 @@ class CoDec(CT.CoDec):
         #return rate
 
     def decode(self):
+        logging.debug("trace")
         decom_k = self.read_decom()
         decom_y = decom_k
         decom_y = self.dequantize_decom(decom_k)
@@ -96,6 +99,7 @@ class CoDec(CT.CoDec):
         #return rate
 
     def quantize_decom(self, decom):
+        logging.debug("trace")
         LL_k = super().quantize(decom[0])
         LL_k[..., 1] += 128
         LL_k[..., 2] += 128
@@ -110,6 +114,7 @@ class CoDec(CT.CoDec):
         return decom_k
 
     def dequantize_decom(self, decom_k):
+        logging.debug("trace")
         LL_k = decom_k[0]
         LL_k[..., 1] -= 128
         LL_k[..., 2] -= 128
@@ -124,6 +129,7 @@ class CoDec(CT.CoDec):
         return decom_y
 
     def UNUSED_quantize_decom(self, decom):
+        logging.debug("trace")
         decom_k = [self.quantize(decom[0])] # LL subband
         for spatial_resolution in decom[1:]:
             spatial_resolution_k = []
@@ -134,6 +140,7 @@ class CoDec(CT.CoDec):
         return decom_k
 
     def UNUSED_dequantize_decom(self, decom_k):
+        logging.debug("trace")
         decom_y = [self.dequantize(decom_k[0])]
         for spatial_resolution_k in decom_k[1:]:
             spatial_resolution_y = []
@@ -145,6 +152,7 @@ class CoDec(CT.CoDec):
 
     def UNUSED_quantize(self, subband):
         '''Quantize the image.'''
+        logging.debug("trace")
         #k = self.Q.encode(subband)
         #k = super().quantize(subband)
         k = subband
@@ -155,6 +163,7 @@ class CoDec(CT.CoDec):
 
     def UNUSED_dequantize(self, k):
         '''"Dequantize" an image.'''
+        logging.debug("trace")
         k = k.astype(np.int16)
         k -= 32768
         #self.Q = Quantizer(Q_step=QSS, min_val=min_index_val, max_val=max_index_val)
@@ -165,6 +174,7 @@ class CoDec(CT.CoDec):
         return y
 
     def write_decom(self, decom):
+        logging.debug("trace")
         LL = decom[0]
         fn_without_extension = self.args.output.split('.')[0]
         fn_subband = f"{fn_without_extension}_LL_{self.levels}"
@@ -196,6 +206,7 @@ class CoDec(CT.CoDec):
         #return slices
 
     def read_decom(self):
+        logging.debug("trace")
         fn_without_extension = self.args.input.split('.')[0]
         fn_subband = f"{fn_without_extension}_LL_{self.levels}"
         LL = self.decode_read_fn(fn_subband)

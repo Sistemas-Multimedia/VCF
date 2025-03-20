@@ -25,6 +25,7 @@ Q = importlib.import_module(args.quantizer)
 class CoDec(Q.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         if args.quantizer == "deadzone":
             self.offset = 128
@@ -46,6 +47,7 @@ class CoDec(Q.CoDec):
         return y
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read()
         img = img.astype(np.int16)
         # Specific for solving the issue https://github.com/vicente-gonzalez-ruiz/scalar_quantization/issues/1
@@ -77,6 +79,7 @@ class CoDec(Q.CoDec):
         #logging.info(f"BPP = {BPP}")
 
     def decode(self):
+        logging.debug("trace")
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
         k = k.astype(np.int16)

@@ -22,10 +22,12 @@ parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help
 class CoDec(EIC.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         self.file_extension = ".pnm"
 
     def compress(self, img):
+        logging.debug("trace")
         logging.debug(f"img.dtype={img.dtype}")
         assert (img.dtype == np.uint8) or (img.dtype == np.uint16), f"current type = {img.dtype}"
         compressed_img = io.BytesIO()
@@ -33,6 +35,7 @@ class CoDec(EIC.CoDec):
         return compressed_img
 
     def decompress(self, compressed_img):
+        logging.debug("trace")
         compressed_img = io.BytesIO(compressed_img)
         img = netpbmfile.imread(compressed_img)
         logging.debug(f"img.dtype={img.dtype}")

@@ -32,3 +32,4 @@ def main(parser, logging, CoDec):
     #logging.info(f"rate = {args.func(codec)}")
 
     args.func(codec)
+    codec.bye()

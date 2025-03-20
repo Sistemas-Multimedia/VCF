@@ -44,7 +44,7 @@ Supposing a Python interpreter and Git available:
 +---------------------+ 
 |      denoisers      | blur
 +---------------------+
-|   entropy codecs    | PNG*, TIFF, Huffman, PNM.
+|   entropy codecs    | PNG, TIFF*, Huffman, PNM.
 +---------------------+
 
 ...* = default codec
@@ -52,6 +52,8 @@ Supposing a Python interpreter and Git available:
 
 Typically, you will need to develop a new encoding scheme for image or
 video.
+
+For lossless representation of images we use PNG.
 
 ### Image Coding
 

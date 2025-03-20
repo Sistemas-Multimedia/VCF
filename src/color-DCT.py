@@ -22,6 +22,7 @@ Q = importlib.import_module(args.quantizer)
 class CoDec(Q.CoDec):
 
     def encode(self):
+        logging.debug("trace")
         #
         # Read the image.
         #
@@ -93,6 +94,7 @@ class CoDec(Q.CoDec):
         self.encode_write(compressed_k)
 
     def decode(self):
+        logging.debug("trace")
         #
         # Read and decompress the quantized indexes.
         #

@@ -20,15 +20,18 @@ parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help
 class CoDec (EIC.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         self.file_extension = ".npz"
 
     def compress(self, img):
+        logging.debug("trace")
         compressed_img = io.BytesIO()
         np.savez_compressed(file=compressed_img, a=img)
         return compressed_img
 
     def decompress(self, compressed_img):
+        logging.debug("trace")
         compressed_img = io.BytesIO(compressed_img)
         img = np.load(compressed_img)['a']
         #print(type(img), img.shape, img.dtype)

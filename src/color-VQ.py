@@ -28,6 +28,7 @@ denoiser = importlib.import_module("blur")
 class CoDec(denoiser.CoDec):
 
     def __init__(self, args, min_index_val=0, max_index_val=255):
+        logging.debug("trace")
         super().__init__(args)
         logging.debug(f"args = {self.args}")
         self.N_clusters = args.N_color_clusters
@@ -35,6 +36,7 @@ class CoDec(denoiser.CoDec):
         self.output = args.output
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read()                    # Read image from input file
         labels, centroids = self.quantize(img)      # Performs vector quantization on the image by clustering RGB triplets into N_clusters using KMeans
         compressed_labels = self.compress(labels)   # Compresses the quantized labels 
@@ -44,6 +46,7 @@ class CoDec(denoiser.CoDec):
         self.total_output_size += os.path.getsize(fn)    # Updates the byte size of the output file 
 
     def decode(self):
+        logging.debug("trace")
         compressed_labels = self.decode_read()      # Read compressed labels
         labels = self.decompress(compressed_labels) # Decompresses the labels
         fn = self.input + "_centroids.npz"
@@ -55,6 +58,7 @@ class CoDec(denoiser.CoDec):
 
     def quantize(self, img):
         """Quantize the image by clustering RGB triplets."""
+        logging.debug("trace")
         height, width, _ = img.shape
 
         # Treat RGB triplets as single units
@@ -70,6 +74,7 @@ class CoDec(denoiser.CoDec):
 
     def dequantize(self, labels, centroids):
         """Reconstruct the image using the cluster centroids."""
+        logging.debug("trace")
         height, width = labels.shape
         # Map each label back to its corresponding RGB centroid
         # labels.flatten() -> Flattens the 2D labels array to a 1D array

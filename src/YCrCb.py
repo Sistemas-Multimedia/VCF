@@ -22,18 +22,19 @@ Q = importlib.import_module(args.quantizer)
 class CoDec(Q.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         if args.quantizer == "deadzone":
             self.offset = 128
         else:
             self.offset = 0
 
-    def _compress(self, img):
+    def UNUSED_compress(self, img):
         YCrCb_img = from_RGB(img)
         compressed_k = super().compress(YCrCb_img)
         return compressed_k
 
-    def _decompress(self, compressed_k):
+    def UNUSED_decompress(self, compressed_k):
         YCrCb_y = super().decompress(compressed_k)
         y = to_RGB(YCrCb_y)
         y = np.clip(y, 0, 255)
@@ -41,6 +42,7 @@ class CoDec(Q.CoDec):
         return y
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read()#.astype(np.int16)
         #print("----------------->", img.dtype)
         #img -= 128
@@ -62,6 +64,7 @@ class CoDec(Q.CoDec):
         #logging.info(f"BPP = {BPP}")
 
     def decode(self):
+        logging.debug("trace")
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
         #k = k.astype(np.int16)

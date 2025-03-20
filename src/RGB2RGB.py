@@ -19,6 +19,7 @@ Q = importlib.import_module(args.quantizer)
 class CoDec(Q.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         if args.quantizer == "deadzone":
             self.offset = 128
@@ -26,6 +27,7 @@ class CoDec(Q.CoDec):
             self.offset = 0
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read()
         img = img.astype(np.int16)
         img -= self.offset
@@ -42,6 +44,7 @@ class CoDec(Q.CoDec):
         self.encode_write(compressed_k)
 
     def decode(self):
+        logging.debug("trace")
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
         k = k.astype(np.int16)

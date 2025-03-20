@@ -34,6 +34,7 @@ denoiser = importlib.import_module("blur")
 class CoDec(denoiser.CoDec):
 
     def __init__(self, args, min_index_val=0, max_index_val=255):
+        logging.debug("trace")
         super().__init__(args)
         logging.debug(f"args = {self.args}")
         self.BS = args.block_size_VQ
@@ -42,6 +43,7 @@ class CoDec(denoiser.CoDec):
         self.output = args.output
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read()
         #k, centroids = self.quantize(img)
         k = self.quantize(img)
@@ -52,6 +54,7 @@ class CoDec(denoiser.CoDec):
         #self.encode_write_fn(compressed_centroids, self.output + "_centroids")
     
     def decode(self):
+        logging.debug("trace")
         compressed_k = self.decode_read()
         #compressed_centroids = self.decode_read_fn(self.input + "_centroids")
         #compressed_k = self.decode_read_fn(self.input + "_labels")
@@ -76,6 +79,7 @@ class CoDec(denoiser.CoDec):
         return y
 
     def quantize(self, img):
+        logging.debug("trace")
         blocks = []
         BL = self.BS * self.BS * img.shape[2]
         for y in range(0, img.shape[0], self.BS):
@@ -126,6 +130,7 @@ class CoDec(denoiser.CoDec):
 
     #def dequantize(self, labels, centroids):
     def dequantize(self, labels):
+        logging.debug("trace")
         #compressed_centroids = self.decode_read_fn(self.input + "_centroids")
         #centroids = self.decompress(compressed_centroids)
         fn = self.args.input + "_centroids.npz"

@@ -40,7 +40,7 @@ denoiser = importlib.import_module("blur")
 class CoDec(denoiser.CoDec):
 
     def __init__(self, args, min_index_val=0, max_index_val=255):
-        logging.debug("parse")
+        logging.debug("trace")
         super().__init__(args)
         logging.debug(f"args = {self.args}")
         #if self.encoding:
@@ -64,7 +64,7 @@ class CoDec(denoiser.CoDec):
         
     def encode(self):
         '''Read an image, quantize the image, and save it.'''
-        logging.debug("parse")
+        logging.debug("trace")
         img = self.encode_read()
         logging.debug(f"Input image with range [{np.min(img)}, {np.max(img)}]")
         img_128 = img.astype(np.int16) - 128
@@ -83,7 +83,7 @@ class CoDec(denoiser.CoDec):
         return output_size
 
     def UNUSED_decompress(self, compressed_k):
-        logging.debug("parse")
+        logging.debug("trace")
         k = super().decompress(compressed_k)
         y = self.dequantize(k)#.astype(np.uint8)
         return y
@@ -98,7 +98,7 @@ class CoDec(denoiser.CoDec):
     
     def decode(self):
         '''Read a quantized image, "dequantize", and save.'''
-        logging.debug("parse")
+        logging.debug("trace")
         compressed_k = self.decode_read()
         k_128 = self.decompress(compressed_k)
         logging.debug(f"Output from entropy decompressor with range [{np.min(k_128)}, {np.max(k_128)}]")
@@ -119,7 +119,7 @@ class CoDec(denoiser.CoDec):
 
     def quantize(self, img):
         '''Quantize the image.'''
-        logging.debug("parse")
+        logging.debug("trace")
         k = self.Q.encode(img)
         #k += 128 # Only positive components can be written in a PNG file
         #k = k.astype(np.uint8)
@@ -128,7 +128,7 @@ class CoDec(denoiser.CoDec):
 
     def dequantize(self, k):
         '''"Dequantize" an image.'''
-        logging.debug("parse")
+        logging.debug("trace")
         #k = k.astype(np.int16)
         #k -= 128
         #self.Q = Quantizer(Q_step=QSS, min_val=min_index_val, max_val=max_index_val)

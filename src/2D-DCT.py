@@ -50,7 +50,7 @@ CT = importlib.import_module(args.color_transform)
 class CoDec(CT.CoDec):
 
     def __init__(self, args):
-        logging.debug("parse")
+        logging.debug("trace")
         super().__init__(args)
         self.block_size = args.block_size_DCT
         logging.debug(f"block_size = {self.block_size}")
@@ -189,7 +189,7 @@ class CoDec(CT.CoDec):
         Returns:
             numpy.ndarray: The padded 3D image with dimensions as multiples of the block size.
         """
-        logging.debug("parse")
+        logging.debug("trace")
         if img.ndim != 3:
             raise ValueError("Input image must be a 3D array (height, width, channels).")
 
@@ -232,7 +232,7 @@ class CoDec(CT.CoDec):
         Returns:
             numpy.ndarray: The original 3D image with padding removed.
         """
-        logging.debug("parse")
+        logging.debug("trace")
         if padded_img.ndim != 3:
             raise ValueError("Padded image must be a 3D array (height, width, channels).")
 
@@ -260,7 +260,7 @@ class CoDec(CT.CoDec):
         return unpadded_img
 
     def encode(self):
-        logging.debug("parse")
+        logging.debug("trace")
         #
         # Read the image.
         #
@@ -361,7 +361,7 @@ class CoDec(CT.CoDec):
         #return rate
 
     def decode(self):
-        logging.debug("parse")
+        logging.debug("trace")
         #
         # Read the code-stream.
         #
@@ -451,17 +451,17 @@ class CoDec(CT.CoDec):
         #return rate
 
     def quantize_decom(self, decom):
-        logging.debug("parse")
+        logging.debug("trace")
         decom_k = self.quantize(decom)
         return decom_k
 
     def dequantize_decom(self, decom_k):
-        logging.debug("parse")
+        logging.debug("trace")
         decom_y = self.dequantize(decom_k)
         return decom_y
     
     def perceptual_quantize_decom(self, decom):
-        logging.debug("parse")
+        logging.debug("trace")
         logging.debug(f"Using perceptual quantization with block_size = {self.block_size}")
         subbands_in_y = self.block_size
         subbands_in_x = self.block_size
@@ -486,7 +486,7 @@ class CoDec(CT.CoDec):
         return decom_k
 
     def perceptual_dequantize_decom(self, decom_k):
-        logging.debug("parse")
+        logging.debug("trace")
         logging.debug(f"Using perceptual dequantization with block_size = {self.block_size}")
         subbands_in_y = self.block_size
         subbands_in_x = self.block_size
@@ -511,7 +511,7 @@ class CoDec(CT.CoDec):
         return decom_y
 
     def optimize_block_size(self):
-        logging.debug("parse")
+        logging.debug("trace")
         min = 1000000
         img = self.encode_read().astype(np.float32)
         img -= self.offset #np.average(img)
