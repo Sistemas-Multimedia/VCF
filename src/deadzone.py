@@ -81,6 +81,9 @@ class CoDec(denoiser.CoDec):
         #return rate
         return output_size
 
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
     def UNUSED_decompress(self, compressed_k):
         logging.debug("trace")
         k = super().decompress(compressed_k)
@@ -116,6 +119,9 @@ class CoDec(denoiser.CoDec):
         #return RMSE
         return output_size
 
+    def decode(self):
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
+    
     def quantize(self, img):
         '''Quantize the image.'''
         logging.debug("trace")

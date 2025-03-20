@@ -56,6 +56,9 @@ class CoDec(denoiser.CoDec):
         #return rate
         return output_size
 
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
     def decode_fn(self, in_fn, out_fn):
         logging.debug("trace")
         #k = io.imread(self.args.input)
@@ -66,6 +69,9 @@ class CoDec(denoiser.CoDec):
         #rate = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
         #return rate
         return output_size
+
+    def decode(self):
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
     '''
     def _decompress(self, compressed_k):
