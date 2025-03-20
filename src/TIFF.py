@@ -30,7 +30,7 @@ class CoDec(EIC.CoDec):
         self.file_extension = ".TIFF"
 
     # pip install imageio-freeimage (not necessary now)
-    def compress(self, img):
+    def compress_fn(self, img, fn):
         logging.debug("trace")
         #skimage_io.use_plugin('freeimage')
         #compressed_img = img
@@ -56,7 +56,7 @@ class CoDec(EIC.CoDec):
         #    writer.write(f, z2list)
         return compressed_img
 
-    def decompress(self, compressed_img):
+    def decompress_fn(self, compressed_img, fn):
         logging.debug("trace")
         compressed_img = pyio.BytesIO(compressed_img)
         #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)

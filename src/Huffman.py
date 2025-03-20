@@ -93,22 +93,6 @@ class CoDec(EIC.CoDec):
         super().__init__(args)
         self.file_extension = ".huf"
 
-    def UNUSED_bye(self):
-        logging.debug("trace")
-        if self.encoding:
-            # Write metadata
-            with open(f"{self.args.output}_meta.txt", 'w') as f:
-                f.write(f"{self.img_shape[0]}\n")
-                f.write(f"{self.img_shape[1]}\n")
-        else:
-            # Read metadata
-            with open(f"{self.args.input}.txt", 'r') as f:
-                height = f.readline().strip()
-                logging.info(f"video height = {height} pixels")
-                width = f.readline().strip()
-                logging.info(f"video width = {width} pixels")
-        super().bye()
-
     def compress_fn(self, img, fn):
         logging.debug("trace")
         tree_fn = f"{fn}_huffman_tree.pkl.gz"

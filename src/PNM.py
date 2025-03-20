@@ -26,7 +26,7 @@ class CoDec(EIC.CoDec):
         super().__init__(args)
         self.file_extension = ".pnm"
 
-    def compress(self, img):
+    def compress_fn(self, img, fn):
         logging.debug("trace")
         logging.debug(f"img.dtype={img.dtype}")
         assert (img.dtype == np.uint8) or (img.dtype == np.uint16), f"current type = {img.dtype}"
@@ -34,7 +34,7 @@ class CoDec(EIC.CoDec):
         netpbmfile.imwrite(compressed_img, img)  # It is not allowed to use netpbmfile.imwrite(file=compressed_img, data=img)
         return compressed_img
 
-    def decompress(self, compressed_img):
+    def decompress_fn(self, compressed_img, fn):
         logging.debug("trace")
         compressed_img = io.BytesIO(compressed_img)
         img = netpbmfile.imread(compressed_img)
