@@ -138,53 +138,6 @@ class CoDec(EVC.CoDec):
 
             #img.save(self.args.output)
         # Open the output file container for the resulting video
-        '''
-        self.args.output = EVC.DECODE_OUTPUT
-        container = av.open(self.args.output, 'w', format='avi')
-        video_stream = container.add_stream('libx264', rate=self.framerate)
-
-        # Set lossless encoding options
-        #video_stream.options = {'crf': '0', 'preset': 'veryslow'}
-        video_stream.options = {'crf': '0', 'preset': 'ultrafast'}
-
-        # Optionally set pixel format to ensure no color space conversion happens
-        video_stream.pix_fmt = 'yuv444p'  # Working but lossy because the YCrCb is floating point-based
-        #video_stream.pix_fmt = 'rgb24'  # Does not work :-/
-        imgs = []
-        for i in range(img_counter):
-            #print("FILE: " + file + " " + str(len(file)))
-            imgs.append(f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % i)
-        print(imgs)
-        #img_0 = Image.open("/tmp/encoded_0000.png").convert('RGB')
-        img_0 = Image.open(imgs[0]).convert('RGB')
-        width, height = img_0.size
-        video_stream.width = width
-        video_stream.height = height
-        self.width, self.height = img_0.size
-        self.N_channels = len(img_0.mode)
-
-        img_counter = 0
-        print(imgs)
-        for i in imgs:
-            img = Image.open(i).convert('RGB')
-            logging.info(f"Decoding frame {img_counter} into {self.args.output}")
-
-            # Convert the image to a VideoFrame
-            frame = av.VideoFrame.from_image(img)
-
-            # Encode the frame and write it to the container
-            packet = video_stream.encode(frame)
-            container.mux(packet)
-            img_counter += 1
-
-        # Ensure all frames are written
-        container.mux(video_stream.encode())
-        container.close()
-        self.N_frames = img_counter
-        #vid = compressed_vid
-        #vid.prefix = DECODE_OUTPUT
-        #return vid
-        '''
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

@@ -2,12 +2,12 @@
 
 import os
 import io
-#from skimage import io as skimage_io # pip install scikit-image
-#from PIL import Image # pip install 
+from skimage import io as skimage_io # pip install scikit-image
+from PIL import Image # pip install 
 import numpy as np
 import logging
 #import subprocess
-#import cv2
+import cv2
 import main
 import urllib
 from urllib.parse import urlparse
@@ -60,7 +60,6 @@ class CoDec:
         self.total_input_size = 0
         self.total_output_size = 0
         self.framerate = 30
-        self.N_frames = 0
 
     def bye(self):
         logging.debug("trace")
@@ -75,34 +74,87 @@ class CoDec:
                 logging.info(f"Output bit-rate = {BPP} bits/pixel")
                 # Deberíamos usar un fichero distinto del que usa entropy_image_coding
                 with open(f"{self.args.output}.txt", 'w') as f:
-                    #f.write(f"{self.args.input}\n")
+                    f.write(f"{self.args.input}\n")
                     f.write(f"{self.N_frames}\n")
                     f.write(f"{self.height}\n")
                     f.write(f"{self.width}\n")
                     f.write(f"{BPP}\n")
             else:
                 with open(f"{self.args.input}.txt", 'r') as f:
+                    original_file = f.readline().strip()
+                    logging.info(f"original_file = {original_file}")
+                    N_frames = int(f.readline().strip())
+                    logging.info(f"N_frames = {N_frames}")
                     height = f.readline().strip()
                     logging.info(f"video height = {height} pixels")
                     width = f.readline().strip()
                     logging.info(f"video width = {width} pixels")
-                    N_frames = float(f.readline().strip())
-                    logging.info(f"N_frames = {N_frames}")
                     BPP = float(f.readline().strip())
                     logging.info(f"BPP = {BPP}")
-                logging.info(f"Number of encoded frames = {self.N_frames}")
+                logging.info(f"Number of encoded frames = {N_frames}")
                 logging.info(f"Video height (rows) = {height}")
                 logging.info(f"Video width (columns) = {width}")
                 total_RMSE = 0
-                for i in range(self.N_frames):
+                for i in range(N_frames):
                     x = self.encode_read_fn(f"file:///tmp/original_{i:04d}.png")
                     y = self.encode_read_fn(f"file:///tmp/decoded_{i:04d}.png")
-                    RMSE = distortion.RMSE(img, y)
-                    logging.debug(f"image RMSE = {RMSE}")
+                    img_RMSE = distortion.RMSE(x, y)
+                    logging.debug(f"image RMSE = {img_RMSE}")
                     total_RMSE += img_RMSE
                 RMSE = total_RMSE / N_frames
                 logging.info(f"Mean RMSE = {RMSE}")
 
+                J = BPP + RMSE
+                logging.info(f"J = R + D = {J}")
+
+                logging.info(f"Output: {self.args.output}")
+
+                self.args.output = DECODE_OUTPUT
+                container = av.open(self.args.output, 'w', format='avi')
+                video_stream = container.add_stream('libx264', rate=self.framerate)
+
+                # Set lossless encoding options
+                #video_stream.options = {'crf': '0', 'preset': 'veryslow'}
+                video_stream.options = {'crf': '0', 'preset': 'ultrafast'}
+
+                # Optionally set pixel format to ensure no color space conversion happens
+                video_stream.pix_fmt = 'yuv444p'  # Working but lossy because the YCrCb is floating point-based
+                #video_stream.pix_fmt = 'rgb24'  # Does not work :-/
+                imgs = []
+                for i in range(N_frames):
+                    #print("FILE: " + file + " " + str(len(file)))
+                    imgs.append(f"{DECODE_OUTPUT_PREFIX}_%04d.png" % i)
+                print(imgs)
+                #img_0 = Image.open("/tmp/encoded_0000.png").convert('RGB')
+                #img_0 = Image.open(imgs[0]).convert('RGB')
+                #width, height = img_0.size
+                video_stream.width = int(width)
+                video_stream.height = int(height)
+                #self.width, self.height = img_0.size
+                #self.N_channels = len(img_0.mode)
+
+                img_counter = 0
+                print(imgs)
+                for i in imgs:
+                    img = Image.open(i).convert('RGB')
+                    logging.info(f"Decoding frame {img_counter} into {self.args.output}")
+
+                    # Convert the image to a VideoFrame
+                    frame = av.VideoFrame.from_image(img)
+
+                    # Encode the frame and write it to the container
+                    packet = video_stream.encode(frame)
+                    container.mux(packet)
+                    img_counter += 1
+
+                # Ensure all frames are written
+                container.mux(video_stream.encode())
+                container.close()
+                self.N_frames = img_counter
+                #vid = compressed_vid
+                #vid.prefix = DECODE_OUTPUT
+                #return vid
+        
                 '''
                 container_x = av.open(original_file)
                 container_y = av.open(self.args.output)
@@ -112,20 +164,34 @@ class CoDec:
                 for frame_x, frame_y in zip(container_x.decode(video=0), container_y.decode(video=0)):
                     img_x = np.array(frame_x.to_image())
                     img_y = np.array(frame_y.to_image())
-                    img_RMSE = distortion.RMSE(img_x, img_y)
-                    print(img_RMSE)
-                    total_RMSE += img_RMSE
-                    print(f"{img_counter}/{self.N_frames}", end='\r', flush=True)
+                    #img_RMSE = distortion.RMSE(img_x, img_y)
+                    #print(img_RMSE)
+                    #total_RMSE += img_RMSE
+                    #print(f"{img_counter}/{self.N_frames}", end='\r', flush=True)
                     img_counter += 1
                 RMSE = total_RMSE / self.N_frames
                 logging.info(f"RMSE = {RMSE}")
-
-                J = BPP + RMSE
-                logging.info(f"J = R + D = {J}")
-
-                logging.info(f"Output: {self.args.output}")
                 '''
 
+    def encode_read_fn(self, fn):
+        logging.debug("trace")
+        #img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
+        #img = Image.open(fn) # https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#using-the-image-class
+        try:
+            #input_size = os.path.getsize(fn)
+            #self.total_input_size += input_size 
+            img = cv2.imread(fn, cv2.IMREAD_UNCHANGED)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        except:
+            req = urllib.request.Request(fn, method='HEAD')
+            f = urllib.request.urlopen(req)
+            #input_size = int(f.headers['Content-Length'])
+            #self.total_input_size += input_size
+            img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
+        logging.debug(f"Read {fn} with shape {img.shape} and type={img.dtype}")
+        self.img_shape = img.shape
+        return img
+                
     def UNUSED_encode(self, in_fn, out_fn):
         logging.debug("trace")
         vid = self.encode_read(in_fn)
@@ -158,7 +224,7 @@ class CoDec:
         except ValueError:
             return False
 
-    def encode_read(self, fn):
+    def read_video(self, fn):
         '''"Read" the video <fn>, which can be a URL. The video is
         saved in "/tmp/<fn>".'''
     
