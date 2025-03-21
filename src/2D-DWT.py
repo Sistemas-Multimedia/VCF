@@ -56,16 +56,16 @@ class CoDec(CT.CoDec):
         #        self.wavelet = pywt.Wavelet(wavelet_name)
         #    logging.info(f"wavelet={wavelet_name} ({self.wavelet})")
 
-    def encode(self):
+    def encode_fn(self, in_fn, out_fn):
         logging.debug("trace")
-        img = self.encode_read().astype(np.int16)
+        img = self.encode_read_fn(in_fn).astype(np.int16)
         img_128 = img #- 128 # To use the deadzone
         CT_img = from_RGB(img_128)
         
         decom_img = space_analyze(CT_img, self.wavelet, self.levels)
         logging.debug(f"len(decom_img)={len(decom_img)}")
         decom_k = self.quantize_decom(decom_img)
-        self.write_decom(decom_k)
+        output_size = self.write_decom_fn(decom_k, out_fn)
 
         #k = self.quantize(CT_img)
         #logging.debug(f"k.shape={k.shape}, k.type={k.dtype}")
@@ -76,10 +76,11 @@ class CoDec(CT.CoDec):
 
         self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate
+        return output_size
 
-    def decode(self):
+    def decode_fn(self, in_fn, out_fn):
         logging.debug("trace")
-        decom_k = self.read_decom()
+        decom_k = self.read_decom_fn(in_fn)
         decom_y = decom_k
         decom_y = self.dequantize_decom(decom_k)
         CT_y = space_synthesize(decom_y, self.wavelet, self.levels)
@@ -94,9 +95,16 @@ class CoDec(CT.CoDec):
         y_128 = to_RGB(CT_y)
         y = y_128# + 128
         y = np.clip(y, 0, 255).astype(np.uint8)
-        self.decode_write(y)
+        output_size = self.decode_write_fn(y, out_fn)
         self.BPP = (self.total_input_size*8)/(y.shape[0]*y.shape[1])
         #return rate
+        return output_size
+
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
+    def decode(self):
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
     def quantize_decom(self, decom):
         logging.debug("trace")
@@ -173,18 +181,19 @@ class CoDec(CT.CoDec):
         logging.debug(f"y.shape={y.shape} y.dtype={y.dtype}")
         return y
 
-    def write_decom(self, decom):
+    def write_decom_fn(self, decom, fn):
         logging.debug("trace")
         LL = decom[0]
-        fn_without_extension = self.args.output.split('.')[0]
-        fn_subband = f"{fn_without_extension}_LL_{self.levels}"
+        fn_without_extension = self.args.output.split('.')[0] # Creo que esto se puede quitar ########################################################################################
+        #fn_subband = f"{fn_without_extension}_LL_{self.levels}"
+        fn_subband = f"{fn}_LL_{self.levels}"
         #LL = io.BytesIO(LL)
-        print(np.max(LL), np.min(LL))
+        #print(np.max(LL), np.min(LL))
         #LL = self.compress(LL.astype(np.uint8))
         LL += 128
         LL = self.compress(LL.astype(np.uint16))
         #LL = self.compress(LL.astype(np.int16))
-        self.encode_write_fn(LL, fn_subband)
+        output_size = self.encode_write_fn(LL, fn_subband)
         resolution_index = self.levels
         #aux_decom = [decom[0][..., 0]] # Used for computing slices
         for spatial_resolution in decom[1:]:
@@ -192,25 +201,28 @@ class CoDec(CT.CoDec):
             subband_index = 0
             #aux_resol = [] # Used for computing slices
             for subband_name in subband_names:
-                fn_subband = f"{fn_without_extension}_{subband_name}_{resolution_index}"
+                #fn_subband = f"{fn_without_extension}_{subband_name}_{resolution_index}"
+                fn_subband = f"{fn}_{subband_name}_{resolution_index}"
                 #SP = io.BytesIO(spatial_resolution[subband_index])
-                SP = self.compress(spatial_resolution[subband_index].astype(np.uint8))
+                SP = self.compress_fn(spatial_resolution[subband_index].astype(np.uint8), fn)
                 #SP = self.compress(spatial_resolution[subband_index].astype(np.uint16))
                 #SP = self.compress(spatial_resolution[subband_index].astype(np.int16))
-                self.encode_write_fn(SP, fn_subband)
+                output_size += self.encode_write_fn(SP, fn_subband)
                 #aux_resol.append(spatial_resolution[subband_index][..., 0])
                 subband_index += 1
             resolution_index -= 1
             #aux_decom.append(tuple(aux_resol))
         #self.slices = pywt.coeffs_to_array(aux_decom)[1]
         #return slices
+        return output_size
 
-    def read_decom(self):
+    def read_decom_fn(self, fn):
         logging.debug("trace")
-        fn_without_extension = self.args.input.split('.')[0]
-        fn_subband = f"{fn_without_extension}_LL_{self.levels}"
+        fn_without_extension = self.args.input.split('.')[0] #############################3
+        #fn_subband = f"{fn_without_extension}_LL_{self.levels}"
+        fn_subband = f"{fn}_LL_{self.levels}"
         LL = self.decode_read_fn(fn_subband)
-        LL = self.decompress(LL).astype(np.int16)
+        LL = self.decompress_fn(LL, fn).astype(np.int16)
         LL -= 128
         #LL = self.decompress(LL).astype(np.uint16)
         decom = [LL]
@@ -219,9 +231,10 @@ class CoDec(CT.CoDec):
             subband_names = ["LH", "HL", "HH"]
             spatial_resolution = []
             for subband_name in subband_names:
-                fn_subband = f"{fn_without_extension}_{subband_name}_{resolution_index}"
+                #fn_subband = f"{fn_without_extension}_{subband_name}_{resolution_index}"
+                fn_subband = f"{fn}_{subband_name}_{resolution_index}"
                 subband = self.decode_read_fn(fn_subband)
-                subband = self.decompress(subband).astype(np.int16)
+                subband = self.decompress_fn(subband, fn).astype(np.int16)
                 #subband = self.decompress(subband).astype(np.uint16)
                 spatial_resolution.append(subband)
             decom.append(tuple(spatial_resolution))
