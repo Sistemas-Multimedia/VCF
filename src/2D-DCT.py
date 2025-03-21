@@ -259,12 +259,12 @@ class CoDec(CT.CoDec):
 
         return unpadded_img
 
-    def encode(self):
+    def encode_fn(self, in_fn, out_fn):
         logging.debug("trace")
         #
         # Read the image.
         #
-        img = self.encode_read().astype(np.float32)
+        img = self.encode_read_fn(in_fn).astype(np.float32)
 
         #
         # Images must have a size multiple of 8.
@@ -273,7 +273,7 @@ class CoDec(CT.CoDec):
         padded_img = self.pad_and_center_to_multiple_of_block_size(img)
         if padded_img.shape != img.shape:
             logging.debug(f"Padding image from dimensions {img.shape} to new dimensions: {padded_img.shape}")
-        with open(self.args.output + ".shape", "wb") as file:
+        with open(f"{out_fn}_shape.bin", "wb") as file:
             file.write(struct.pack("iii", *self.original_shape))
         img = padded_img
 
@@ -351,28 +351,29 @@ class CoDec(CT.CoDec):
         decom_k = decom_k.astype(np.uint8)
         #print("----------_", decom_k, decom_k.shape)
         #decom_k = np.clip(decom_k, 0, 255).astype(np.uint8)
-        decom_k = self.compress(decom_k)
+        decom_k = self.compress_fn(decom_k, in_fn)
 
         #
         # Write the code-stream.
         #
-        self.encode_write(decom_k)
+        output_size = self.encode_write_fn(decom_k, out_fn)
         #self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate
+        return output_size
 
-    def decode(self):
+    def decode_fn(self, in_fn, out_fn):
         logging.debug("trace")
         #
         # Read the code-stream.
         #
-        decom_k = self.decode_read()
-        with open(self.args.input + ".shape", "rb") as file:
+        decom_k = self.decode_read_fn(in_fn)
+        with open(f"{in_fn}_shape.bin", "rb") as file:
             self.original_shape = struct.unpack("iii", file.read(12))
 
         #
         # Decompress the indexes.
         #
-        decom_k = self.decompress(decom_k)
+        decom_k = self.decompress_fn(decom_k, in_fn)
         logging.debug(f"original_shape={self.original_shape}, current_shape={decom_k.shape}")
 
         #
@@ -441,14 +442,20 @@ class CoDec(CT.CoDec):
         if np.min(y) < 0:
             logging.warning(f"y[{np.unravel_index(np.argmin(y),y.shape)}]={np.min(y)}")
 
-
         #
         # Write the image.
         #
         y = np.clip(y, 0, 255).astype(np.uint8)
-        self.decode_write(y)
+        output_size = self.decode_write_fn(y, out_fn)
         #self.BPP = (self.input_bytes*8)/(y.shape[0]*y.shape[1])
         #return rate
+        return output_size
+
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
+    def decode(self):
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
     def quantize_decom(self, decom):
         logging.debug("trace")
