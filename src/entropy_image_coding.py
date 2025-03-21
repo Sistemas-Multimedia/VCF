@@ -102,11 +102,6 @@ class CoDec:
             img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         logging.debug(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
         self.img_shape = img.shape
-        return img
-
-    def encode_read(self):
-        logging.debug("trace")
-        img = self.encode_read_fn(self.args.input)
         if __debug__:
             fn = "/tmp/original.png"
             output_size = self.decode_write_fn(img, "/tmp/original.png") # Save a copy for comparing later
@@ -117,6 +112,11 @@ class CoDec:
             except Exception as e:
                 logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
             '''
+        return img
+
+    def encode_read(self):
+        logging.debug("trace")
+        img = self.encode_read_fn(self.args.input)
         return img
     
     def encode_write_fn(self, codestream, fn_without_extention):

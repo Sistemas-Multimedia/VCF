@@ -46,9 +46,9 @@ class CoDec(Q.CoDec):
         y = y.astype(np.uint8)
         return y
 
-    def encode(self):
+    def encode_fn(self, in_fn, out_fn):
         logging.debug("trace")
-        img = self.encode_read()
+        img = self.encode_read_fn(in_fn)
         img = img.astype(np.int16)
         # Specific for solving the issue https://github.com/vicente-gonzalez-ruiz/scalar_quantization/issues/1
         #img_128 = img.astype(np.int16) - 128
@@ -61,7 +61,7 @@ class CoDec(Q.CoDec):
         #logging.debug(f"max(YCoCg_img)={np.max(YCoCg_img)}, min(YCoCg_img)={np.min(YCoCg_img)}")
         #assert (YCoCg_img < 256).all()
         #assert (YCoCg_img >= 0).all()
-        k = self.quantize(YCoCg_img)
+        k = self.quantize_fn(YCoCg_img, out_fn)
         logging.debug(f"k.shape={k.shape}, k.type={k.dtype}")
         #k = YCoCg_img
         #k[..., 1] += 128
@@ -73,21 +73,22 @@ class CoDec(Q.CoDec):
             logging.warning(f"k[{np.unravel_index(np.argmin(k),k.shape)}]={np.min(k)}")
         #k = np.clip(k, 0, 255).astype(np.uint8)
         k = k.astype(np.uint16)
-        compressed_k = self.compress(k)
-        self.encode_write(compressed_k)
+        compressed_k = self.compress_fn(k, in_fn)
+        output_size = self.encode_write_fn(compressed_k, out_fn)
         #self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #logging.info(f"BPP = {BPP}")
+        return output_size
 
-    def decode(self):
+    def decode_fn(self, in_fn, out_fn):
         logging.debug("trace")
-        compressed_k = self.decode_read()
-        k = self.decompress(compressed_k)
+        compressed_k = self.decode_read_fn(in_fn)
+        k = self.decompress_fn(compressed_k, in_fn)
         k = k.astype(np.int16)
         logging.debug(f"k.shape={k.shape}, k.type={k.dtype}")
         k -= self.offset
         #k[..., 1] -= 128
         #k[..., 2] -= 128
-        YCoCg_y = self.dequantize(k)
+        YCoCg_y = self.dequantize_fn(k, in_fn)
         #YCoCg_y = k
 #        logging.debug(f"max(YCoCg_y)={np.max(YCoCg_y)}, min(YCoCg_y)={np.min(YCoCg_y)}")
 #        assert (YCoCg_y < 256).all()
@@ -109,10 +110,17 @@ class CoDec(Q.CoDec):
         y = np.clip(y, 0, 255).astype(np.uint8)
         #print(dir(Q.denoiser.CoDec))
         y = Q.denoiser.CoDec.filter(self, y)
-        self.decode_write(y)
+        output_size = self.decode_write_fn(y, out_fn)
         #self.BPP = (self.input_bytes*8)/(k.shape[0]*k.shape[1])
         #RMSE = distortion.RMSE(self.encode_read(), y)
         #logging.info(f"RMSE = {RMSE}")
+        return output_size
+
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
+    def decode(self):
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

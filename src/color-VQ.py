@@ -35,29 +35,38 @@ class CoDec(denoiser.CoDec):
         self.input = args.input
         self.output = args.output
 
-    def encode(self):
+    def encode_fn(self, in_fn, out_fn):
         logging.debug("trace")
-        img = self.encode_read()                    # Read image from input file
-        labels, centroids = self.quantize(img)      # Performs vector quantization on the image by clustering RGB triplets into N_clusters using KMeans
-        compressed_labels = self.compress(labels)   # Compresses the quantized labels 
-        self.encode_write(compressed_labels)        # Writes the compressed labels to the output file
-        fn = self.output + "_centroids.npz"         
-        np.savez_compressed(file=fn, a=centroids)   # Saves the centroids (representative RGB colors) as a compressed .npz file, which will be needed during decoding
-        self.total_output_size += os.path.getsize(fn)    # Updates the byte size of the output file 
+        img = self.encode_read_fn(in_fn)
+        labels, centroids = self.quantize(img)               
+        compressed_labels = self.compress_fn(labels, in_fn) 
+        output_size = self.encode_write_fn(compressed_labels, out_fn)
+        codebook_fn = f"{out_fn}_centroids.npz"         
+        np.savez_compressed(file=codebook_fn, a=centroids)
+        self.total_output_size += os.path.getsize(codebook_fn)
+        return output_size
+
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
+    def decode_fn(self, in_fn, out_fn):
+        logging.debug("trace")
+        compressed_labels = self.decode_read_fn(in_fn)
+        labels = self.decompress_fn(compressed_labels, in_fn)
+        codebook_fn = f"{in_fn}_centroids.npz"         
+        self.total_input_size += os.path.getsize(codebook_fn)     
+        centroids = np.load(file=codebook_fn)['a']
+        img = self.dequantize(labels, centroids) 
+        img = denoiser.CoDec.filter(self, img)
+        output_size = self.decode_write_fn(img, out_fn)
+        return output_size
 
     def decode(self):
-        logging.debug("trace")
-        compressed_labels = self.decode_read()      # Read compressed labels
-        labels = self.decompress(compressed_labels) # Decompresses the labels
-        fn = self.input + "_centroids.npz"
-        self.total_input_size += os.path.getsize(fn)     
-        centroids = np.load(file=fn)['a']           # Load the centroids (representative RGB values) from the previously saved .npz file
-        img = self.dequantize(labels, centroids)    # Reconstruct the image by mapping the labels back to their corresponding centroids (RGB colors)
-        img = denoiser.CoDec.filter(self, img)
-        self.decode_write(img)                      # Writes the reconstructed image to the output file
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
+    # Vector quantization on the image by clustering RGB triplets
+    # into N_clusters using KMeans
     def quantize(self, img):
-        """Quantize the image by clustering RGB triplets."""
         logging.debug("trace")
         height, width, _ = img.shape
 

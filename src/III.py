@@ -95,7 +95,7 @@ class CoDec(EVC.CoDec):
                 #logging.info(f"Generated {}")
                 #O_bytes = self.transform_codec.encode()
                 O_bytes = self.transform_codec.encode_fn(img_fn, img_fnNOPNG)
-                logging.info(f"O_bytes={O_bytes}")
+                #logging.info(f"O_bytes={O_bytes}")
                 #O_bytes = os.path.getsize(img_fnNOPNG + ".TIFF") # Esto no debería estar aqui!
                 self.total_output_size += O_bytes
                 img_counter += 1

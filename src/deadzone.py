@@ -122,8 +122,7 @@ class CoDec(denoiser.CoDec):
     def decode(self):
         return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
     
-    def quantize(self, img):
-        '''Quantize the image.'''
+    def quantize_fn(self, img, fn):
         logging.debug("trace")
         k = self.Q.encode(img)
         #k += 128 # Only positive components can be written in a PNG file
@@ -131,7 +130,7 @@ class CoDec(denoiser.CoDec):
         logging.debug(f"k.shape={k.shape} k.dtype={k.dtype} max(x)={np.max(k)} min(k)={np.min(k)}")
         return k
 
-    def dequantize(self, k):
+    def dequantize_fn(self, k, fn):
         '''"Dequantize" an image.'''
         logging.debug("trace")
         #k = k.astype(np.int16)
@@ -141,6 +140,16 @@ class CoDec(denoiser.CoDec):
         y = self.Q.decode(k)
         logging.debug(f"y.shape={y.shape} y.dtype={y.dtype}")
         return y
+
+    def quantize(self, img):
+        logging.debug("trace")
+        return self.quantize_fn(img, fn=self.args.output)
+
+    #def dequantize(self, labels, centroids):
+    def dequantize(self, labels):
+        logging.debug("trace")
+        return self.dequantize_fn(labels, fn=self.args.input)
+
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)
