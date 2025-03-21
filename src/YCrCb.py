@@ -89,5 +89,11 @@ class CoDec(Q.CoDec):
         #logging.info(f"RMSE = {RMSE}")
         return output_size
 
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
+    def decode(self):
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)
