@@ -21,12 +21,12 @@ Q = importlib.import_module(args.quantizer)
 
 class CoDec(Q.CoDec):
 
-    def encode(self):
+    def encode_fn(self, in_fn, out_fn):
         logging.debug("trace")
         #
         # Read the image.
         #
-        img = self.encode_read()#.astype(np.int16)
+        img = self.encode_read_fn(in_fn)#.astype(np.int16)
 
         #
         # This provides numerical stability during to the transform
@@ -66,7 +66,7 @@ class CoDec(Q.CoDec):
         # Quantize the coefficients. 
         #
         logging.debug(f"Input to quantizer with range [{np.min(coefs)}, {np.max(coefs)}]")
-        k = self.quantize(coefs)
+        k = self.quantize_fn(coefs, out_fn)
         
         #
         # The entropy codecs that we are using input input values in
@@ -90,16 +90,17 @@ class CoDec(Q.CoDec):
         # input.
         #
         logging.debug(f"Input to entropy compressor with range [{np.min(k)}, {np.max(k)}]")
-        compressed_k = self.compress(k)
-        self.encode_write(compressed_k)
+        compressed_k = self.compress_fn(k, in_fn)
+        output_size = self.encode_write_fn(compressed_k, out_fn)
+        return output_size
 
-    def decode(self):
+    def decode_fn(self, in_fn, out_fn):
         logging.debug("trace")
         #
         # Read and decompress the quantized indexes.
         #
-        compressed_k = self.decode_read()
-        k = self.decompress(compressed_k)
+        compressed_k = self.decode_read_fn(in_fn)
+        k = self.decompress_fn(compressed_k, in_fn)
 
         #
         # If the quantized indexes were shifted, let's restore the
@@ -119,7 +120,7 @@ class CoDec(Q.CoDec):
         # Dequantize the indexes.
         #
         logging.debug(f"Input to dequantizer with range [{np.min(k)}, {np.max(k)}]")
-        coefs = self.dequantize(k)
+        coefs = self.dequantize_fn(k, in_fn)
 
         #
         # Inverse transform.
@@ -140,7 +141,14 @@ class CoDec(Q.CoDec):
         #
         logging.debug(f"Input to entropy decoder with range [{np.min(y)}, {np.max(y)}]")
         y = np.clip(y, 0, 255).astype(np.uint8)
-        self.decode_write(y)
+        output_size = self.decode_write_fn(y, out_fn)
+        return output_size
+
+    def encode(self):
+        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
+
+    def decode(self):
+        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)
