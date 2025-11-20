@@ -47,7 +47,7 @@ video.
 	+---------------------+ 
 	|       filters       | (blur)
 	+---------------------+
-	|   entropy codecs    | PNG, TIFF*, Huffman, PNM.
+	|   entropy codecs    | PNG, TIFF*, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
 	+---------------------+
 
 	...* = default codec
