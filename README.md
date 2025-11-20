@@ -3,9 +3,9 @@ A programming environment to develop and test image and video compression algori
 
 ## Install and configuration
 
-Supposing a Python interpreter and Git available:
+Supposing that a Python interpreter and Git are available:
 
-      python -m venv ~/envs/VCF  # Only if you want a new environment
+      python -m venv ~/envs/VCF
       git clone git@github.com:Sistemas-Multimedia/VCF.git
       cd VCF
       source ~/envs/VCF/bin/activate
@@ -33,22 +33,22 @@ Supposing a Python interpreter and Git available:
 
 ### Codecs organization
 
-+---------------------+
-| temporal transforms | III, (IPP), (IBP), (MCTF).
-+---------------------+
-| spatial transforms  | 2D-DCT, 2D-DWT.
-+---------------------+
-|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT.
-+---------------------+
-|     quantizers      | deadzone*, LloydMax, VQ, color-VQ.
-+---------------------+ 
-|      denoisers      | blur
-+---------------------+
-|   entropy codecs    | PNG, TIFF*, Huffman, PNM.
-+---------------------+
+	+---------------------+
+	| temporal transforms | III, (IPP), (IBP), (MCTF).
+	+---------------------+
+	| spatial transforms  | 2D-DCT, 2D-DWT.
+	+---------------------+
+	|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT.
+	+---------------------+
+	|     quantizers      | deadzone*, LloydMax, VQ, color-VQ.
+	+---------------------+ 
+	|      denoisers      | blur
+	+---------------------+
+	|   entropy codecs    | PNG, TIFF*, Huffman, PNM.
+	+---------------------+
 
-...* = default codec
-(...) = to be implemented
+	...* = default codec
+	(...) = to be implemented
 
 Typically, you will need to develop a new encoding scheme for image or
 video.
