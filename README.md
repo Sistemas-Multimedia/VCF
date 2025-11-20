@@ -31,6 +31,9 @@ Supposing that a Python interpreter and Git are available:
    
 ## Programming
 
+Typically, you will need to develop a new encoding scheme for image or
+video.
+
 ### Codecs organization
 
 	+---------------------+
@@ -50,18 +53,14 @@ Supposing that a Python interpreter and Git are available:
 	...* = default codec
 	(...) = to be implemented
 
-Typically, you will need to develop a new encoding scheme for image or
-video.
-
-For lossless representation of images we use PNG.
-
 ### Image Coding
 
 The simplest solution is to implement the methods `compressed_img =
 compress(img)` and `img = decompress(compressed_img)`, defined in the
-`entropy_image_coding` class interface. Notice that it is not
-necessary to read `img` when encoding, nor write `compressed_img` when
-decoding. Example: `src/PNM.py`.
+`entropy_image_coding`
+[class interface](https://realpython.com/python-interface/). Notice
+that it is not necessary to read `img` when encoding, nor write
+`compressed_img` when decoding. Example: `src/PNM.py`.
 
 ### Video Coding
 
