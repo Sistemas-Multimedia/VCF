@@ -60,7 +60,9 @@ compress(img)` and `img = decompress(compressed_img)`, defined in the
 `entropy_image_coding`
 [class interface](https://realpython.com/python-interface/). Notice
 that it is not necessary to read `img` when encoding, nor write
-`compressed_img` when decoding. Example: `src/PNM.py`.
+`compressed_img` when
+decoding. Example:
+[`src/PNM.py`](https://github.com/Sistemas-Multimedia/VCF/blob/main/src/PNM.py).
 
 ### Video Coding
 
@@ -68,4 +70,6 @@ Again, it is necessary to implement the methods `None = compress()`
 and `None = decompress()`, defined in the `entropy_video_coding` class
 interface. In this case, because a video usually does not fit in
 memory, you must read and write the frames in the methods `compress()`
-and `decompress()`. Example `src/MPNG.py`.
+and
+`decompress()`. Example
+[`src/MPNG.py`](https://github.com/Sistemas-Multimedia/VCF/blob/main/src/MPNG.py).
