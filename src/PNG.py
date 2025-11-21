@@ -7,7 +7,6 @@ import numpy as np
 import cv2 as cv # pip install opencv-python
 with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
     f.write(__doc__)
-
 import parser
 import main
 import entropy_image_coding as EIC
@@ -26,10 +25,12 @@ parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help
 class CoDec(EIC.CoDec):
 
     def __init__(self, args):
+        logging.debug("trace")
         super().__init__(args)
         self.file_extension = ".png"
 
     def compress_fn(self, img, fn):
+        logging.debug("trace")
         #skimage_io.use_plugin('freeimage')
         #compressed_img = img
         logging.debug(f"Input to io.BytesIO() witn range [{np.min(img)}, {np.max(img)}]")
@@ -53,6 +54,7 @@ class CoDec(EIC.CoDec):
 
     # pip install imageio-freeimage (not necessary now)
     def decompress_fn(self, compressed_img, fn):
+        logging.debug("trace")
         compressed_img = io.BytesIO(compressed_img)
         #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)
         #img = cv.cvtColor(img, cv.COLOR_BGR2RGB)

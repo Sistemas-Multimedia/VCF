@@ -1,4 +1,5 @@
 '''Entropy Encoding of images using TIFF (Tag Image File Format). '''
+
 import tifffile
 import io as pyio  # Avoid conflict with skimage.io
 import main
@@ -27,7 +28,7 @@ class CoDec(EIC.CoDec):
     def __init__(self, args):
         logging.debug("trace")
         super().__init__(args)
-        self.file_extension = ".TIFF"
+        self.file_extension = ".tif"
 
     # pip install imageio-freeimage (not necessary now)
     def compress_fn(self, img, fn):

@@ -39,7 +39,7 @@ video.
 	+---------------------+
 	| temporal transforms | III, [IPP], [IBP], [MCTF].
 	+---------------------+
-	| spatial transforms  | 2D-DCT, 2D-DWT.
+	| spatial transforms  | 2D-DCT*, 2D-DWT.
 	+---------------------+
 	|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT.
 	+---------------------+
@@ -47,7 +47,7 @@ video.
 	+---------------------+ 
 	|       filters       | (blur)
 	+---------------------+
-	|   entropy codecs    | PNG, TIFF*, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
+	|   entropy codecs    | TIFF*, PNG, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
 	+---------------------+
 
 	...* = default codec

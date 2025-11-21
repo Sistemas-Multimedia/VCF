@@ -1,13 +1,13 @@
+'''Parsing of the command line arguments.'''
 import argparse
 
 def int_or_str(text):
-    '''Helper function for argument parsing.'''
+    '''If text represents an integer, returns an integer.'''
     try:
         return int(text)
     except ValueError:
         return text
 
-# A way of converting a call to a object's method to a plain function
 def encode(codec):
     return codec.encode()
 
@@ -63,8 +63,8 @@ parser = CustomArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpForma
                               description=description)
 parser.add_argument("-g", "--debug", action="store_true", help=f"Output debug information")
 subparser = parser.add_subparsers(help="You must specify one of the following subcomands:", dest="subparser_name")
-parser_encode = subparser.add_parser("encode", help="Encode data")
-parser_decode = subparser.add_parser("decode", help="Decode data")
+parser_encode = subparser.add_parser("encode", help="Compress data")
+parser_decode = subparser.add_parser("decode", help="Uncompress data")
 parser_encode.set_defaults(func=encode)
 parser_decode.set_defaults(func=decode)
 #    return parser, parser_encode, parser_decode

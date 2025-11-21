@@ -23,9 +23,8 @@ DECODE_OUTPUT = "/tmp/decoded.png"
 class CoDec:
 
     def __init__(self, args):
-        logging.debug("trace")
+        logging.debug(f"trace args={args}")
         self.args = args
-        logging.debug(f"args = {self.args}")
         if args.subparser_name == "encode":
             self.encoding = True
         else:
@@ -35,7 +34,6 @@ class CoDec:
         self.total_output_size = 0
 
     def bye(self):
-        logging.debug("trace")
         logging.debug("trace")
         if self.encoding:
             # Write metadata
@@ -73,20 +71,15 @@ class CoDec:
                     logging.debug(f"Unable to read {self.args.output}")
 
     def compress(self, img):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
         return self.compress_fn(img, fn = self.args.output)
         
     def decompress(self, compressed_img):
-        logging.debug("trace")
+        logging.debug(f"trace compressed_img={compressed_img}")
         return self.decompress_fn(compressed_img, self.args.input)
 
-    def UNUSED_get_output_bytes(self):
-        logging.debug("trace")
-        #logging.info(f"output_bytes={self.total_output_size}")
-        return self.total_output_size
-
     def encode_read_fn(self, fn):
-        logging.debug("trace")
+        logging.debug(f"trace fn={fn}")
         #img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         #img = Image.open(fn) # https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#using-the-image-class
         try:
@@ -119,10 +112,11 @@ class CoDec:
         img = self.encode_read_fn(self.args.input)
         return img
     
-    def encode_write_fn(self, codestream, fn_without_extention):
-        logging.debug("trace")
+    def encode_write_fn(self, codestream, fn_without_extension):
+        logging.debug(f"trace codestream={codestream}")
+        logging.debug(f"trace fn_without_extension={fn_without_extension}")
         codestream.seek(0)
-        fn = fn_without_extention + self.file_extension
+        fn = fn_without_extension + self.file_extension
         with open(fn, "wb") as output_file:
             output_file.write(codestream.read())
         output_size = os.path.getsize(fn)
@@ -132,12 +126,13 @@ class CoDec:
         return output_size
 
     def encode_write(self, compressed_img):
-        logging.debug("trace")
+        logging.debug(f"trace compressed_img={compressed_img}")
         output_size = self.encode_write_fn(compressed_img, self.args.output)
         return output_size
 
     def encode_fn(self, in_fn, out_fn):
-        logging.debug("trace")
+        logging.debug(f"trace in_fn={in_fn}")
+        logging.debug(f"trace out_fn={out_fn}")
         img = self.encode_read_fn(in_fn)
         compressed_img = self.compress_fn(img, out_fn) # Some codecs
                                                        # (such as
@@ -155,9 +150,9 @@ class CoDec:
         output_size = self.encode_write(compressed_img)
         return output_size
 
-    def decode_read_fn(self, fn_without_extention):
-        logging.debug("trace")
-        fn = fn_without_extention + self.file_extension
+    def decode_read_fn(self, fn_without_extension):
+        logging.debug(f"trace fn_without_extension={fn_without_extension}")
+        fn = fn_without_extension + self.file_extension
         input_size = os.path.getsize(fn)
         self.total_input_size += input_size
         logging.debug(f"Read {input_size} bytes from {fn}")
@@ -170,7 +165,8 @@ class CoDec:
         return compressed_img
 
     def decode_write_fn(self, img, fn):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
+        logging.debug(f"trace fn={fn}")
         try:
             skimage_io.imsave(fn, img)
         except Exception as e:
@@ -182,12 +178,13 @@ class CoDec:
         return output_size
 
     def decode_write(self, img):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
         output_size = self.decode_write_fn(img, self.args.output)
         return output_size
 
     def decode_fn(self, in_fn, out_fn):
-        logging.debug("trace")
+        logging.debug(f"trace in_fn={in_fn}")
+        logging.debug(f"trace out_fn={out_fn}")
         compressed_img = self.decode_read_fn(in_fn)
         img = self.decompress_fn(compressed_img, in_fn)
         #compressed_img_diskimage = io.BytesIO(compressed_img)
@@ -233,4 +230,9 @@ class CoDec:
 
     #def filter(self, img):
     #    return img
+
+    def UNUSED_get_output_bytes(self):
+        logging.debug("trace")
+        #logging.info(f"output_bytes={self.total_output_size}")
+        return self.total_output_size
 

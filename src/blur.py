@@ -1,4 +1,4 @@
-'''Image bluring using low-pass filtering. Only when decoding!'''
+'''Image blurring using low-pass filtering. *** Effective only when decoding! ***'''
 
 import numpy as np
 import logging
@@ -33,7 +33,7 @@ EC = importlib.import_module(args.entropy_image_codec)
 class CoDec(EC.CoDec):
 
     def __init__(self, args):
-        logging.debug("trace")
+        logging.debug(f"trace args={args}")
         super().__init__(args)
         logging.debug(f"args = {self.args}")
         self.args = args
@@ -42,7 +42,8 @@ class CoDec(EC.CoDec):
             self.filter_size = 0
 
     def decode_fn(self, in_fn, out_fn):
-        logging.debug("trace")
+        logging.debug(f"trace in_fn={in_fn}")
+        logging.debug(f"trace out_fn={out_fn}")
         compressed_k = self.decode_read_fn(in_fn)
         k = self.decompress_fn(compressed_k, in_fn)
         logging.debug(f"k.shape={k.shape} k.dtype={k.dtype}")        
@@ -62,15 +63,15 @@ class CoDec(EC.CoDec):
         return output_size
         '''
             
-    def filter(self, y):
-        logging.debug("trace")
+    def filter(self, img):
+        logging.debug(f"trace y={img}")
         logging.info(f"Using filter {self.args.filter} with size {self.args.filter_size}")
         if self.args.filter == "gaussian":
-            return cv2.GaussianBlur(y, (self.args.filter_size, self.args.filter_size), 0)
+            return cv2.GaussianBlur(img, (self.args.filter_size, self.args.filter_size), 0)
         elif self.args.filter == "median":
-            return cv2.medianBlur(y, self.args.filter_size)
+            return cv2.medianBlur(img, self.args.filter_size)
         elif self.args.filter == "blur":
-            return cv2.blur(y, (self.args.filter_size, self.args.filter_size))
+            return cv2.blur(img, (self.args.filter_size, self.args.filter_size))
         else:
             return y
 
