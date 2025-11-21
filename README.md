@@ -37,22 +37,21 @@ video.
 ### Codecs organization
 
 	+---------------------+
-	| temporal transforms | III, [IPP], [IBP], [MCTF].
+	| temporal transforms | III, [IPP], [IBP], [MCTF], [MC-DWT].
 	+---------------------+
-	| spatial transforms  | 2D-DCT*, 2D-DWT.
+	| spatial transforms  | 2D-DCT*, 2D-DWT, [AE].
 	+---------------------+
 	|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT.
 	+---------------------+
 	|     quantizers      | deadzone*, LloydMax, VQ, color-VQ.
 	+---------------------+ 
-	|       filters       | (blur)
+	|       filters       | no_filter*, blur, [NLM], [BM3D]
 	+---------------------+
 	|   entropy codecs    | TIFF*, PNG, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
 	+---------------------+
 
 	...* = default codec
 	[...] = to be implemented
-	(...) = optional
 
 ### Image Coding
 

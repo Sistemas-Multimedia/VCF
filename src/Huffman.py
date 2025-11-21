@@ -19,10 +19,10 @@ from huffman_coding import huffman_coding # pip install --ignore-installed "huff
 
 # Encoder parser
 parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.ENCODE_INPUT})", default=EIC.ENCODE_INPUT)
-parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.ENCODE_OUTPUT})", default=f"{EIC.ENCODE_OUTPUT}")
+parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.ENCODE_OUTPUT}.huf)", default=f"{EIC.ENCODE_OUTPUT}")
 
 # Decoder parser
-parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT})", default=f"{EIC.DECODE_INPUT}")
+parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT}.huf)", default=f"{EIC.DECODE_INPUT}")
 parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.DECODE_OUTPUT})", default=f"{EIC.DECODE_OUTPUT}")    
 
 #parser.parser.parse_known_args()
@@ -89,12 +89,13 @@ def decode_data(encoded_data, root):
 class CoDec(EIC.CoDec):
 
     def __init__(self, args):
-        logging.debug("trace")
+        logging.debug(f"trace args={args}")
         super().__init__(args)
         self.file_extension = ".huf"
 
     def compress_fn(self, img, fn):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
+        logging.debug(f"trace fn={fn}")
         tree_fn = f"{fn}_huffman_tree.pkl.gz"
         compressed_img = io.BytesIO()
 
@@ -124,7 +125,8 @@ class CoDec(EIC.CoDec):
         return compressed_img
     
     def decompress_fn(self, compressed_img, fn):
-        logging.debug("trace")
+        logging.debug(f"trace compressed_img={compressed_img}")
+        logging.debug(f"trace fn={fn}")
         tree_fn = f"{fn}_huffman_tree.pkl.gz"
         compressed_img = io.BytesIO(compressed_img)
         

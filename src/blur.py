@@ -13,8 +13,8 @@ import parser
 #import entropy_image_coding as EIC
 #import importlib
 
-default_filter_size = 3
-default_filter = "none"
+default_filter_size = 5
+default_blur_filter = "gaussian"
 default_EIC = "TIFF"
 
 #_parser, parser_encode, parser_decode = parser.create_parser(description=__doc__)
@@ -24,7 +24,7 @@ parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy 
 
 # Decoder parser
 parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-parser.parser_decode.add_argument("-f", "--filter", help=f"Filter name (none, gaussian, median or blur) (default: {default_filter})", default=default_filter)
+parser.parser_decode.add_argument("-b", "--blur_filter", help=f"Blurring filter name (gaussian, median or blur) (default: {default_blur_filter})", default=default_blur_filter)
 parser.parser_decode.add_argument("-s", "--filter_size", type=parser.int_or_str, help=f"Filter size (default: {default_filter_size})", default=default_filter_size)
 
 args = parser.parser.parse_known_args()[0]
@@ -38,7 +38,7 @@ class CoDec(EC.CoDec):
         logging.debug(f"args = {self.args}")
         self.args = args
         if self.encoding:
-            self.filter = "none"
+            self.filter = "gaussian"
             self.filter_size = 0
 
     def decode_fn(self, in_fn, out_fn):
@@ -73,7 +73,7 @@ class CoDec(EC.CoDec):
         elif self.args.filter == "blur":
             return cv2.blur(img, (self.args.filter_size, self.args.filter_size))
         else:
-            return y
+            return img
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

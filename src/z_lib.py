@@ -11,27 +11,27 @@ import entropy_image_coding as EIC
 
 # Encoder parser
 parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.ENCODE_INPUT})", default=EIC.ENCODE_INPUT)
-parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.ENCODE_OUTPUT})", default=f"{EIC.ENCODE_OUTPUT}")
+parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.ENCODE_OUTPUT}.npz)", default=f"{EIC.ENCODE_OUTPUT}")
 
 # Decoder parser
-parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT})", default=f"{EIC.DECODE_INPUT}")
+parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT}.npz)", default=f"{EIC.DECODE_INPUT}")
 parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.DECODE_OUTPUT})", default=f"{EIC.DECODE_OUTPUT}")    
 
 class CoDec (EIC.CoDec):
 
     def __init__(self, args):
-        logging.debug("trace")
+        logging.debug(f"trace args={args}")
         super().__init__(args)
         self.file_extension = ".npz"
 
     def compress(self, img):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
         compressed_img = io.BytesIO()
         np.savez_compressed(file=compressed_img, a=img)
         return compressed_img
 
     def decompress(self, compressed_img):
-        logging.debug("trace")
+        logging.debug(f"trace compressed_img={compressed_img}")
         compressed_img = io.BytesIO(compressed_img)
         img = np.load(compressed_img)['a']
         #print(type(img), img.shape, img.dtype)

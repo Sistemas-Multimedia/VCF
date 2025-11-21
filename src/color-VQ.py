@@ -21,7 +21,7 @@ parser.parser_encode.add_argument("-m", "--N_color_clusters", type=parser.int_or
 parser.parser_decode.add_argument("-m", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 
 args = parser.parser.parse_known_args()[0]
-denoiser = importlib.import_module("blur")
+denoiser = importlib.import_module("no_filter")
 #EC = importlib.import_module(args.entropy_image_codec)
 
 #class CoDec(EC.CoDec):
