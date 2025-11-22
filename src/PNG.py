@@ -19,7 +19,7 @@ parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=
 parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.ENCODE_OUTPUT}.png)", default=f"{EIC.ENCODE_OUTPUT}")
 
 # Decoder parser
-parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT}.png)", default=f"{EIC.DECODE_INPUT}")
+parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT})", default=f"{EIC.DECODE_INPUT}")
 parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.DECODE_OUTPUT})", default=f"{EIC.DECODE_OUTPUT}")    
 
 class CoDec(EIC.CoDec):
@@ -41,6 +41,7 @@ class CoDec(EIC.CoDec):
         #skimage_io.imsave(fname=compressed_img, arr=img[:,:,0], plugin="imageio", check_contrast=False)
         #skimage_io.imsave(fname=compressed_img, arr=img[:,:,0], plugin="pil", check_contrast=False)
         skimage_io.imsave(fname=compressed_img, arr=img, plugin="pil", check_contrast=False)
+        #skimage_io.imsave(fname=compressed_img, arr=img, check_contrast=False, extension=".png")
         #skimage_io.imsave(fname=compressed_img, arr=img, plugin="freeimage")
         #img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
         #cv.imwrite(compressed_img, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
@@ -55,7 +56,7 @@ class CoDec(EIC.CoDec):
 
     # pip install imageio-freeimage (not necessary now)
     def decompress_fn(self, compressed_img, fn):
-        logging.debug(f"trace compressed_img={compressed_img}")
+        logging.debug(f"trace compressed_img={compressed_img[10]}")
         logging.debug(f"trace fn={fn}")
         compressed_img = io.BytesIO(compressed_img)
         #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)

@@ -33,16 +33,20 @@ parser.parser_decode.add_argument("-f", "--filter", help=f"Filter name (default:
 #parser.parser_decode.add_argument("-s", "--filter_size", type=parser.int_or_str, help=f"Filter size (default: {default_filter_size})", default=default_filter_size)
 
 args = parser.parser.parse_known_args()[0]
-denoiser = importlib.import_module(args.filter)
+try:
+    denoiser = importlib.import_module(args.filter)
+except:
+    denoiser = importlib.import_module("no_filter")
 #EC = importlib.import_module(args.entropy_image_codec)
 #denoiser = importlib.import_module(blur)
 
 class CoDec(denoiser.CoDec):
 
     def __init__(self, args, min_index_val=0, max_index_val=255):
-        logging.debug("trace")
+        logging.debug(f"trace args={args}")
+        logging.debug(f"trace min_index_val={min_index_val}")        
+        logging.debug(f"trace max_index_val={max_index_val}")        
         super().__init__(args)
-        logging.debug(f"args = {self.args}")
         #if self.encoding:
         #    self.QSS = args.QSS
         #    logging.info(f"QSS = {self.QSS}")
@@ -57,13 +61,9 @@ class CoDec(denoiser.CoDec):
         self.Q = Quantizer(Q_step=self.QSS, min_val=min_index_val, max_val=max_index_val)
         self.total_output_size = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
 
-    def UNUSED_compress(self, img):
-        k = self.quantize(img).astype(np.uint8)
-        compressed_k = super().compress(k)
-        return compressed_k
-
     def encode_fn(self, in_fn, out_fn):
-        logging.debug("trace")
+        logging.debug(f"trace in_fn={in_fn}")
+        logging.debug(f"trace out_fn={out_fn}")
         img = self.encode_read_fn(in_fn)
         logging.debug(f"Input image with range [{np.min(img)}, {np.max(img)}]")
         img_128 = img.astype(np.int16) - 128
@@ -82,14 +82,9 @@ class CoDec(denoiser.CoDec):
         return output_size
 
     def encode(self):
+        logging.debug("trace")
         return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
-    def UNUSED_decompress(self, compressed_k):
-        logging.debug("trace")
-        k = super().decompress(compressed_k)
-        y = self.dequantize(k)#.astype(np.uint8)
-        return y
-        
     '''
     def _decompress(self, compressed_k):
         k = super().decompress(compressed_k)
@@ -99,7 +94,8 @@ class CoDec(denoiser.CoDec):
     '''
 
     def decode_fn(self, in_fn, out_fn):
-        logging.debug("trace")
+        logging.debug(f"trace in_fn={in_fn}")
+        logging.debug(f"trace out_fn={out_fn}")
         compressed_k = self.decode_read_fn(in_fn)
         k_128 = self.decompress_fn(compressed_k, in_fn)
         logging.debug(f"Output from entropy decompressor with range [{np.min(k_128)}, {np.max(k_128)}]")
@@ -120,10 +116,12 @@ class CoDec(denoiser.CoDec):
         return output_size
 
     def decode(self):
+        logging.debug("trace")
         return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
     
     def quantize_fn(self, img, fn):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
+        logging.debug(f"trace fn={fn}")
         k = self.Q.encode(img)
         #k += 128 # Only positive components can be written in a PNG file
         #k = k.astype(np.uint8)
@@ -132,7 +130,8 @@ class CoDec(denoiser.CoDec):
 
     def dequantize_fn(self, k, fn):
         '''"Dequantize" an image.'''
-        logging.debug("trace")
+        logging.debug(f"trace k={k}")
+        logging.debug(f"trace fn={fn}")
         #k = k.astype(np.int16)
         #k -= 128
         #self.Q = Quantizer(Q_step=QSS, min_val=min_index_val, max_val=max_index_val)
@@ -142,14 +141,24 @@ class CoDec(denoiser.CoDec):
         return y
 
     def quantize(self, img):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
         return self.quantize_fn(img, fn=self.args.output)
 
     #def dequantize(self, labels, centroids):
     def dequantize(self, labels):
-        logging.debug("trace")
+        logging.debug(f"trace labels={labels}")
         return self.dequantize_fn(labels, fn=self.args.input)
 
+    def UNUSED_compress(self, img):
+        k = self.quantize(img).astype(np.uint8)
+        compressed_k = super().compress(k)
+        return compressed_k
+
+    def UNUSED_decompress(self, compressed_k):
+        logging.debug("trace")
+        k = super().decompress(compressed_k)
+        y = self.dequantize(k)#.astype(np.uint8)
+        return y
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

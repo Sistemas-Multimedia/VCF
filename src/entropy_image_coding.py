@@ -12,8 +12,6 @@ import main
 import urllib
 import math
 
-from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
-
 # Default IO images
 ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
 ENCODE_OUTPUT = "/tmp/encoded" # File extension decided in run-time
@@ -32,59 +30,33 @@ class CoDec:
         logging.debug(f"self.encoding = {self.encoding}")
         self.total_input_size = 0
         self.total_output_size = 0
+        #img = self.encode_read_fn(args.input)
+        #self.decode_write_fn(img, "/tmp/original.png") # Save a copy for comparing later
+        #self.total_output_size -= output_size # This file must not increase the bit-rate
+        #self.total_input_size = 0
+        #self.total_output_size = 0
 
     def bye(self):
         logging.debug("trace")
-        if self.encoding:
-            # Write metadata
-            with open(f"{self.args.output}.txt", 'w') as f:
-                f.write(f"{self.img_shape[0]}\n")
-                f.write(f"{self.img_shape[1]}\n")
-        else:
-            # Read metadata
-            with open(f"{self.args.input}.txt", 'r') as f:
-                height = f.readline().strip()
-                logging.info(f"image height = {height} pixels")
-                width = f.readline().strip()
-                logging.info(f"image width = {width} pixels")
-        logging.info(f"Total {self.total_input_size} bytes read")
-        logging.info(f"Total {self.total_output_size} bytes written")
-        if self.encoding:
-            number_of_output_bits = self.total_output_size*8
-            number_of_pixels = self.img_shape[0]*self.img_shape[1] # self.img_shape no existe aquí, sólo existe en las clases descendientes
-            BPP = number_of_output_bits/number_of_pixels
-            logging.info(f"Output bit-rate = {BPP} bits/pixel")
-            with open(f"{self.args.output}_BPP.txt", 'w') as f:
-                f.write(f"{BPP}")
-        else:
-            if __debug__:
-                try:
-                    img = self.encode_read_fn("file:///tmp/original.png")
-                    y = self.encode_read_fn(self.args.output)
-                    RMSE = distortion.RMSE(img, y)
-                    logging.info(f"RMSE = {RMSE}")
-                    with open(f"{self.args.input}_BPP.txt", 'r') as f:
-                        BPP = float(f.read())
-                    J = BPP + RMSE
-                    logging.info(f"J = R + D = {J}")
-                except ValueError as e:
-                    logging.debug(f"Unable to read {self.args.output}")
 
     def compress(self, img):
+        '''Compress (using the corresponding image codec) the default image.'''
         logging.debug(f"trace img={img}")
         return self.compress_fn(img, fn = self.args.output)
         
     def decompress(self, compressed_img):
-        logging.debug(f"trace compressed_img={compressed_img}")
+        '''Decompress the default image.'''
+        logging.debug(f"trace compressed_img={compressed_img[:10]}")
         return self.decompress_fn(compressed_img, self.args.input)
 
     def encode_read_fn(self, fn):
+        '''Read an image with extension.'''
         logging.debug(f"trace fn={fn}")
         #img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         #img = Image.open(fn) # https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#using-the-image-class
         try:
             input_size = os.path.getsize(fn)
-            self.total_input_size += input_size 
+            #self.total_input_size += input_size 
             img = cv.imread(fn, cv.IMREAD_UNCHANGED)
             img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         except:
@@ -95,24 +67,16 @@ class CoDec:
             img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
         logging.debug(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
         self.img_shape = img.shape
-        if __debug__:
-            fn = "/tmp/original.png"
-            output_size = self.decode_write_fn(img, "/tmp/original.png") # Save a copy for comparing later
-            self.total_output_size -= output_size # This file must not increase the bit-rate
-            '''
-            try:
-                skimage_io.imsave(fn, img)
-            except Exception as e:
-                logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
-            '''
         return img
 
     def encode_read(self):
+        '''Read the image self.args.input.'''
         logging.debug("trace")
         img = self.encode_read_fn(self.args.input)
         return img
     
     def encode_write_fn(self, codestream, fn_without_extension):
+        '''Write a code-stream with extension.'''
         logging.debug(f"trace codestream={codestream}")
         logging.debug(f"trace fn_without_extension={fn_without_extension}")
         codestream.seek(0)
@@ -126,6 +90,7 @@ class CoDec:
         return output_size
 
     def encode_write(self, compressed_img):
+        '''Write a code-stream without extension.'''
         logging.debug(f"trace compressed_img={compressed_img}")
         output_size = self.encode_write_fn(compressed_img, self.args.output)
         return output_size
