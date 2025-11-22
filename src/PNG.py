@@ -2,6 +2,7 @@
 
 import io
 from skimage import io as skimage_io # pip install scikit-image
+import imageio.v3 as iio
 import logging
 import numpy as np
 import cv2 as cv # pip install opencv-python
@@ -40,8 +41,11 @@ class CoDec(EIC.CoDec):
         compressed_img = io.BytesIO()
         #skimage_io.imsave(fname=compressed_img, arr=img[:,:,0], plugin="imageio", check_contrast=False)
         #skimage_io.imsave(fname=compressed_img, arr=img[:,:,0], plugin="pil", check_contrast=False)
-        skimage_io.imsave(fname=compressed_img, arr=img, plugin="pil", check_contrast=False)
-        #skimage_io.imsave(fname=compressed_img, arr=img, check_contrast=False, extension=".png")
+        #skimage_io.imsave(fname=compressed_img, arr=img, plugin="pil", check_contrast=False)
+        #print("---->", compressed_img)
+        #skimage_io.imsave(fname=compressed_img, arr=img, check_contrast=False, format="png", extension=".png")
+        #compressed_img = iio.imwrite("<bytes>", img, extension=".png")
+        iio.imwrite(compressed_img, img, plugin="pillow", extension=".png")
         #skimage_io.imsave(fname=compressed_img, arr=img, plugin="freeimage")
         #img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
         #cv.imwrite(compressed_img, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
