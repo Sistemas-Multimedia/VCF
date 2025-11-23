@@ -45,7 +45,10 @@ class CoDec(EIC.CoDec):
         #print("---->", compressed_img)
         #skimage_io.imsave(fname=compressed_img, arr=img, check_contrast=False, format="png", extension=".png")
         #compressed_img = iio.imwrite("<bytes>", img, extension=".png")
+        
+        # https://imageio.readthedocs.io/en/stable/examples.html#writing-to-bytes-encoding
         iio.imwrite(compressed_img, img, plugin="pillow", extension=".png")
+        
         #skimage_io.imsave(fname=compressed_img, arr=img, plugin="freeimage")
         #img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
         #cv.imwrite(compressed_img, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])

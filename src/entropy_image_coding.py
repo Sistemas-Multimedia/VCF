@@ -13,7 +13,8 @@ import urllib
 import math
 
 # Default IO images
-ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
+#ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
+ENCODE_INPUT = "/tmp/original.png"
 ENCODE_OUTPUT = "/tmp/encoded" # File extension decided in run-time
 DECODE_INPUT = ENCODE_OUTPUT
 DECODE_OUTPUT = "/tmp/decoded.png"
