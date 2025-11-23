@@ -7,6 +7,7 @@ pywavelets
 netpbmfile[all]
 bitarray
 information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory@main#egg=information_theory
+huffman_coding @ git+https://github.com/vicente-gonzalez-ruiz/huffman_coding
 DCT2D @ git+https://github.com/vicente-gonzalez-ruiz/DCT2D@master#egg=DCT2D
 color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms@main#egg=color_transforms
 scalar_quantization @ git+https://github.com/vicente-gonzalez-ruiz/scalar_quantization@master#egg=scalar_quantization
