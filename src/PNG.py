@@ -14,17 +14,7 @@ import entropy_image_coding as EIC
 #import png
 
 COMPRESSION_LEVEL = 9
-
-# Encoder parser
-parser.parser_encode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.ENCODE_INPUT})", default=EIC.ENCODE_INPUT)
-parser.parser_encode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.ENCODE_OUTPUT}.png)", default=f"{EIC.ENCODE_OUTPUT}")
-
-# Decoder parser
-parser.parser_decode.add_argument("-i", "--input", type=parser.int_or_str, help=f"Input image (default: {EIC.DECODE_INPUT})", default=f"{EIC.DECODE_INPUT}")
-parser.parser_decode.add_argument("-o", "--output", type=parser.int_or_str, help=f"Output image (default: {EIC.DECODE_OUTPUT})", default=f"{EIC.DECODE_OUTPUT}")    
-
 class CoDec(EIC.CoDec):
-
     def __init__(self, args):
         logging.debug(f"trace args={args}")
         super().__init__(args)
@@ -121,6 +111,28 @@ class CoDec(EIC.CoDec):
 
         '''
         return self.encode()
+
+class CoDec(EIC.CoDec):
+    def __init__(self, args):
+        logging.debug(f"trace args={args}")
+        super().__init__(args)
+        self.file_extension = ".png"
+
+    def compress(self, img):
+        logging.debug(f"trace img={img}")
+        logging.debug(f"Input to io.BytesIO() witn range [{np.min(img)}, {np.max(img)}]")
+        assert (img.dtype == np.uint8) or (img.dtype == np.uint16), f"current type = {img.dtype}"
+        compressed_img = io.BytesIO()
+        iio.imwrite(compressed_img, img, plugin="pillow", extension=".png")
+        return compressed_img
+
+    def decompress(self, compressed_img):
+        logging.debug(f"trace compressed_img={compressed_img[10]}")
+        compressed_img = io.BytesIO(compressed_img)
+        img = skimage_io.imread(fname=compressed_img)
+        logging.debug(f"Output from skimage_io.imread() witn range [{np.min(img)}, {np.max(img)}]")
+        logging.debug(f"img.dtype={img.dtype}")
+        return img
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

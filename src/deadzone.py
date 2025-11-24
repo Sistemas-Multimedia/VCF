@@ -36,7 +36,9 @@ args = parser.parser.parse_known_args()[0]
 try:
     denoiser = importlib.import_module(args.filter)
 except:
+    # Remember that the filter is only active when decoding.
     denoiser = importlib.import_module("no_filter")
+
 #EC = importlib.import_module(args.entropy_image_codec)
 #denoiser = importlib.import_module(blur)
 
@@ -119,19 +121,19 @@ class CoDec(denoiser.CoDec):
         logging.debug("trace")
         return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
     
-    def quantize_fn(self, img, fn):
+    def quantize_fn(self, img):
         logging.debug(f"trace img={img}")
-        logging.debug(f"trace fn={fn}")
+        #logging.debug(f"trace fn={fn}")
         k = self.Q.encode(img)
         #k += 128 # Only positive components can be written in a PNG file
         #k = k.astype(np.uint8)
         logging.debug(f"k.shape={k.shape} k.dtype={k.dtype} max(x)={np.max(k)} min(k)={np.min(k)}")
         return k
 
-    def dequantize_fn(self, k, fn):
+    def dequantize_fn(self, k):
         '''"Dequantize" an image.'''
         logging.debug(f"trace k={k}")
-        logging.debug(f"trace fn={fn}")
+        #logging.debug(f"trace fn={fn}")
         #k = k.astype(np.int16)
         #k -= 128
         #self.Q = Quantizer(Q_step=QSS, min_val=min_index_val, max_val=max_index_val)
@@ -142,12 +144,12 @@ class CoDec(denoiser.CoDec):
 
     def quantize(self, img):
         logging.debug(f"trace img={img}")
-        return self.quantize_fn(img, fn=self.args.output)
+        return self.quantize_fn(img)
 
     #def dequantize(self, labels, centroids):
     def dequantize(self, labels):
         logging.debug(f"trace labels={labels}")
-        return self.dequantize_fn(labels, fn=self.args.input)
+        return self.dequantize_fn(labels)
 
     def UNUSED_compress(self, img):
         k = self.quantize(img).astype(np.uint8)

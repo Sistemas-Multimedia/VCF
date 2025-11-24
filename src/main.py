@@ -14,12 +14,12 @@ def main(parser, logging, CoDec):
 
     # If parameters "encode" of "decode" are undefined, the following
     # block causes an AttributeError exception.
-    try:
-        logging.info(f"input = {args.input}")
-        logging.info(f"output = {args.output}")
-    except AttributeError:
-        logging.error("Sorry, you must specify 'encode' or 'decode'")
-        quit()
+    #try:
+    #    logging.info(f"input = {args.original}")
+    #    logging.info(f"output = {args.encoded}")
+    #except AttributeError:
+    #    logging.error("Sorry, you must specify 'encode' or 'decode'")
+    #    quit()
 
     # Create an encoder or a decoder, depending on the first
     # parameter.
