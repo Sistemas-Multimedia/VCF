@@ -2,6 +2,7 @@
 
 import numpy as np
 import logging
+import parser
 import main
 with open("/tmp/description.txt", 'w') as f:
     f.write(__doc__)
@@ -9,11 +10,10 @@ with open("/tmp/description.txt", 'w') as f:
 import importlib
 import cv2
 
-import parser
 #import entropy_image_coding as EIC
 #import importlib
 
-import filter
+import no_filter
 
 default_filter_size = 5
 #default_blur_filter = "gaussian"
@@ -28,10 +28,10 @@ default_filter_size = 5
 #parser.parser_decode.add_argument("-f", "--blur_filter", help=f"Blurring filter name (gaussian, median or blur) (default: {default_blur_filter})", default=default_blur_filter)
 parser.parser_decode.add_argument("-s", "--filter_size", type=parser.int_or_str, help=f"Filter size (default: {default_filter_size})", default=default_filter_size)
 
-args = parser.parser.parse_known_args()[0]
-EC = importlib.import_module(args.entropy_image_codec)
+#args = parser.parser.parse_known_args()[0]
+#EC = importlib.import_module(args.entropy_image_codec)
 
-class CoDec(filter.CoDec):
+class CoDec(no_filter.CoDec):
 
     def __init__(self, args):
         logging.debug(f"trace args={args}")

@@ -7,6 +7,7 @@ with open("/tmp/description.txt", 'w') as f:
 import importlib
 import cv2
 import parser
+default_filter_size = 5
 
 default_EIC = "TIFF"
 
