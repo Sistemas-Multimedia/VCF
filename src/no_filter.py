@@ -1,4 +1,4 @@
-'''No image/video filtering. *** Effective only when decoding! ***'''
+'''Filter's common interface.'''
 
 import logging
 import main
@@ -6,13 +6,12 @@ with open("/tmp/description.txt", 'w') as f:
     f.write(__doc__)
 import importlib
 import cv2
-
 import parser
 
 default_EIC = "TIFF"
 
 # Encoder parser
-parser.parser_encode.add_argument("-c", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
+parser.parser_encode.add_argument("-c", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC) # Se puede quitar?
 
 # Decoder parser
 parser.parser_decode.add_argument("-c", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)

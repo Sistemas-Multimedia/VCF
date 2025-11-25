@@ -45,7 +45,7 @@ video.
 	+---------------------+
 	|     quantizers      | deadzone*, LloydMax, VQ, color-VQ.
 	+---------------------+ 
-	|       filters       | no_filter*, blur, [NLM], [BM3D]
+	|       filters       | no_filter*, gaussian_blur, [NLM], [BM3D]
 	+---------------------+
 	|   entropy codecs    | TIFF*, PNG, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
 	+---------------------+
