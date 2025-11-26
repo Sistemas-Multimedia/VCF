@@ -13,7 +13,6 @@ import cv2
 #import entropy_image_coding as EIC
 #import importlib
 
-import no_filter
 
 default_filter_size = 5
 #default_blur_filter = "gaussian"
@@ -27,8 +26,9 @@ default_filter_size = 5
 # Decoder parser
 #parser.parser_decode.add_argument("-f", "--blur_filter", help=f"Blurring filter name (gaussian, median or blur) (default: {default_blur_filter})", default=default_blur_filter)
 parser.parser_decode.add_argument("-s", "--filter_size", type=parser.int_or_str, help=f"Filter size (default: {default_filter_size})", default=default_filter_size)
+import no_filter
 
-#args = parser.parser.parse_known_args()[0]
+args = parser.parser.parse_known_args()[0]
 #EC = importlib.import_module(args.entropy_image_codec)
 
 class CoDec(no_filter.CoDec):
