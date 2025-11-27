@@ -13,18 +13,23 @@ from information_theory import information  # pip install "information_theory @ 
 import importlib
 
 #default_EIC = "PNG"
-default_N_clusters = 256
+default_N_clusters = 32
+default_filter = "no_filter"
 
 #parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 #parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 parser.parser_encode.add_argument("-m", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 parser.parser_decode.add_argument("-m", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
+parser.parser_decode.add_argument("-f", "--filter", type=parser.int_or_str, help=f"Denoising filter (default: {default_filter})", default=default_filter)
 
 args = parser.parser.parse_known_args()[0]
-denoiser = importlib.import_module("no_filter")
-#EC = importlib.import_module(args.entropy_image_codec)
+try:
+    print("Denoising filter =", args.filter)
+    denoiser = importlib.import_module(args.filter)
+except:
+    # Remember that the filter is only active when decoding.
+    denoiser = importlib.import_module("no_filter")
 
-#class CoDec(EC.CoDec):
 class CoDec(denoiser.CoDec):
 
     def __init__(self, args, min_index_val=0, max_index_val=255):
@@ -32,42 +37,37 @@ class CoDec(denoiser.CoDec):
         super().__init__(args)
         logging.debug(f"args = {self.args}")
         self.N_clusters = args.N_color_clusters
-        self.input = args.input
-        self.output = args.output
 
-    def encode_fn(self, in_fn, out_fn):
+    def encode(self):
         logging.debug("trace")
-        img = self.encode_read_fn(in_fn)
-        labels, centroids = self.quantize(img)               
-        compressed_labels = self.compress_fn(labels, in_fn) 
-        output_size = self.encode_write_fn(compressed_labels, out_fn)
-        codebook_fn = f"{out_fn}_centroids.npz"         
+        img = self.encode_read()
+        logging.info("quantizing ...")
+        labels, centroids = self.quantize(img)         
+        logging.info("compressing ...")
+        compressed_labels = self.compress(labels) 
+        output_size = self.encode_write(compressed_labels)
+        codebook_fn = f"{self.args.encoded}_centroids.npz"         
         np.savez_compressed(file=codebook_fn, a=centroids)
         self.total_output_size += os.path.getsize(codebook_fn)
         return output_size
 
-    def encode(self):
-        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
-
-    def decode_fn(self, in_fn, out_fn):
+    def decode(self):
         logging.debug("trace")
-        compressed_labels = self.decode_read_fn(in_fn)
-        labels = self.decompress_fn(compressed_labels, in_fn)
-        codebook_fn = f"{in_fn}_centroids.npz"         
+        compressed_labels = self.decode_read()
+        labels = self.decompress(compressed_labels)
+        codebook_fn = f"{self.args.encoded}_centroids.npz"         
         self.total_input_size += os.path.getsize(codebook_fn)     
         centroids = np.load(file=codebook_fn)['a']
+        logging.info("Dequantizing ...")
         img = self.dequantize(labels, centroids) 
         img = denoiser.CoDec.filter(self, img)
-        output_size = self.decode_write_fn(img, out_fn)
+        output_size = self.decode_write(img)
         return output_size
-
-    def decode(self):
-        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
     # Vector quantization on the image by clustering RGB triplets
     # into N_clusters using KMeans
     def quantize(self, img):
-        logging.debug("trace")
+        logging.debug(f"trace img={img}")
         height, width, _ = img.shape
 
         # Treat RGB triplets as single units
@@ -75,6 +75,7 @@ class CoDec(denoiser.CoDec):
 
         # Perform K-means clustering on RGB vectors
         k_means = cluster.KMeans(init="k-means++", n_clusters=self.N_clusters, n_init=1) # KMeans clustering is used to group these RGB triplets into N_clusters clusters
+        logging.info("Determining centroids ...")
         k_means.fit(rgb_vectors)
         centroids = k_means.cluster_centers_.astype(np.uint8)  # Centroids are the center points (average RGB values) of each cluster. They represent the color values used to compress the image
         labels = k_means.labels_.reshape((height, width))  # Labels represent which cluster (color) each pixel belongs to, and are reshaped back into the original 2D dimensions of the image
