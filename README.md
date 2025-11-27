@@ -39,18 +39,18 @@ video.
 	+---------------------+
 	| temporal transforms | III, [IPP], [IBP], [MCTF], [MC-DWT].
 	+---------------------+
-	| spatial transforms  | 2D-DCT*, 2D-DWT, [AE].
+	| spatial transforms  | 2D-DCT*, 2D-DWT, [CAE].
 	+---------------------+
-	|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT.
-	+---------------------+
-	|     quantizers      | deadzone*, LloydMax, VQ, color-VQ.
-	+---------------------+ 
-	|       filters       | no_filter*, gaussian_blur, [NLM], [BM3D]
-	+---------------------+
-	|   entropy codecs    | TIFF*, PNG, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
-	+---------------------+
+	|  color transforms   | YCoCg*, YCrCb, RGB, color-DCT.
+	+---------------------+--+           +--+           +--+     +-----+
+	|     quantizers      |-a| deadzone* |-q|, LloydMax |-q|, VQ |-b,-n|, color-VQ (mover arriba).
+	+---------------------+--+           +--+           ++-++    +-----+
+	|  decoding filters   |-f| no_filter*, gaussian_blur |-s| , [NLM], [BM3D]
+	+---------------------+--+                           +--+
+	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
+	+---------------------+--+
 
-	...* = default codec
+	...* = default option
 	[...] = to be implemented
 
 ### Image Coding

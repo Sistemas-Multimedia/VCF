@@ -68,6 +68,8 @@ class CoDec(denoiser.CoDec):
         logging.debug("trace")
         img = self.encode_read()
         logging.debug(f"Input image with range [{np.min(img)}, {np.max(img)}]")
+        # Remember that in a deadzone quantizer the input should be
+        # positive and negative.
         img_128 = img.astype(np.int16) - 128
         logging.debug(f"Input to quantizer with range [{np.min(img_128)}, {np.max(img_128)}]")
         k = self.quantize(img_128).astype(np.uint8)

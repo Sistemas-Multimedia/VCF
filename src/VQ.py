@@ -113,7 +113,7 @@ class CoDec(denoiser.CoDec):
         centroids = centroids.reshape(centroids.shape[0], self.BS*self.BS, img.shape[2])#.astype(np.uint8)
         #compressed_centroids = self.compress(centroids)
         #self.encode_write_fn(compressed_centroids, self.output + "_centroids")
-        codebook_fn = f"/tmp/{self.args.encoded}_centroids.npz"
+        codebook_fn = f"{self.args.encoded}_centroids.npz"
         np.savez_compressed(file=codebook_fn, a=centroids)
         self.total_output_size += os.path.getsize(codebook_fn)
         return labels
@@ -124,7 +124,7 @@ class CoDec(denoiser.CoDec):
         logging.debug(f"trace labels={labels}")
         #compressed_centroids = self.decode_read_fn(self.input + "_centroids")
         #centroids = self.decompress(compressed_centroids)
-        codebook_fn = f"/tmp/{self.args.encoded}_centroids.npz"
+        codebook_fn = f"{self.args.encoded}_centroids.npz"
         self.total_input_size += os.path.getsize(codebook_fn)
         centroids = np.load(file=codebook_fn)['a']
         img_shape = (labels.shape[0]*self.BS, labels.shape[1]*self.BS, centroids.shape[2])

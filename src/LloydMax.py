@@ -90,7 +90,7 @@ class CoDec(denoiser.CoDec):
         return k
 
     def dequantize(self, k):
-        logging.debug("trace k=", k)
+        logging.debug(f"trace k = {k}")
         with open(f"{self.args.encoded}_QSS.txt", 'r') as f:
             QSS = int(f.read())
         logging.info(f"Read QSS={QSS} from {self.args.encoded}_QSS.txt")
