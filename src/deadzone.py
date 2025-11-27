@@ -28,12 +28,13 @@ default_filter = "no_filter"
 #parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 #parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 parser.parser_encode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"Quantization step size (default: {default_QSS})", default=default_QSS)
+
 parser.parser_decode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"Quantization step size (default: {default_QSS})", default=default_QSS)
-parser.parser_decode.add_argument("-f", "--filter", help=f"Filter name (default: {default_filter})", default=default_filter)
-#parser.parser_decode.add_argument("-s", "--filter_size", type=parser.int_or_str, help=f"Filter size (default: {default_filter_size})", default=default_filter_size)
+parser.parser_decode.add_argument("-f", "--filter", type=parser.int_or_str, help=f"Denoising filter (default: {default_filter})", default=default_filter)
 
 args = parser.parser.parse_known_args()[0]
 try:
+    print("Denoising filter =", args.filter)
     denoiser = importlib.import_module(args.filter)
 except:
     # Remember that the filter is only active when decoding.
@@ -64,6 +65,7 @@ class CoDec(denoiser.CoDec):
         self.total_output_size = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
 
     def encode(self):
+        logging.debug("trace")
         img = self.encode_read()
         logging.debug(f"Input image with range [{np.min(img)}, {np.max(img)}]")
         img_128 = img.astype(np.int16) - 128
@@ -75,6 +77,7 @@ class CoDec(denoiser.CoDec):
         return output_size
 
     def decode(self):
+        logging.debug("trace")
         compressed_k = self.decode_read()
         k_128 = self.decompress(compressed_k)
         logging.debug(f"Output from entropy decompressor with range [{np.min(k_128)}, {np.max(k_128)}]")
