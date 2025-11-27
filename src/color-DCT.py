@@ -13,20 +13,25 @@ from color_transforms.DCT import to_RGB
 
 default_quantizer = "deadzone"
 
-parser.parser_encode.add_argument("-c", "--quantizer", help=f"Quantizer (default: {default_quantizer})", default=default_quantizer)
-parser.parser_decode.add_argument("-c", "--quantizer", help=f"Quantizer (default: {default_quantizer})", default=default_quantizer)
+parser.parser_encode.add_argument("-a", "--quantizer", help=f"Quantizer (default: {default_quantizer})", default=default_quantizer)
+parser.parser_decode.add_argument("-a", "--quantizer", help=f"Quantizer (default: {default_quantizer})", default=default_quantizer)
 
 args = parser.parser.parse_known_args()[0]
 Q = importlib.import_module(args.quantizer)
 
 class CoDec(Q.CoDec):
 
-    def encode_fn(self, in_fn, out_fn):
+    def __init__(self, args):
         logging.debug("trace")
-        #
-        # Read the image.
-        #
-        img = self.encode_read_fn(in_fn)#.astype(np.int16)
+        super().__init__(args)
+        if args.quantizer == "deadzone":
+            self.offset = np.array([0, 0, 0])
+        else:
+            self.offset = np.array([256, 256, 256])
+
+    def encode(self):
+        logging.debug("trace")
+        img = self.encode_read()#.astype(np.int16)
 
         #
         # This provides numerical stability during to the transform
@@ -34,7 +39,7 @@ class CoDec(Q.CoDec):
         # represent the coefficients. Notice that most image codecs
         # handle only positive integers.
         #
-        img = img.astype(np.int16) - 128
+        img = img.astype(np.int16) #- 128
         #img = img.astype(np.uint8)
         logging.debug(f"Input to color-DCT with range [{np.min(img)}, {np.max(img)}]")
 
@@ -43,30 +48,14 @@ class CoDec(Q.CoDec):
         # the DCT) with mean 0.
         #
         coefs = from_RGB(img)
+        for i in range(coefs.shape[2]):
+             coefs[..., i] += self.offset[i]
 
-        #
-        # The coefs can be positive and negative, but some quantizers
-        # (such as LloydMax) only input positive values. For those
-        # quantizers, the coefs must be shifted. After this, coefs
-        # should fit in [0, 255].
-        #
-        if (self.args.quantizer == "LloydMax"):
-            coefs += 128
-            if __debug__:
-                #assert (coefs < 256).all()
-                if np.max(coefs) > 255:
-                    logging.error(f"coefs[{np.unravel_index(np.argmax(coefs), coefs.shape)}]={np.max(coefs)} and LloydMax only accept values < 256. Quitting ...")
-                    quit()
-                #assert (coefs >= 0).all()
-                if np.min(coefs) > 255:
-                    logging.error(f"coefs[{np.unravel_index(np.argmin(coefs), coefs.shape)}]={np.min(coefs)} and LloydMax only accept values >= 0. Quitting ...")
-                    quit()
-        
         #
         # Quantize the coefficients. 
         #
         logging.debug(f"Input to quantizer with range [{np.min(coefs)}, {np.max(coefs)}]")
-        k = self.quantize_fn(coefs, out_fn)
+        k = self.quantize(coefs)
         
         #
         # The entropy codecs that we are using input input values in
@@ -79,10 +68,11 @@ class CoDec(Q.CoDec):
         #
         # * VQ: output values in Z^+ (and input vectors in Z^+^n).
         #
-        if (self.args.quantizer == "deadzone"):
-            k = k.astype(np.int16)
-            k += 16384
-            k = k.astype(np.uint16)
+        #if (self.args.quantizer == "deadzone"):
+        #    k = k.astype(np.int16)
+        #    k += 16384
+        #    k = k.astype(np.uint16)
+        k = k.astype(np.uint16)
 
         #
         # Compress and write to disk the quantized indexes. Remember
@@ -90,25 +80,25 @@ class CoDec(Q.CoDec):
         # input.
         #
         logging.debug(f"Input to entropy compressor with range [{np.min(k)}, {np.max(k)}]")
-        compressed_k = self.compress_fn(k, in_fn)
-        output_size = self.encode_write_fn(compressed_k, out_fn)
+        compressed_k = self.compress(k)
+        output_size = self.encode_write(compressed_k)
         return output_size
 
-    def decode_fn(self, in_fn, out_fn):
+    def decode(self):
         logging.debug("trace")
         #
         # Read and decompress the quantized indexes.
         #
-        compressed_k = self.decode_read_fn(in_fn)
-        k = self.decompress_fn(compressed_k, in_fn)
+        compressed_k = self.decode_read()
+        k = self.decompress(compressed_k)
 
         #
         # If the quantized indexes were shifted, let's restore the
         # original values.
         #
-        k = k.astype(np.int16)
-        if (self.args.quantizer == "deadzone"):
-            k -= 16384
+        #k = k.astype(np.int16)
+        #if (self.args.quantizer == "deadzone"):
+        #    k -= 16384
             
         #k = k.astype(np.int16)
         #k -= 128
@@ -120,7 +110,9 @@ class CoDec(Q.CoDec):
         # Dequantize the indexes.
         #
         logging.debug(f"Input to dequantizer with range [{np.min(k)}, {np.max(k)}]")
-        coefs = self.dequantize_fn(k, in_fn)
+        coefs = self.dequantize(k).astype(np.int16)
+        for i in range(coefs.shape[2]):
+             coefs[..., i] -= self.offset[i]
 
         #
         # Inverse transform.
@@ -133,7 +125,7 @@ class CoDec(Q.CoDec):
         #
         # Reverse the pixels shift.
         #
-        y = y + 128
+        #y = y + 128
         
 
         #
@@ -141,14 +133,8 @@ class CoDec(Q.CoDec):
         #
         logging.debug(f"Input to entropy decoder with range [{np.min(y)}, {np.max(y)}]")
         y = np.clip(y, 0, 255).astype(np.uint8)
-        output_size = self.decode_write_fn(y, out_fn)
+        output_size = self.decode_write(y)
         return output_size
-
-    def encode(self):
-        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
-
-    def decode(self):
-        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

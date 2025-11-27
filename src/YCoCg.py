@@ -33,20 +33,6 @@ class CoDec(Q.CoDec):
         else:
             self.offset = np.array([0, 128, 128])
 
-    def UNUSED_compress(self, img):
-        img = img.astype(np.int16)
-        img -= 128
-        YCrCb_img = from_RGB(img)
-        compressed_k = super().compress(YCrCb_img)
-        return compressed_k
-
-    def UNUSED_decompress(self, compressed_k):
-        YCrCb_y = super().decompress(compressed_k)
-        y = to_RGB(YCrCb_y)
-        y = np.clip(y, 0, 255)
-        y = y.astype(np.uint8)
-        return y
-
     def encode(self):
         logging.debug("trace")
         img = self.encode_read()
