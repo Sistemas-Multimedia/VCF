@@ -19,17 +19,23 @@ from information_theory import information  # pip install "information_theory @ 
 default_block_size = 4
 #default_EIC = "PNG"
 default_N_clusters = 256
+default_filter = "no_filter"
 
 #parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 #parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-parser.parser_encode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
+parser.parser_encode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size}). The block size must be a multiple of the image size.", default=default_block_size)
 parser.parser_decode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
 parser.parser_encode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 parser.parser_decode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
+parser.parser_decode.add_argument("-f", "--filter", type=parser.int_or_str, help=f"Denoising filter (default: {default_filter})", default=default_filter)
 
 args = parser.parser.parse_known_args()[0]
-denoiser = importlib.import_module("no_filter")
-#EC = importlib.import_module(args.entropy_image_codec)
+try:
+    print("Denoising filter =", args.filter)
+    denoiser = importlib.import_module(args.filter)
+except:
+    # Remember that the filter is only active when decoding.
+    denoiser = importlib.import_module("no_filter")
 
 class CoDec(denoiser.CoDec):
 
@@ -39,55 +45,32 @@ class CoDec(denoiser.CoDec):
         logging.debug(f"args = {self.args}")
         self.BS = args.block_size_VQ
         self.N_clusters = args.N_clusters
-        self.input = args.input
-        self.output = args.output
 
-    def encode_fn(self, in_fn, out_fn):
+    def encode(self):
         logging.debug("trace")
-        img = self.encode_read_fn(in_fn)
+        img = self.encode_read()
         #k, centroids = self.quantize(img)
-        k = self.quantize_fn(img, out_fn)
-        compressed_k = self.compress_fn(k, in_fn)
-        output_size = self.encode_write_fn(compressed_k, out_fn)
+        k = self.quantize(img)
+        compressed_k = self.compress(k)
+        output_size = self.encode_write(compressed_k)
         #self.encode_write_fn(compressed_k, self.output + "_labels")
         #compressed_centroids = self.compress(centroids)
         #self.encode_write_fn(compressed_centroids, self.output + "_centroids")
         return output_size
 
-    def decode_fn(self, in_fn, out_fn):
+    def decode(self):
         logging.debug("trace")
-        compressed_k = self.decode_read_fn(in_fn)
-        #compressed_centroids = self.decode_read_fn(self.input + "_centroids")
-        #compressed_k = self.decode_read_fn(self.input + "_labels")
-        #centroids = self.decompress(compressed_centroids)
-        #k = EC.CoDec.decompress(self, compressed_k)
-        #k = denoiser.CoDec.decompress(self, compressed_k)
-        k = self.decompress_fn(compressed_k, in_fn)
+        compressed_k = self.decode_read()
+        k = self.decompress(compressed_k)
         #y = self.dequantize(k, centroids)
-        y = self.dequantize_fn(k, in_fn)
+        y = self.dequantize(k)
         #print(dir(denoiser.CoDec))
         y = denoiser.CoDec.filter(self, y).astype(np.uint8)
-        output_size = self.decode_write_fn(y, out_fn)
+        output_size = self.decode_write(y)
         return output_size
 
-    def encode(self):
-        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
-    
-    def decode(self):
-        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
-
-    def UNUSED_compress(self, img):
-        k = self.quantize(img)
-        compressed_k = super().compress(k)
-        return compressed_k
-
-    def UNUSED_decompress(self, compressed_k):
-        k = super().decompress(compressed_k)
-        y = self.dequantize(k)
-        return y
-
-    def quantize_fn(self, img, fn):
-        logging.debug("trace")
+    def quantize(self, img):
+        logging.debug(f"trace img = {img}")
         blocks = []
         BL = self.BS * self.BS * img.shape[2]
         for y in range(0, img.shape[0], self.BS):
@@ -130,18 +113,18 @@ class CoDec(denoiser.CoDec):
         centroids = centroids.reshape(centroids.shape[0], self.BS*self.BS, img.shape[2])#.astype(np.uint8)
         #compressed_centroids = self.compress(centroids)
         #self.encode_write_fn(compressed_centroids, self.output + "_centroids")
-        codebook_fn = f"{fn}_centroids.npz"
+        codebook_fn = f"{self.args.encoded}_centroids.npz"
         np.savez_compressed(file=codebook_fn, a=centroids)
         self.total_output_size += os.path.getsize(codebook_fn)
         return labels
         #return labels, centroids
 
     #def dequantize(self, labels, centroids):
-    def dequantize_fn(self, labels, fn):
-        logging.debug("trace")
+    def dequantize(self, labels):
+        logging.debug(f"trace labels={labels}")
         #compressed_centroids = self.decode_read_fn(self.input + "_centroids")
         #centroids = self.decompress(compressed_centroids)
-        codebook_fn = f"{fn}_centroids.npz"
+        codebook_fn = f"{self.args.encoded}_centroids.npz"
         self.total_input_size += os.path.getsize(codebook_fn)
         centroids = np.load(file=codebook_fn)['a']
         img_shape = (labels.shape[0]*self.BS, labels.shape[1]*self.BS, centroids.shape[2])
@@ -158,15 +141,6 @@ class CoDec(denoiser.CoDec):
                                                       self.BS,
                                                       centroids.shape[2])
         return _y
-
-    def quantize(self, img):
-        logging.debug("trace")
-        return self.quantize_fn(img, fn=self.args.output)
-
-    #def dequantize(self, labels, centroids):
-    def dequantize(self, labels):
-        logging.debug("trace")
-        return self.dequantize_fn(labels, fn=self.args.input)
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)
