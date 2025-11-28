@@ -27,7 +27,7 @@ class CoDec(Q.CoDec):
         if args.quantizer == "deadzone":
             self.offset = np.array([0, 0, 0])
         else:
-            self.offset = np.array([256, 256, 256])
+            self.offset = np.array([0, 128, 128])
 
     def encode(self):
         logging.debug("trace")
@@ -47,7 +47,7 @@ class CoDec(Q.CoDec):
         # Transform the image. Coefficients are floats ideally (for
         # the DCT) with mean 0.
         #
-        coefs = from_RGB(img)
+        coefs = from_RGB(img).astype(np.int16)
         for i in range(coefs.shape[2]):
              coefs[..., i] += self.offset[i]
 

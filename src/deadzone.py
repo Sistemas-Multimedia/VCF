@@ -69,8 +69,9 @@ class CoDec(denoiser.CoDec):
         img = self.encode_read()
         logging.debug(f"Input image with range [{np.min(img)}, {np.max(img)}]")
         # Remember that in a deadzone quantizer the input should be
-        # positive and negative.
-        img_128 = img.astype(np.int16) - 128
+        # positive and negative, but this only makes sense when the
+        # signal, by nature, is positive and negative.
+        img_128 = img.astype(np.int16) #- 128
         logging.debug(f"Input to quantizer with range [{np.min(img_128)}, {np.max(img_128)}]")
         k = self.quantize(img_128).astype(np.uint8)
         logging.debug(f"Input to entropy compressor with range [{np.min(k)}, {np.max(k)}]")
@@ -85,7 +86,7 @@ class CoDec(denoiser.CoDec):
         logging.debug(f"Output from entropy decompressor with range [{np.min(k_128)}, {np.max(k_128)}]")
         y_128 = self.dequantize(k_128)
         logging.debug(f"Output from dequantizer with range [{np.min(y_128)}, {np.max(y_128)}]")
-        y = y_128 + 128 
+        y = y_128 #+ 128 
         logging.debug(f"y.shape={y.shape} y.dtype={y.dtype}")        
         y = denoiser.CoDec.filter(self, y)
         output_size = self.decode_write(y)

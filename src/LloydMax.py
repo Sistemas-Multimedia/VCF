@@ -22,13 +22,17 @@ import importlib
 default_QSS = 32
 #default_EIC = "PNG"
 default_filter = "no_filter"
+default_min_val = 0
+default_max_val = 255
 
-#parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-#parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 parser.parser_encode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"Quantization step size (default: {default_QSS})", default=default_QSS)
+parser.parser_encode.add_argument("-m", "--min_val", type=parser.int_or_str, help=f"Default min_val (default: {default_min_val})", default=default_min_val)
+parser.parser_encode.add_argument("-n", "--max_val", type=parser.int_or_str, help=f"Default max_val (default: {default_max_val})", default=default_max_val)
 
 parser.parser_decode.add_argument("-q", "--QSS", type=parser.int_or_str, help=f"Quantization step size (default: {default_QSS})", default=default_QSS)
 parser.parser_decode.add_argument("-f", "--filter", type=parser.int_or_str, help=f"Denoising filter (default: {default_filter})", default=default_filter)
+parser.parser_decode.add_argument("-m", "--min_val", type=parser.int_or_str, help=f"Default min_val (default: {default_min_val})", default=default_min_val)
+parser.parser_decode.add_argument("-n", "--max_val", type=parser.int_or_str, help=f"Default max_val (default: {default_max_val})", default=default_max_val)
 
 args = parser.parser.parse_known_args()[0]
 try:
@@ -43,8 +47,11 @@ class CoDec(denoiser.CoDec):
     def __init__(self, args):
         logging.debug(f"trace args={args}")
         super().__init__(args)
+        self.min_val = args.min_val
+        self.max_val = args.max_val
 
     def encode(self):
+        '''Read, quantize, and write an image.'''
         logging.debug("trace")
         img = self.encode_read()
         k = self.quantize(img)
@@ -53,8 +60,8 @@ class CoDec(denoiser.CoDec):
         return output_size
 
     def decode(self):
+        '''Read, dequantize, and write an image.'''
         logging.debug("trace")
-        #k = io.imread(self.args.input)
         compressed_k = self.decode_read()
         k = self.decompress(compressed_k)
         y = self.dequantize(k)
@@ -63,7 +70,7 @@ class CoDec(denoiser.CoDec):
         return output_size
 
     def quantize(self, img):
-        '''Quantize the image.'''
+        '''Quantize img.'''
         logging.debug(f"trace img={img}")
         logging.info(f"QSS = {self.args.QSS}")
         with open(f"{self.args.encoded}_QSS.txt", 'w') as f:
@@ -76,10 +83,17 @@ class CoDec(denoiser.CoDec):
             extended_img = img
         k = np.empty_like(extended_img)
         for c in range(extended_img.shape[2]):
-            histogram_img, bin_edges_img = np.histogram(extended_img[..., c], bins=256, range=(0, 256))
+            histogram_img, bin_edges_img = np.histogram(
+                extended_img[..., c],
+                bins=(self.max_val - self.min_val + 1),
+                range=(self.min_val, self.max_val))
             logging.info(f"histogram = {histogram_img}")
             histogram_img += 1 # Bins cannot be zero
-            self.Q = Quantizer(Q_step=self.args.QSS, counts=histogram_img)
+            self.Q = Quantizer(
+                Q_step=self.args.QSS,
+                counts=histogram_img,
+                min_val=self.min_val,
+                max_val=self.max_val)
             centroids = self.Q.get_representation_levels()
             with gzip.GzipFile(f"{self.args.encoded}_centroids_{c}.gz", "w") as f:
                 np.save(file=f, arr=centroids)
@@ -90,6 +104,7 @@ class CoDec(denoiser.CoDec):
         return k
 
     def dequantize(self, k):
+        '''Dequantize k.'''
         logging.debug(f"trace k = {k}")
         with open(f"{self.args.encoded}_QSS.txt", 'r') as f:
             QSS = int(f.read())
@@ -103,7 +118,7 @@ class CoDec(denoiser.CoDec):
             with gzip.GzipFile(f"{self.args.encoded}_centroids_{c}.gz", "r") as f:
                 centroids = np.load(file=f)
             logging.info(f"Read {self.args.encoded}_centroids_{c}.gz")
-            self.Q = Quantizer(Q_step=QSS, counts=np.ones(shape=256))
+            self.Q = Quantizer(Q_step=QSS, counts=np.ones(shape=(self.max_val - self.min_val + 1)))
             self.Q.set_representation_levels(centroids)
             y[..., c] = self.Q.decode(extended_k[..., c])
         return y
