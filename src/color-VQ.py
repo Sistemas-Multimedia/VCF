@@ -5,21 +5,17 @@ import numpy as np
 import logging
 import main
 from sklearn import cluster  # pip install scikit-learn
-
 import parser
-from information_theory import information  # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
-#import blur as denoiser
-#import entropy_image_coding as EIC
 import importlib
 
-#default_EIC = "PNG"
+with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
+    f.write(__doc__)
+
 default_N_clusters = 32
 default_filter = "no_filter"
 
-#parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-#parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-parser.parser_encode.add_argument("-m", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
-parser.parser_decode.add_argument("-m", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
+parser.parser_encode.add_argument("-q", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
+parser.parser_decode.add_argument("-q", "--N_color_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 parser.parser_decode.add_argument("-f", "--filter", type=parser.int_or_str, help=f"Denoising filter (default: {default_filter})", default=default_filter)
 
 args = parser.parser.parse_known_args()[0]

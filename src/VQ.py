@@ -9,11 +9,7 @@ with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
 import parser
 from sklearn import cluster  # pip install scikit-learn
 
-#import blur as denoiser
-#import entropy_image_coding as EIC
 import importlib
-#denoiser = importlib.import_module("blur")
-#coño
 from information_theory import information  # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 
 default_block_size = 4
@@ -80,7 +76,9 @@ class CoDec(denoiser.CoDec):
             logging.warning('\033[91m' + "Warning: Must reduce number of clusters. Image not big enough | too much pixel reducction" + '\033[0m')
             self.N_clusters = len(blocks)
         #initial_centroids = np.ones(shape=(self.N_clusters, self.BS*self.BS*img.shape[2]))*255
-        #for i in range(self.N_clusters): # Ojo, que quizás no se use
+        #for i in ran#denoiser = importlib.import_module("blur")
+#coño
+ge(self.N_clusters): # Ojo, que quizás no se use
         #    initial_centroids[i] = np.round(initial_centroids[i]/self.N_clusters)
         #k_means = cluster.KMeans(init=initial_centroids, n_clusters=self.N_clusters, n_init=1)
         k_means = cluster.KMeans(init="k-means++", n_clusters=self.N_clusters, n_init=1)
