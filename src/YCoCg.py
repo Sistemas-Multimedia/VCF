@@ -10,11 +10,8 @@ import parser
 
 from color_transforms.YCoCg import from_RGB # pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
 from color_transforms.YCoCg import to_RGB
-#from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 
 default_quantizer = "deadzone"
-
-#_parser, parser_encode, parser_decode = parser.create_parser(description=__doc__)
 
 parser.parser_encode.add_argument("-a", "--quantizer", help=f"Quantizer (default: {default_quantizer})", default=default_quantizer)
 
@@ -41,12 +38,9 @@ class CoDec(Q.CoDec):
         YCoCg_img = from_RGB(img)
         #assert (YCoCg_img < 256).all()
         #assert (YCoCg_img >= 0).all()
+        # Residues should be centered at zero if deadzone.
         for i in range(YCoCg_img.shape[2]):
              YCoCg_img[..., i] += self.offset[i]
-        # Now the samples should be centered at zero. In the case of a
-        # deadzone quantizer this is the correct configuration. For a
-        # LloydMax quantizer, this is OK because the quantizer is
-        # adaptive.
         k = self.quantize(YCoCg_img)
         logging.debug(f"k = {k}")
         #k += self.offset
