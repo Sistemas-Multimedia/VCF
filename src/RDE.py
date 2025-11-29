@@ -7,15 +7,15 @@ import argparse
 import numpy as np
 from PIL import Image
 import urllib
+import glob
 
 def calculate_rmse(image1_path, image2_path):
+
     """
     Reads two images and computes the Root Mean Square Error (RMSE) 
     between them, assuming they have the same dimensions.
     """
     
-    # 1. Load the images
-
     try:
         img1 = Image.open(image1_path)
     except FileNotFoundError as e:
@@ -87,14 +87,24 @@ def main():
 
     RMSE, shape = calculate_rmse(args.original, args.decoded)
     original_bytes = get_file_size(args.original)
-    codestream_bytes = get_file_size(args.codestream)
+    #codestream_bytes = get_file_size(args.codestream)
+    codestream_prefix = args.codestream.split(".")[0] + '*'
+    #print(codestream_prefix)
+    codestream_files = glob.glob(codestream_prefix)
+    #print("Code-stream files:", codestream_files)
+    codestream_bytes = 0
+    for i in codestream_files:
+        file_length = get_file_size(i)
+        print("Code-stream file:", i, "length:", file_length) 
+        codestream_bytes += file_length
+
     decoded_bytes = get_file_size(args.decoded)
     number_of_pixels = shape[0]*shape[1]
     original_bpp = original_bytes*8/number_of_pixels
     codestream_bpp = codestream_bytes*8/number_of_pixels
     decoded_bpp = decoded_bytes*8/number_of_pixels
     print("Original image:", args.original, original_bytes, f"bytes ({original_bpp:.2f}) bits/pixel")
-    print("Code-stream:", args.codestream, codestream_bytes, f"bytes ({codestream_bpp:.2f}) bits/pixel")
+    print("Code-stream:", codestream_files, codestream_bytes, f"bytes ({codestream_bpp:.2f}) bits/pixel")
     print("Decoded image:", args.decoded, decoded_bytes, f"bytes ({decoded_bpp:.2f}) bits/pixel")
     
     print("Images shape:", shape)

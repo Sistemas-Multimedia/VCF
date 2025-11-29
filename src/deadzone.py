@@ -62,7 +62,7 @@ class CoDec(denoiser.CoDec):
         #        logging.debug(f"Read QSS={self.QSS} from {self.args.output}_deadzone.txt")
         self.QSS = args.QSS
         self.Q = Quantizer(Q_step=self.QSS, min_val=min_index_val, max_val=max_index_val)
-        self.total_output_size = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
+        #self.total_output_size = 1 # We suppose that the representation of the QSS requires 1 byte in the code-stream.
 
     def encode(self):
         logging.debug("trace")

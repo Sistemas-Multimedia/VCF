@@ -42,9 +42,9 @@ video.
 	| spatial transforms  | 2D-DCT*, 2D-DWT, [CAE].
 	+---------------------+
 	|  color transforms   | YCoCg*, YCrCb, RGB2RGB, color-DCT.
-	+---------------------+--+           +--+           +--+     +-----+
-	|     quantizers      |-a| deadzone* |-q|, LloydMax |-q|, VQ |-b,-n|, color-VQ (mover arriba).
-	+---------------------+--+           +--+           ++-++    +-----+
+	+---------------------+--+           +--+           +------+     +----+
+	|     quantizers      |-a| deadzone* |-q|, LloydMax |-q,m,n|, VQ |-q,b|, color-VQ (mover arriba).
+	+---------------------+--+           +--+           ++--+--+     +----+
 	|  decoding filters   |-f| no_filter*, gaussian_blur |-s| , [NLM], [BM3D]
 	+---------------------+--+                           +--+
 	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].

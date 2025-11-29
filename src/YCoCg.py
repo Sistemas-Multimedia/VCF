@@ -29,9 +29,9 @@ class CoDec(Q.CoDec):
         logging.debug("trace")
         super().__init__(args)
         if args.quantizer == "deadzone":
-            self.offset = np.array([-128, 0, 0])
+            self.offset = np.array([0, 0, 0])
         else:
-            self.offset = np.array([0, 128, 128])
+            self.offset = np.array([-128, 0, 0])
 
     def encode(self):
         logging.debug("trace")

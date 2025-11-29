@@ -21,12 +21,10 @@ default_block_size = 4
 default_N_clusters = 256
 default_filter = "no_filter"
 
-#parser.parser_encode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
-#parser.parser_decode.add_argument("-e", "--entropy_image_codec", help=f"Entropy Image Codec (default: {default_EIC})", default=default_EIC)
 parser.parser_encode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size}). The block size must be a multiple of the image size.", default=default_block_size)
 parser.parser_decode.add_argument("-b", "--block_size_VQ", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
-parser.parser_encode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
-parser.parser_decode.add_argument("-n", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
+parser.parser_encode.add_argument("-q", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
+parser.parser_decode.add_argument("-q", "--N_clusters", type=parser.int_or_str, help=f"Number of clusters (default: {default_N_clusters})", default=default_N_clusters)
 parser.parser_decode.add_argument("-f", "--filter", type=parser.int_or_str, help=f"Denoising filter (default: {default_filter})", default=default_filter)
 
 args = parser.parser.parse_known_args()[0]
