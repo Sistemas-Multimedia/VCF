@@ -76,9 +76,7 @@ class CoDec(denoiser.CoDec):
             logging.warning('\033[91m' + "Warning: Must reduce number of clusters. Image not big enough | too much pixel reducction" + '\033[0m')
             self.N_clusters = len(blocks)
         #initial_centroids = np.ones(shape=(self.N_clusters, self.BS*self.BS*img.shape[2]))*255
-        #for i in ran#denoiser = importlib.import_module("blur")
-#coño
-ge(self.N_clusters): # Ojo, que quizás no se use
+        #for i in range(self.N_clusters): # Ojo, que quizás no se use
         #    initial_centroids[i] = np.round(initial_centroids[i]/self.N_clusters)
         #k_means = cluster.KMeans(init=initial_centroids, n_clusters=self.N_clusters, n_init=1)
         k_means = cluster.KMeans(init="k-means++", n_clusters=self.N_clusters, n_init=1)

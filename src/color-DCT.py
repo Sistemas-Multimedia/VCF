@@ -133,6 +133,7 @@ class CoDec(Q.CoDec):
         #
         logging.debug(f"Input to entropy decoder with range [{np.min(y)}, {np.max(y)}]")
         y = np.clip(y, 0, 255).astype(np.uint8)
+        y = Q.denoiser.CoDec.filter(self, y)
         output_size = self.decode_write(y)
         return output_size
 

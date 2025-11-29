@@ -37,12 +37,12 @@ parser.parser_encode.add_argument("-B", "--block_size_DCT", type=parser.int_or_s
 parser.parser_encode.add_argument("-t", "--color_transform", type=parser.int_or_str, help=f"Color transform (default: \"{default_CT}\")", default=default_CT)
 parser.parser_encode.add_argument("-p", "--perceptual_quantization", action='store_true', help=f"Use perceptual quantization (default: \"{perceptual_quantization}\")", default=perceptual_quantization)
 parser.parser_encode.add_argument("-L", "--Lambda", type=parser.int_or_str, help="Relative weight between the rate and the distortion. If provided (float), the block size is RD-optimized between {2**i; i=1,2,3,4,5,6,7}. For example, if Lambda=1.0, then the rate and the distortion have the same weight.")
+parser.parser_encode.add_argument("-x", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
 
 parser.parser_decode.add_argument("-B", "--block_size_DCT", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
 parser.parser_decode.add_argument("-t", "--color_transform", type=parser.int_or_str, help=f"Color transform (default: \"{default_CT}\")", default=default_CT)
 parser.parser_decode.add_argument("-p", "--perceptual_quantization", action='store_true', help=f"Use perceptual dequantization (default: \"{perceptual_quantization}\")", default=perceptual_quantization)
-parser.parser_encode.add_argument("-a", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
-parser.parser_decode.add_argument("-a", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
+parser.parser_decode.add_argument("-x", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
 
 args = parser.parser.parse_known_args()[0]
 CT = importlib.import_module(args.color_transform)
@@ -259,12 +259,12 @@ class CoDec(CT.CoDec):
 
         return unpadded_img
 
-    def encode_fn(self, in_fn, out_fn):
+    def encode(self):
         logging.debug("trace")
         #
         # Read the image.
         #
-        img = self.encode_read_fn(in_fn).astype(np.float32)
+        img = self.encode_read().astype(np.float32)
 
         #
         # Images must have a size multiple of 8.
@@ -273,7 +273,7 @@ class CoDec(CT.CoDec):
         padded_img = self.pad_and_center_to_multiple_of_block_size(img)
         if padded_img.shape != img.shape:
             logging.debug(f"Padding image from dimensions {img.shape} to new dimensions: {padded_img.shape}")
-        with open(f"{out_fn}_shape.bin", "wb") as file:
+        with open(f"{self.args.encoded}_shape.bin", "wb") as file:
             file.write(struct.pack("iii", *self.original_shape))
         img = padded_img
 
@@ -339,10 +339,11 @@ class CoDec(CT.CoDec):
         decom_k += self.offset
         logging.debug(f"decom_k[{np.unravel_index(np.argmax(decom_k),decom_k.shape)}]={np.max(decom_k)}")
         logging.debug(f"decom_k[{np.unravel_index(np.argmin(decom_k),decom_k.shape)}]={np.min(decom_k)}")
-        if np.max(decom_k) > 255:
-            logging.warning(f"decom_k[{np.unravel_index(np.argmax(decom_k),decom_k.shape)}]={np.max(decom_k)}")
-        if np.min(decom_k) < 0:
-            logging.warning(f"decom_k[{np.unravel_index(np.argmin(decom_k),decom_k.shape)}]={np.min(decom_k)}")
+        if self.args.debug:
+            if np.max(decom_k) > 255:
+                logging.warning(f"decom_k[{np.unravel_index(np.argmax(decom_k),decom_k.shape)}]={np.max(decom_k)}")
+            if np.min(decom_k) < 0:
+                logging.warning(f"decom_k[{np.unravel_index(np.argmin(decom_k),decom_k.shape)}]={np.min(decom_k)}")
         #decom_k[0:subband_y_size, 0:subband_x_size, 0] -= 128
 
         #
@@ -351,29 +352,29 @@ class CoDec(CT.CoDec):
         decom_k = decom_k.astype(np.uint8)
         #print("----------_", decom_k, decom_k.shape)
         #decom_k = np.clip(decom_k, 0, 255).astype(np.uint8)
-        decom_k = self.compress_fn(decom_k, in_fn)
+        decom_k = self.compress(decom_k)
 
         #
         # Write the code-stream.
         #
-        output_size = self.encode_write_fn(decom_k, out_fn)
+        output_size = self.encode_write(decom_k)
         #self.BPP = (self.total_output_size*8)/(img.shape[0]*img.shape[1])
         #return rate
         return output_size
 
-    def decode_fn(self, in_fn, out_fn):
+    def decode(self):
         logging.debug("trace")
         #
         # Read the code-stream.
         #
-        decom_k = self.decode_read_fn(in_fn)
-        with open(f"{in_fn}_shape.bin", "rb") as file:
+        decom_k = self.decode_read()
+        with open(f"{self.args.encoded}_shape.bin", "rb") as file:
             self.original_shape = struct.unpack("iii", file.read(12))
 
         #
         # Decompress the indexes.
         #
-        decom_k = self.decompress_fn(decom_k, in_fn)
+        decom_k = self.decompress(decom_k)
         logging.debug(f"original_shape={self.original_shape}, current_shape={decom_k.shape}")
 
         #
@@ -402,7 +403,6 @@ class CoDec(CT.CoDec):
         #
         # Perceptual de-quantization.
         #
-        print("-------------->", DCT_y.dtype)
         if args.perceptual_quantization:
             logging.debug(f"Using perceptual de-quantization with block_size = {self.block_size}")
             blocks_in_y = int(DCT_y.shape[0]/self.block_size)
@@ -437,25 +437,19 @@ class CoDec(CT.CoDec):
         # Restore the original range of values.
         #
         y += self.offset
-        if np.max(y) > 255:
-            logging.warning(f"y[{np.unravel_index(np.argmax(y),y.shape)}]={np.max(y)}")
-        if np.min(y) < 0:
-            logging.warning(f"y[{np.unravel_index(np.argmin(y),y.shape)}]={np.min(y)}")
+        if self.args.debug:
+            if np.max(y) > 255:
+                logging.warning(f"y[{np.unravel_index(np.argmax(y),y.shape)}]={np.max(y)}")
+            if np.min(y) < 0:
+                logging.warning(f"y[{np.unravel_index(np.argmin(y),y.shape)}]={np.min(y)}")
 
         #
         # Write the image.
         #
         y = np.clip(y, 0, 255).astype(np.uint8)
         output_size = self.decode_write_fn(y, out_fn)
-        #self.BPP = (self.input_bytes*8)/(y.shape[0]*y.shape[1])
-        #return rate
+
         return output_size
-
-    def encode(self):
-        return self.encode_fn(in_fn=self.args.input, out_fn=self.args.output)
-
-    def decode(self):
-        return self.decode_fn(in_fn=self.args.input, out_fn=self.args.output)
 
     def quantize_decom(self, decom):
         logging.debug("trace")
