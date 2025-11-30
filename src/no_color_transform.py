@@ -1,4 +1,4 @@
-'''Dummy RGB (no color) transform.'''
+'''No color transform.'''
 
 import numpy as np
 import logging
@@ -11,7 +11,6 @@ import parser
 default_quantizer = "deadzone"
 
 parser.parser_encode.add_argument("-a", "--quantizer", help=f"Quantizer (default: {default_quantizer})", default=default_quantizer)
-
 parser.parser_decode.add_argument("-a", "--quantizer", help=f"Quantizer (default: {default_quantizer})", default=default_quantizer)
 
 args = parser.parser.parse_known_args()[0]
@@ -27,11 +26,8 @@ class CoDec(Q.CoDec):
         logging.debug("trace")
         img = self.encode_read()
         img = img.astype(np.int16)
-        #img -= self.offset
-        RGB_img = img
-        k = self.quantize(RGB_img)
+        k = self.quantize(img)
         logging.debug(f"k.shape={k.shape}, k.type={k.dtype}")
-        #k += self.offset
         if self.args.debug:
             if np.max(k) > 255:
                 logging.warning(f"k[{np.unravel_index(np.argmax(k),k.shape)}]={np.max(k)}")
@@ -48,10 +44,7 @@ class CoDec(Q.CoDec):
         k = self.decompress(compressed_k)
         k = k.astype(np.int16)
         logging.debug(f"k.shape={k.shape}, k.type={k.dtype}")
-        #k -= self.offset
-        RGB_y = self.dequantize(k)
-        y = RGB_y
-        #y += self.offset
+        y = self.dequantize(k)
         logging.debug(f"y.shape={y.shape}, y.type={y.dtype}")
         if self.args.debug:
             if np.max(y) > 255:

@@ -39,9 +39,9 @@ video.
 	+---------------------+
 	| temporal transforms | III, [IPP], [IBP], [MCTF], [MC-DWT].
 	+---------------------+         +--------+
-	| spatial transforms  | 2D-DCT* |-B,p,L,x|, 2D-DWT, [CAE].
+	| spatial transforms  | 2D-DCT* |-B,p,L,x|, 2D-DWT, [CAE], no_spatial_transform.
 	+---------------------+--+      +--------+
-	|  color transforms   |-t| YCoCg*, YCrCb, RGB2RGB, color-DCT.
+	|  color transforms   |-t| YCoCg*, YCrCb, color-DCT, no_color_transform.
 	+---------------------+--+           +--+           +------+     +----+           +--+
 	|     quantizers      |-a| deadzone* |-q|, LloydMax |-q,m,n|, VQ |-q,b|, color-VQ |-q|.
 	+---------------------+--+           +--+           ++--+--+     +----+           +--+
