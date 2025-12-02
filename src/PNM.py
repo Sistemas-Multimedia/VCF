@@ -18,9 +18,8 @@ class CoDec(EIC.CoDec):
         super().__init__(args)
         self.file_extension = ".pnm"
 
-    def compress_fn(self, img, fn):
+    def compress(self, img):
         logging.debug(f"trace img={img}")
-        logging.debug(f"trace fn={fn}")
         logging.debug(f"img.dtype={img.dtype}")
         assert (img.dtype == np.uint8) or (img.dtype == np.uint16), f"current type = {img.dtype}"
         compressed_img = io.BytesIO()

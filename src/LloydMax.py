@@ -36,7 +36,7 @@ parser.parser_decode.add_argument("-n", "--max_val", type=parser.int_or_str, hel
 
 args = parser.parser.parse_known_args()[0]
 try:
-    #print("Denoising filter =", args.filter)
+    print("Denoising filter =", args.filter) # Don't delete this!!
     denoiser = importlib.import_module(args.filter)
 except:
     # Remember that the filter is only active when decoding.
@@ -49,6 +49,9 @@ class CoDec(denoiser.CoDec):
         super().__init__(args)
         self.min_val = args.min_val
         self.max_val = args.max_val
+        logging.info(f"min_val = {self.min_val}")
+        logging.info(f"max_val = {self.max_val}")
+        logging.info(f"QSS = {self.args.QSS}")
 
     def encode(self):
         '''Read, quantize, and write an image.'''
@@ -74,11 +77,16 @@ class CoDec(denoiser.CoDec):
         logging.debug("trace")
         logging.debug(f"trace img={img}")
         logging.debug(f"trace fn={fn}")
-        logging.info(f"QSS = {self.args.QSS}")
-        with open(f"{fn}_QSS.txt", 'w') as f:
-            f.write(f"{self.args.QSS}")
-        self.output_bytes = 1 # We suppose that the representation of the QSS requires 1 byte
-        logging.info(f"Written {fn}_QSS.txt")
+        QSS = self.args.QSS
+        min_val = self.args.min_val
+        max_val = self.args.max_val
+        logging.info(f"QSS = {QSS}")
+        with open(f"{fn}_params.txt", 'w') as f:
+            f.write(f"{QSS}\n")
+            f.write(f"{min_val}\n")
+            f.write(f"{max_val}\n")
+        #self.output_bytes = 1 # We suppose that the representation of the QSS requires 1 byte
+        #logging.info(f"Written {fn}_QSS.txt")
         if len(img.shape) < 3:
             extended_img = np.expand_dims(img, axis=2)
         else:
@@ -87,15 +95,15 @@ class CoDec(denoiser.CoDec):
         for c in range(extended_img.shape[2]):
             histogram_img, bin_edges_img = np.histogram(
                 extended_img[..., c],
-                bins=(self.max_val - self.min_val + 1),
-                range=(self.min_val, self.max_val))
+                bins=(max_val - min_val + 1),
+                range=(min_val, max_val))
             logging.info(f"histogram = {histogram_img}")
             histogram_img += 1 # Bins cannot be zero
             self.Q = Quantizer(
                 Q_step=self.args.QSS,
                 counts=histogram_img,
-                min_val=self.min_val,
-                max_val=self.max_val)
+                min_val=min_val,
+                max_val=max_val)
             centroids = self.Q.get_representation_levels()
             with gzip.GzipFile(f"{fn}_centroids_{c}.gz", "w") as f:
                 np.save(file=f, arr=centroids)
@@ -112,9 +120,14 @@ class CoDec(denoiser.CoDec):
         '''Dequantize k.'''
         logging.debug("trace")
         logging.debug(f"trace k = {k}")
-        with open(f"{fn}_QSS.txt", 'r') as f:
-            QSS = int(f.read())
-        logging.info(f"Read QSS={QSS} from {fn}_QSS.txt")
+        with open(f"{fn}_params.txt", 'r') as f:
+            QSS, min_val, max_val = [int(line.strip()) for line in f]
+            #QSS = int(f.read())
+            #max_val = int(f.read())
+            #min_val = int(f.read())
+        logging.info(f"QSS = {QSS}")
+        logging.info(f"min_val={min_val}")
+        logging.info(f"max_val={max_val}")
         if len(k.shape) < 3:
             extended_k = np.expand_dims(k, axis=2)
         else:
@@ -124,7 +137,7 @@ class CoDec(denoiser.CoDec):
             with gzip.GzipFile(f"{fn}_centroids_{c}.gz", "r") as f:
                 centroids = np.load(file=f)
             logging.info(f"Read {fn}_centroids_{c}.gz")
-            self.Q = Quantizer(Q_step=QSS, counts=np.ones(shape=(self.max_val - self.min_val + 1)))
+            self.Q = Quantizer(Q_step=QSS, counts=np.ones(shape=(max_val - min_val + 1)))
             self.Q.set_representation_levels(centroids)
             y[..., c] = self.Q.decode(extended_k[..., c])
         return y

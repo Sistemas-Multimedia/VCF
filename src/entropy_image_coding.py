@@ -98,16 +98,16 @@ class CoDec:
         logging.debug(f"trace img={img}")
         logging.debug(f"trace fn={fn}")
         try:
-            skimage_io.imsave(fn + self.file_extension, img)
+            skimage_io.imsave(fn, img)
         except Exception as e:
             logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
         self.img_shape = img.shape
-        output_size = os.path.getsize(fn + self.file_extension)
+        output_size = os.path.getsize(fn)
         self.total_output_size += output_size
         logging.debug(f"Written {output_size} bytes in {fn} with shape {img.shape} and type {img.dtype}")
         return output_size
 
-    def decode_write(self, img, fn="/tmp/decoded"):
+    def decode_write(self, img, fn="/tmp/decoded.png"):
         return self.decode_write_fn(img, fn)
 
     def decode(self):
