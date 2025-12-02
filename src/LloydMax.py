@@ -36,7 +36,7 @@ parser.parser_decode.add_argument("-n", "--max_val", type=parser.int_or_str, hel
 
 args = parser.parser.parse_known_args()[0]
 try:
-    print("Denoising filter =", args.filter)
+    #print("Denoising filter =", args.filter)
     denoiser = importlib.import_module(args.filter)
 except:
     # Remember that the filter is only active when decoding.
@@ -69,14 +69,16 @@ class CoDec(denoiser.CoDec):
         output_size = self.decode_write(y)
         return output_size
 
-    def quantize(self, img):
+    def quantize_fn(self, img, fn):
         '''Quantize img.'''
+        logging.debug("trace")
         logging.debug(f"trace img={img}")
+        logging.debug(f"trace fn={fn}")
         logging.info(f"QSS = {self.args.QSS}")
-        with open(f"{self.args.encoded}_QSS.txt", 'w') as f:
+        with open(f"{fn}_QSS.txt", 'w') as f:
             f.write(f"{self.args.QSS}")
         self.output_bytes = 1 # We suppose that the representation of the QSS requires 1 byte
-        logging.info(f"Written {self.args.encoded}_QSS.txt")
+        logging.info(f"Written {fn}_QSS.txt")
         if len(img.shape) < 3:
             extended_img = np.expand_dims(img, axis=2)
         else:
@@ -95,33 +97,40 @@ class CoDec(denoiser.CoDec):
                 min_val=self.min_val,
                 max_val=self.max_val)
             centroids = self.Q.get_representation_levels()
-            with gzip.GzipFile(f"{self.args.encoded}_centroids_{c}.gz", "w") as f:
+            with gzip.GzipFile(f"{fn}_centroids_{c}.gz", "w") as f:
                 np.save(file=f, arr=centroids)
-            len_codebook = os.path.getsize(f"{self.args.encoded}_centroids_{c}.gz")
+            len_codebook = os.path.getsize(f"{fn}_centroids_{c}.gz")
             logging.info(f"Written {len_codebook} bytes in {self.args.encoded}_centroids_{c}.gz")
             self.total_output_size += len_codebook
             k[..., c] = self.Q.encode(extended_img[..., c])
         return k
 
-    def dequantize(self, k):
+    def quantize(self, img, fn="/tmp/encoded"):
+        return self.quantize_fn(img, fn)
+
+    def dequantize_fn(self, k, fn):
         '''Dequantize k.'''
+        logging.debug("trace")
         logging.debug(f"trace k = {k}")
-        with open(f"{self.args.encoded}_QSS.txt", 'r') as f:
+        with open(f"{fn}_QSS.txt", 'r') as f:
             QSS = int(f.read())
-        logging.info(f"Read QSS={QSS} from {self.args.encoded}_QSS.txt")
+        logging.info(f"Read QSS={QSS} from {fn}_QSS.txt")
         if len(k.shape) < 3:
             extended_k = np.expand_dims(k, axis=2)
         else:
             extended_k = k
         y = np.empty_like(extended_k)
         for c in range(y.shape[2]):
-            with gzip.GzipFile(f"{self.args.encoded}_centroids_{c}.gz", "r") as f:
+            with gzip.GzipFile(f"{fn}_centroids_{c}.gz", "r") as f:
                 centroids = np.load(file=f)
-            logging.info(f"Read {self.args.encoded}_centroids_{c}.gz")
+            logging.info(f"Read {fn}_centroids_{c}.gz")
             self.Q = Quantizer(Q_step=QSS, counts=np.ones(shape=(self.max_val - self.min_val + 1)))
             self.Q.set_representation_levels(centroids)
             y[..., c] = self.Q.decode(extended_k[..., c])
         return y
+
+    def dequantize(self, k, fn="/tmp/encoded"):
+        return self.dequantize_fn(k, fn)
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

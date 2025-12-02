@@ -29,6 +29,7 @@ parser.parser_decode.add_argument("-e", "--encoded", type=parser.int_or_str, hel
 parser.parser_decode.add_argument("-d", "--decoded", type=parser.int_or_str, help=f"Output image (default: {DECODED})", default=f"{DECODED}")    
 
 class CoDec:
+    
     def __init__(self, args):
         logging.debug(f"trace args={args}")
         self.args = args
@@ -43,32 +44,38 @@ class CoDec:
     def bye(self):
         logging.debug("trace")
 
-    def encode_read(self):
+    def encode_read_fn(self, fn):
         '''Read an image.'''
         try:
-            input_size = os.path.getsize(self.args.original)
-            img = cv.imread(self.args.original, cv.IMREAD_UNCHANGED)
+            input_size = os.path.getsize(fn)
+            img = cv.imread(fn, cv.IMREAD_UNCHANGED)
             img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         except:
-            req = urllib.request.Request(self.args.original, method='HEAD')
+            req = urllib.request.Request(fn, method='HEAD')
             f = urllib.request.urlopen(req)
             input_size = int(f.headers['Content-Length'])
             self.total_input_size += input_size
-            img = skimage_io.imread(self.args.original) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
-        logging.debug(f"Read {input_size} bytes from {self.args.original} with shape {img.shape} and type={img.dtype}")
+            img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
+        logging.debug(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
         self.img_shape = img.shape
         return img
 
-    def encode_write(self, codestream):
+    def encode_read(self, fn="/tmp/original.png"):
+        return self.encode_read_fn(fn)
+
+    def encode_write_fn(self, codestream, fn):
         '''Write a code-stream.'''
         logging.debug(f"trace codestream={codestream}")
         codestream.seek(0)
-        with open(self.args.encoded + self.file_extension, "wb") as output_file:
+        with open(fn + self.file_extension, "wb") as output_file:
             output_file.write(codestream.read())
-        output_size = os.path.getsize(self.args.encoded + self.file_extension)
+        output_size = os.path.getsize(fn + self.file_extension)
         self.total_output_size += output_size
-        logging.info(f"Written {output_size} bytes in {self.args.encoded + self.file_extension}")
+        logging.info(f"Written {output_size} bytes in {fn + self.file_extension}")
         return output_size
+
+    def encode_write(self, codestream, fn="/tmp/encoded"):
+        return self.encode_write_fn(codestream, fn)
 
     def encode(self):
         img = self.encode_read()
@@ -77,24 +84,31 @@ class CoDec:
         self.img_shape = img.shape
         return output_size
 
-    def decode_read(self):
-        input_size = os.path.getsize(self.args.encoded + self.file_extension)
+    def decode_read_fn(self, fn):
+        input_size = os.path.getsize(fn + self.file_extension)
         self.total_input_size += input_size
-        logging.debug(f"Read {input_size} bytes from {self.args.encoded + self.file_extension}")
-        codestream = open(self.args.encoded + self.file_extension, "rb").read()
+        logging.debug(f"Read {input_size} bytes from {fn + self.file_extension}")
+        codestream = open(fn + self.file_extension, "rb").read()
         return codestream
 
-    def decode_write(self, img):
+    def decode_read(self, fn="/tmp/encoded"):
+        return self.decode_read_fn(fn)
+
+    def decode_write_fn(self, img, fn):
         logging.debug(f"trace img={img}")
+        logging.debug(f"trace fn={fn}")
         try:
-            skimage_io.imsave(self.args.decoded, img)
+            skimage_io.imsave(fn + self.file_extension, img)
         except Exception as e:
-            logging.error(f"Exception \"{e}\" saving image {self.args.decoded} with shape {img.shape} and type {img.dtype}")
+            logging.error(f"Exception \"{e}\" saving image {fn} with shape {img.shape} and type {img.dtype}")
         self.img_shape = img.shape
-        output_size = os.path.getsize(self.args.decoded)
+        output_size = os.path.getsize(fn + self.file_extension)
         self.total_output_size += output_size
-        logging.debug(f"Written {output_size} bytes in {self.args.decoded} with shape {img.shape} and type {img.dtype}")
+        logging.debug(f"Written {output_size} bytes in {fn} with shape {img.shape} and type {img.dtype}")
         return output_size
+
+    def decode_write(self, img, fn="/tmp/decoded"):
+        return self.decode_write_fn(img, fn)
 
     def decode(self):
         compressed_img = self.decode_read()

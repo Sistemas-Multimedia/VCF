@@ -24,52 +24,27 @@ Supposing that a Python interpreter and Git are available:
 ### Video coding (example)
 
       cd src
-      python MPNG.py encode
-      ffplay /tmp/encoded_%04d.png
-      python MPNG.py decode
-      mplayer /tmp/decoded.avi
-   
-## Programming
+      python III.py encode
+      ffplay /tmp/encoded_%04d.tif
+      python III.py decode
+      ffplay /tmp/decoded_%04d.png
 
-Typically, you will need to develop a new encoding scheme for image or
-video.
-
-### Codecs organization
+## Codecs organization
 
 	+---------------------+
-	| temporal transforms | III, [IPP], [IBP], [MCTF], [MC-DWT].
+	| temporal transforms | III, [IPP] (5), [IBP] (6), [MCTF] (6).
 	+---------------------+         +--------+
-	| spatial transforms  | 2D-DCT* |-B,p,L,x|, 2D-DWT, [CAE], no_spatial_transform.
+	| spatial transforms  | 2D-DCT* |-B,p,L,x|, 2D-DWT, [CAE] (5), no_spatial_transform.
 	+---------------------+--+      +--------+
 	|  color transforms   |-t| YCoCg*, YCrCb, color-DCT, no_color_transform.
 	+---------------------+--+           +--+           +------+     +----+           +--+
 	|     quantizers      |-a| deadzone* |-q|, LloydMax |-q,m,n|, VQ |-q,b|, color-VQ |-q|.
 	+---------------------+--+           +--+           ++--+--+     +----+           +--+
-	|  decoding filters   |-f| no_filter*, gaussian_blur |-s|, [NLM], [BM3D]
+	|  decoding filters   |-f| no_filter*, gaussian_blur |-s|, [NLM] (1), [BM3D] (3)
 	+---------------------+--+                           +--+
-	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, [adaptive_Huffman], [arith], [adaptive_arith].
+	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, [adaptive_Huffman] (4), [arith] (4), [adaptive_arith] (5).
 	+---------------------+--+
 
 	...* = default option
 	[...] = to be implemented
-
-### Image Coding
-
-The simplest solution is to implement the methods `compressed_img =
-compress(img)` and `img = decompress(compressed_img)`, defined in the
-`entropy_image_coding`
-[class interface](https://realpython.com/python-interface/). Notice
-that it is not necessary to read `img` when encoding, nor write
-`compressed_img` when
-decoding. Example:
-[`src/PNM.py`](https://github.com/Sistemas-Multimedia/VCF/blob/main/src/PNM.py).
-
-### Video Coding
-
-Again, it is necessary to implement the methods `None = compress()`
-and `None = decompress()`, defined in the `entropy_video_coding` class
-interface. In this case, because a video usually does not fit in
-memory, you must read and write the frames in the methods `compress()`
-and
-`decompress()`. Example
-[`src/MPNG.py`](https://github.com/Sistemas-Multimedia/VCF/blob/main/src/MPNG.py).
+	(.) = points for the evaluation of the subject

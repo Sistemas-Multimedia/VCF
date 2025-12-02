@@ -35,6 +35,7 @@ class CoDec(EIC.CoDec):
         compressed_img = pyio.BytesIO(compressed_img)
         img = tifffile.imread(compressed_img)
         logging.debug(f"img.dtype={img.dtype}")
+        logging.debug(f"img = {img}")
         return img
 
 if __name__ == "__main__":

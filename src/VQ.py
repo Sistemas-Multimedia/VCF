@@ -25,7 +25,7 @@ parser.parser_decode.add_argument("-f", "--filter", type=parser.int_or_str, help
 
 args = parser.parser.parse_known_args()[0]
 try:
-    print("Denoising filter =", args.filter)
+    #print("Denoising filter =", args.filter)
     denoiser = importlib.import_module(args.filter)
 except:
     # Remember that the filter is only active when decoding.

@@ -447,8 +447,7 @@ class CoDec(CT.CoDec):
         # Write the image.
         #
         y = np.clip(y, 0, 255).astype(np.uint8)
-        output_size = self.decode_write_fn(y, out_fn)
-
+        output_size = self.decode_write(y)
         return output_size
 
     def quantize_decom(self, decom):

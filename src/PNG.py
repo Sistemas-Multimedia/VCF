@@ -23,45 +23,28 @@ class CoDec(EIC.CoDec):
     def compress_fn(self, img, fn):
         logging.debug(f"trace img={img}")
         logging.debug(f"trace fn={fn}")
-        #skimage_io.use_plugin('freeimage')
-        #compressed_img = img
         logging.debug(f"Input to io.BytesIO() witn range [{np.min(img)}, {np.max(img)}]")
         assert (img.dtype == np.uint8) or (img.dtype == np.uint16), f"current type = {img.dtype}"
-        #assert (img.dtype == np.uint8), f"current type = {img.dtype}"
         compressed_img = io.BytesIO()
-        #skimage_io.imsave(fname=compressed_img, arr=img[:,:,0], plugin="imageio", check_contrast=False)
-        #skimage_io.imsave(fname=compressed_img, arr=img[:,:,0], plugin="pil", check_contrast=False)
-        #skimage_io.imsave(fname=compressed_img, arr=img, plugin="pil", check_contrast=False)
-        #print("---->", compressed_img)
-        #skimage_io.imsave(fname=compressed_img, arr=img, check_contrast=False, format="png", extension=".png")
-        #compressed_img = iio.imwrite("<bytes>", img, extension=".png")
-        
         # https://imageio.readthedocs.io/en/stable/examples.html#writing-to-bytes-encoding
         iio.imwrite(compressed_img, img, plugin="pillow", extension=".png")
-        
-        #skimage_io.imsave(fname=compressed_img, arr=img, plugin="freeimage")
-        #img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-        #cv.imwrite(compressed_img, img, [cv.IMWRITE_PNG_COMPRESSION, COMPRESSION_LEVEL])
-        #with open(compressed_img, "wb") as f:
-        #    writer = png.Writer(width=img.shape[1], height=img.shape[0],
-        #                        bitdeph=16, greyscale=False)
-            # Convert z to the Python list of lists expected by
-            # the png writer.
-        #    z2list = z.reshape(-1, z.shape[1]*z.shape[2]).tolist()
-        #    writer.write(f, z2list)
         return compressed_img
+
+    def compress(self, img, fn=="/tmp/encoded"):
+        return self.compress_fn(img, fn)
 
     # pip install imageio-freeimage (not necessary now)
     def decompress_fn(self, compressed_img, fn):
         logging.debug(f"trace compressed_img={compressed_img[10]}")
         logging.debug(f"trace fn={fn}")
         compressed_img = io.BytesIO(compressed_img)
-        #img = cv.imread(compressed_img, cv.IMREAD_UNCHANGED)
-        #img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         img = skimage_io.imread(fname=compressed_img)
         logging.debug(f"Output from skimage_io.imread() witn range [{np.min(img)}, {np.max(img)}]")
         logging.debug(f"img.dtype={img.dtype}")
         return img
+
+    def decompress(self, compressed_img, fn="/tmp/encoded"):
+        return self.decompress_fn(compressed_img, fn)
     
     ##########
     # UNUSED #
@@ -111,28 +94,6 @@ class CoDec(EIC.CoDec):
 
         '''
         return self.encode()
-
-class CoDec(EIC.CoDec):
-    def __init__(self, args):
-        logging.debug(f"trace args={args}")
-        super().__init__(args)
-        self.file_extension = ".png"
-
-    def compress(self, img):
-        logging.debug(f"trace img={img}")
-        logging.debug(f"Input to io.BytesIO() witn range [{np.min(img)}, {np.max(img)}]")
-        assert (img.dtype == np.uint8) or (img.dtype == np.uint16), f"current type = {img.dtype}"
-        compressed_img = io.BytesIO()
-        iio.imwrite(compressed_img, img, plugin="pillow", extension=".png")
-        return compressed_img
-
-    def decompress(self, compressed_img):
-        logging.debug(f"trace compressed_img={compressed_img[10]}")
-        compressed_img = io.BytesIO(compressed_img)
-        img = skimage_io.imread(fname=compressed_img)
-        logging.debug(f"Output from skimage_io.imread() witn range [{np.min(img)}, {np.max(img)}]")
-        logging.debug(f"img.dtype={img.dtype}")
-        return img
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)

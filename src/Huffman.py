@@ -24,9 +24,9 @@ class CoDec(EIC.CoDec):
         super().__init__(args)
         self.file_extension = ".huf"
 
-    def compress(self, img):
+    def compress_fn(self, img, fn):
         logging.debug(f"trace img={img}")
-        tree_fn = f"{self.args.encoded}_huffman_tree.pkl.gz"
+        tree_fn = f"{fn}_huffman_tree.pkl.gz"
         compressed_img = io.BytesIO()
 
         # Flatten the array and convert to a list
@@ -54,10 +54,13 @@ class CoDec(EIC.CoDec):
         #self.total_output_size += tree_length
 
         return compressed_img
+
+    def compress(self, img, fn="/tmp/encoded"):
+        return self.compress_fn(ing, fn)
     
-    def decompress(self, compressed_img):
+    def decompress_fn(self, compressed_img, fn):
         logging.debug(f"trace compressed_img={compressed_img[:10]}")
-        tree_fn = f"{self.args.encoded}_huffman_tree.pkl.gz"
+        tree_fn = f"{fn}_huffman_tree.pkl.gz"
         compressed_img = io.BytesIO(compressed_img)
         
         # Load the shape and the Huffman Tree from the compressed file
@@ -79,6 +82,9 @@ class CoDec(EIC.CoDec):
         # Reshape decoded data to original shape
         img = np.array(decoded_data).reshape(shape).astype(np.uint8)
         return img
+
+    def decompress(self, compressed_img, fn="/tmp/encoded"):
+        return self.decompress_fn(compressed_img, fn)
 
 if __name__ == "__main__":
     main.main(parser.parser, logging, CoDec)
