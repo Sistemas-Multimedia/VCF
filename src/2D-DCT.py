@@ -278,7 +278,7 @@ class CoDec(CT.CoDec):
         img = padded_img
 
         #
-        # Provides numperical stability to the DCT.
+        # Provides numerical stability to the DCT.
         #
         img -= self.offset
         logging.debug(f"Input to color-DCT with range [{np.min(img)}, {np.max(img)}]")

@@ -1,4 +1,4 @@
-'''III... coding: runs a 2D image codec to a sequence of images.'''
+'''III... coding: runs a 2D image codec for each image of a sequence.'''
 
 import sys
 import io
@@ -67,7 +67,7 @@ class CoDec(EVC.CoDec):
 
         '''
         logging.debug("trace")
-        fn = self.args.input
+        fn = self.args.original
         logging.info(f"Encoding {fn}")
         container = av.open(fn)
         img_counter = 0

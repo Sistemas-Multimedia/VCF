@@ -30,7 +30,7 @@ N_FRAMES = 3
 
 DEFAULT_TRANSFORM = "2D-DCT"
 
-class Video:
+class UNUSED_Video:
     '''A video is a sequence of files stored in "prefix".'''
 
     def __init__(self, N_frames, height, width, fn):
