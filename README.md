@@ -31,9 +31,9 @@ Supposing that a Python interpreter and Git are available:
 
 ## Codecs organization
 
-	+---------------------+
-	| temporal transforms |    III, [IPP] (5), [IBP] (6), [MCTF] (6).
-	+---------------------+--+         +--------+
+	+---------------------+        +----+
+	| temporal transforms |    III |-T,N|, [IPP] (5), [IBP] (6), [MCTF] (6).
+	+---------------------+--+     +---++-------+
 	| spatial transforms  |-T| 2D-DCT* |-B,p,L,x|, 2D-DWT, [CAE] (5), no_spatial_transform.
 	+---------------------+--+         +--------+
 	|  color transforms   |-t| YCoCg*, YCrCb, color-DCT, no_color_transform.
