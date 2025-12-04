@@ -62,6 +62,7 @@ class CoDec:
         self.framerate = 30
 
     def bye(self):
+        return
         logging.debug("trace")
         #logging.info(f"Total {self.total_input_size} bytes read")
         #logging.info(f"Total {self.total_output_size} bytes written")
