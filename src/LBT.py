@@ -675,7 +675,7 @@ class CoDec(CT.CoDec):
             except Exception as e:
                 raise IOError(f"Error al leer archivo codificado: {in_fn}: {e}")
             
-            if decom_k is None or decom_k.size == 0:
+            if decom_k is None or len(decom_k) == 0:
                 raise ValueError(f"Archivo codificado vacío o inválido: {in_fn}")
             
             # Leer las dimensiones originales
