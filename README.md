@@ -48,3 +48,33 @@ Supposing that a Python interpreter and Git are available:
 	...* = default option
 	[...] = to be implemented
 	(.) = points for the evaluation of the subject
+
+## Decoding Filters
+
+Decoding filters are applied during the decompression phase to improve image quality by removing noise or artifacts.
+
+### Non-Local Means (NLM)
+The NLM filter reduces noise by averaging pixel values based on the similarity of their surrounding neighborhoods, rather than just their local proximity.
+
+**Usage:**
+```bash
+python NLM.py decode -i <input_encoded_file> -o <output_image> --h 10 --template_window_size 7 --search_window_size 21
+```
+* `--h`: Filter strength (higher values remove more noise but may blur details).
+* `--template_window_size`: Size of the patch to compare.
+* `--search_window_size`: Size of the area to search for similar patches.
+
+### Block-Matching and 3D Filtering (BM3D)
+An advanced denoising algorithm that groups similar 2D image patches into 3D stacks and applies filtering in the transform domain. It supports grayscale, color, and multichannel images, as well as deblurring.
+
+**Usage:**
+```bash
+python BM3D.py decode -i <input_encoded_file> -o <output_image> --sigma_bm3d 25.0 --profile_bm3d np
+```
+* `--sigma_bm3d`: Noise standard deviation (fuerza del filtro).
+* `--profile_bm3d`: Complexity profile (`lc`, `np`, `high`, `vn`).
+* `--psd_bm3d`: (Optional) Path to a `.npy` file with the noise Power Spectral Density.
+* `--psf_bm3d`: (Optional) Path to a `.npy` file with the Point Spread Function for deblurring.
+
+
+
