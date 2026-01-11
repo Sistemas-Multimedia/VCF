@@ -37,21 +37,20 @@ class CoDec(EIC.CoDec):
         compressed_img = io.BytesIO()
 
         # Flatten image to 1D array and convert to bytes
-        flattened_img = img.flatten().tolist()
+        flattened_img = img.flatten()
         data_bytes = bytes(flattened_img)
 
+        
         # Encode using Adaptive Huffman FGK
         encoder = FGK()
         encoded_bits = encoder.encode(data_bytes)
 
-        # Convert bit string to bitarray and write to BytesIO
+        np.save(f"{fn}_bitlen.npy",len(encoded_bits))
+
         ba = bitarray(encoded_bits)
         ba.tofile(compressed_img)
-        
-        # Save original shape separately
-        shape_fn = f"{fn}_shape.npy"
-        np.save(shape_fn, img.shape)
-        logging.debug(f"Saved image shape to {shape_fn}")
+
+        np.save(f"{fn}_shape.npy",img.shape)
 
         return compressed_img
         
@@ -63,20 +62,24 @@ class CoDec(EIC.CoDec):
 
         compressed_img = io.BytesIO(compressed_img)
 
-        # Load original shape
-        shape_fn = f"{fn}_shape.npy"
-        shape = np.load(shape_fn)
+        # load Shape
+        shape = np.load(f"{fn}_shape.npy")
+        bitlen = int(np.load(f"{fn}_bitlen.npy"))
+        
 
         # Read bitarray from BytesIO
         ba = bitarray()
         ba.fromfile(compressed_img)
 
+        encoded_data = ba.to01()[:bitlen]
+
         # Decode using Adaptive Huffman FGK
         decoder = FGK()
-        decoded_bytes = decoder.decode(ba.to01())
+        decoded_bytes = decoder.decode(encoded_data)
 
-        # Reshape decoded bytes to original image
-        img = np.frombuffer(decoded_bytes, dtype=np.uint8).reshape(shape)
+        # reconstruct image
+        img = np.frombuffer(bytes(decoded_bytes),dtype=np.uint8).reshape(shape)
+        
         return img
 
     def decompress(self, compressed_img, fn="/tmp/encoded"):
