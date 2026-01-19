@@ -18,7 +18,7 @@ from information_theory import distortion # pip install "information_theory @ gi
 
 import importlib
   
-default_QSS = 32
+default_QSS = 16
 #default_EIC = "PNG"
 #default_filter_size = 3
 default_filter = "no_filter"
