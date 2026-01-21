@@ -1,0 +1,149 @@
+Metadata-Version: 2.4
+Name: netpbmfile
+Version: 2026.1.8
+Summary: Read and write Netpbm files
+Home-page: https://www.cgohlke.com
+Author: Christoph Gohlke
+Author-email: cgohlke@cgohlke.com
+License: BSD-3-Clause
+Project-URL: Bug Tracker, https://github.com/cgohlke/netpbmfile/issues
+Project-URL: Source Code, https://github.com/cgohlke/netpbmfile
+Platform: any
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Requires-Python: >=3.11
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+Requires-Dist: numpy
+Provides-Extra: all
+Requires-Dist: tifffile; extra == "all"
+Requires-Dist: matplotlib; extra == "all"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: platform
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+Read and write Netpbm files
+===========================
+
+Netpbmfile is a Python library to read and write image files in the Netpbm
+or related formats:
+
+- PBM (Portable Bit Map): P1 (text) and P4 (binary)
+- PGM (Portable Gray Map): P2 (text) and P5 (binary)
+- PPM (Portable Pixel Map): P3 (text) and P6 (binary)
+- PNM (Portable Any Map): shorthand for PBM, PGM, and PPM collectively
+- PAM (Portable Arbitrary Map): P7, bilevel, gray, and rgb
+- PGX (Portable Graymap Signed): PG, signed grayscale
+- PFM (Portable Float Map): Pf (gray), PF (rgb), and PF4 (rgba), read-only
+- XV thumbnail: P7 332 (rgb332), read-only
+
+The Netpbm formats are specified at https://netpbm.sourceforge.net/doc/.
+
+The PGX format is specified in ITU-T Rec. T.803.
+
+No gamma correction or scaling is performed.
+
+:Author: `Christoph Gohlke <https://www.cgohlke.com>`_
+:License: BSD-3-Clause
+:Version: 2026.1.8
+:DOI: `10.5281/zenodo.17903402 <https://doi.org/10.5281/zenodo.17903402>`_
+
+Quickstart
+----------
+
+Install the netpbmfile package and all dependencies from the
+`Python Package Index <https://pypi.org/project/netpbmfile/>`_::
+
+    python -m pip install -U "netpbmfile[all]"
+
+See `Examples`_ for using the programming interface.
+
+Source code and support are available on
+`GitHub <https://github.com/cgohlke/netpbmfile>`_.
+
+Requirements
+------------
+This revision was tested with the following requirements and dependencies
+(other versions may work):
+
+- `CPython <https://www.python.org>`_ 3.11.9, 3.12.10, 3.13.11, 3.14.2 64-bit
+- `NumPy <https://pypi.org/project/numpy>`_ 2.4.0
+
+Revisions
+---------
+
+2026.1.8
+
+- Improve code quality.
+
+2025.12.12
+
+- Drop support for Python 3.10, support Python 3.14.
+
+2025.5.8
+
+- Remove doctest command line option.
+
+2025.1.1
+
+- Improve type hints.
+- Drop support for Python 3.9, support Python 3.13.
+
+2024.5.24
+
+- …
+
+Refer to the CHANGES file for older revisions.
+
+Examples
+--------
+
+Write a numpy array to a Netpbm file in grayscale binary format:
+
+>>> import numpy
+>>> data = numpy.array([[0, 1], [65534, 65535]], dtype=numpy.uint16)
+>>> imwrite('_tmp.pgm', data)
+
+Read the image data from a Netpbm file as numpy array:
+
+>>> image = imread('_tmp.pgm')
+>>> numpy.testing.assert_equal(image, data)
+
+Access meta and image data in a Netpbm file:
+
+>>> with NetpbmFile('_tmp.pgm') as pgm:
+...     pgm.magicnumber
+...     pgm.axes
+...     pgm.shape
+...     pgm.dtype
+...     pgm.maxval
+...     pgm.asarray().tolist()
+...
+'P5'
+'YX'
+(2, 2)
+dtype('>u2')
+65535
+[[0, 1], [65534, 65535]]
+
+View the image and metadata in the Netpbm file from the command line::
+
+    $ python -m netpbmfile _tmp.pgm

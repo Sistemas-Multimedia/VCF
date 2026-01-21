@@ -1,0 +1,2 @@
+from information_theory import distortion
+from information_theory import information

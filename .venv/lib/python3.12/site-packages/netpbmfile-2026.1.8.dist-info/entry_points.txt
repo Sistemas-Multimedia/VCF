@@ -1,0 +1,2 @@
+[console_scripts]
+netpbmfile = netpbmfile.netpbmfile:main
