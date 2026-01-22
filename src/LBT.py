@@ -72,7 +72,7 @@ class LearnedBlockTransform:
         self.N = block_size * block_size
         self.model = LBTModel(self.N)
 
-    def train(self, images, epochs=401, lr=1e-2, lambda_v=1.0):
+    def train(self, images, epochs=401, lr=None, lambda_v=1.0):
         blocks = []
         for img in images:
             blocks.append(self._extract_blocks(img))
@@ -80,29 +80,31 @@ class LearnedBlockTransform:
         # Preparar tensores (Num_Bloques, N)
         X = torch.from_numpy(np.concatenate(blocks, axis=0).reshape(-1, self.N)).float()
 
+        # Learning rate adaptativo según tamaño de bloque
+        if lr is None:
+            lr = min(1e-2, 1.0 / self.N)  # Reducir lr para bloques grandes
+
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
-        print(f"Iniciando entrenamiento (N={self.N})...")
+        print(f"Iniciando entrenamiento (N={self.N}, lr={lr:.6f})...")
         for e in range(epochs):
             optimizer.zero_grad()
 
             x_hat, y = self.model(X)
 
-            # Pérdida 1: Error de reconstrucción (Fidelidad)
+            # Pérdida: Solo error de reconstrucción (el término 1/var causa problemas)
             mse = torch.mean((x_hat - X)**2)
-
-            # Pérdida 2: Inversa de la Varianza (Expansión para cuantizador futuro)
-            var_y = torch.var(y) + 1e-6
-            r_loss = 1.0 / var_y
-
-            # J = MSE + lambda * R
-            loss = mse + lambda_v * r_loss
+            loss = mse
 
             loss.backward()
+            
+            # Evitar explosión de gradientes
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            
             optimizer.step()
 
-            if e % 10 == 0:
-                print(f"Epoch {e:3d} | Loss: {loss.item():.6f} | MSE: {mse.item():.8f} | Var(Y): {var_y.item():.4f}")
+            if e % 50 == 0:
+                print(f"Epoch {e:3d} | Loss: {loss.item():.6f} | MSE: {mse.item():.8f}")
 
     def encode_blocks(self, img):
         self.model.eval()
