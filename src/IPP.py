@@ -6,7 +6,6 @@ with open("/tmp/description.txt", "w") as f:
     f.write(__doc__)
 
 import os
-import json
 import logging
 import numpy as np
 from PIL import Image
@@ -59,119 +58,125 @@ class CoDec:
         SEARCH = self.args.search_range
         GOP = self.args.gop_size
         LAMBDA = self.args.lambda_rdo
-        
+
         ref_frame = None
         frame_idx = 0
-        
 
         for packet in container.demux():
             for frame in packet.decode():
                 curr = np.array(frame.to_image()).astype(np.int16)
                 H, W = curr.shape[:2]
-                
-                # Imagen para guardar (residuos o pixels)
-                to_save_img = np.zeros_like(curr)
-                
+
+                # ---------------- Inicialización ----------------
                 mv = np.zeros((H // B, W // B, 2), dtype=np.int16)
-                # Mapa de modos: 0 = Intra (raw), 1 = Inter (residual)
-                modes = np.zeros((H // B, W // B), dtype=np.uint8) 
+                modes = np.zeros((H // B, W // B), dtype=np.uint8)
 
                 # ---------------- I-FRAME ----------------
                 if ref_frame is None or frame_idx % GOP == 0:
-                    frame_type = "I"
-                    # En I-Frame todo es Intra (raw pixels)
-                    to_save_img = curr.copy() 
+                    #frame_type = "I"
+                    # Todo bloque es intra
+                    to_save_img = curr.copy()
                     recon = curr.copy()
-                    # Nota: En I-frame modes se queda todo en 0 (Intra)
-                
-                # ---------------- P-FRAME ----------------
                 else:
-                    frame_type = "P"
+                    #frame_type = "P"
                     recon = np.zeros_like(curr)
-                    
+
+                    # Prepara imagenes todo I y todo P
+                    test_I = curr.copy()  # todo I
+                    test_P = np.zeros_like(curr)  # todo P
                     for y in range(0, H, B):
                         for x in range(0, W, B):
-                            # Coordenadas de bloque (grid)
                             by, bx = y // B, x // B
-                            
                             block = curr[y:y+B, x:x+B]
-                            
+
                             # --- Motion Estimation ---
                             best_sad = np.inf
                             best_pred = None
                             best_dy = best_dx = 0
-                            
                             for dy in range(-SEARCH, SEARCH+1):
                                 for dx in range(-SEARCH, SEARCH+1):
                                     ry, rx = y+dy, x+dx
                                     if ry<0 or rx<0 or ry+B>H or rx+B>W:
                                         continue
-                                    
-                                    cand = ref_frame[ry:ry+B, rx:rx+B]
+                                    cand = ref_frame[ry:ry+B, x+dx:x+dx+B]
                                     sad = np.sum(np.abs(block - cand))
-                                    
                                     if sad < best_sad:
                                         best_sad = sad
                                         best_pred = cand
                                         best_dy, best_dx = dy, dx
-                            
-                            residual = block - best_pred
-                            
-                            # --- RDO ---
-                            # Coste Intra (transmitir pixel tal cual)
-                            D_I = np.sum((block - block)**2) # Distortion es 0 si no hay cuantización
-                            # Aproximación simple: varianza o energía como proxy de bitrate
-                            mse_intra = np.mean(block**2) 
-                            J_I = mse_intra # Simplificado para el ejemplo
-                            
-                            # Coste Inter (transmitir residuo)
-                            mse_inter = np.mean(residual**2)
-                            J_P = mse_inter + LAMBDA # Penalización por vector de movimiento
-                            
-                            # NOTA: Tu lógica original de RDO comparaba sumas directas.
-                            # Aquí mantenemos la lógica de selección:
-                            # Si la energía del residuo es menor que la del bloque, usa Inter.
-                            
-                            if np.sum(np.abs(block)) < np.sum(np.abs(residual)) + 100: # Heurística simple
-                                # MODO INTRA (dentro de P-frame)
-                                to_save_img[y:y+B, x:x+B] = block
-                                recon[y:y+B, x:x+B] = block
-                                modes[by, bx] = 0 # 0 = Intra
-                            else:
-                                # MODO INTER
-                                # CORRECCIÓN CRÍTICA: Offset +128 para guardar negativos
-                                to_save_img[y:y+B, x:x+B] = residual + 128
-                                recon[y:y+B, x:x+B] = best_pred + residual
-                                mv[by, bx] = (best_dy, best_dx)
-                                modes[by, bx] = 1 # 1 = Inter
 
-                # ---------------- Guardado ----------------
-                # Guardamos la imagen preparada (con offset si aplica)
+                            residual = block - best_pred
+                            test_P[y:y+B, x:x+B] = residual + 128
+                            mv[by, bx] = (best_dy, best_dx)
+
+                    # Guardar imágenes para aplicar transformada
+                    test_I_png = f"{self.args.output_prefix}/frame_test_I_{frame_idx:04d}.png"
+                    test_P_png = f"{self.args.output_prefix}/frame_test_P_{frame_idx:04d}.png"
+                    Image.fromarray(np.clip(test_I, 0, 255).astype(np.uint8)).save(test_I_png)
+                    Image.fromarray(np.clip(test_P, 0, 255).astype(np.uint8)).save(test_P_png)
+                    self.transform_codec.encode_fn(test_I_png, test_I_png.replace(".png",""))
+                    self.transform_codec.encode_fn(test_P_png, test_P_png.replace(".png",""))
+
+                    decoded_I_png = f"{self.args.output_prefix}/frame_test_I_decoded_{frame_idx:04d}.png"
+                    decoded_P_png = f"{self.args.output_prefix}/frame_test_P_decoded_{frame_idx:04d}.png"
+                    self.transform_codec.decode_fn(test_I_png.replace(".png",""), decoded_I_png)
+                    self.transform_codec.decode_fn(test_P_png.replace(".png",""), decoded_P_png)
+
+                    decoded_I = np.array(Image.open(decoded_I_png)).astype(np.int16)
+                    decoded_P = np.array(Image.open(decoded_P_png)).astype(np.int16)
+
+                    # ---------------- Comparación bloque a bloque con RDO simplificado ----------------
+                    to_save_img = np.zeros_like(curr)
+                    for y in range(0, H, B):
+                        for x in range(0, W, B):
+                            by, bx = y // B, x // B
+                            block_I = decoded_I[y:y+B, x:x+B]
+                            block_P = decoded_P[y:y+B, x:x+B]
+
+                            # Distorsión D = MSE
+                            D_I = np.mean((curr[y:y+B, x:x+B] - block_I)**2)
+
+                            res_block = decoded_P[y:y+B, x:x+B] - 128
+                            dy, dx = mv[by, bx]                        # vector de movimiento
+                            pred_block = ref_frame[y+dy:y+dy+B, x+dx:x+dx+B]  # bloque predicho
+                            recon_block = pred_block + res_block       # reconstrucción real
+                            D_P = np.mean((curr[y:y+B, x:x+B] - recon_block)**2)
+
+                            # Heurística para R
+                            R_I = np.sum(np.abs(block_I))
+                            R_P = np.sum(np.abs(block_P))
+
+                            # J = D + λ * R
+                            J_I = D_I + LAMBDA * R_I
+                            J_P = D_P + LAMBDA * R_P
+
+                            if J_I <= J_P:
+                                #to_save_img[y:y+B, x:x+B] = block_I
+                                #modes[by, bx] = 0
+                                #recon[y:y+B, x:x+B] = block_I
+                                to_save_img[y:y+B, x:x+B] = test_I[y:y+B, x:x+B]
+                                modes[by, bx] = 0
+                                recon[y:y+B, x:x+B] = test_I[y:y+B, x:x+B]
+                            else:
+                                #to_save_img[y:y+B, x:x+B] = block_P
+                                #modes[by, bx] = 1
+                                #recon[y:y+B, x:x+B] = block_P
+                                to_save_img[y:y+B, x:x+B] = test_P[y:y+B, x:x+B]
+                                modes[by, bx] = 1
+                                recon[y:y+B, x:x+B] = recon_block
+
+                # ---------------- Guardar residual final ----------------
                 residual_png = f"{self.args.output_prefix}/residual_{frame_idx:04d}.png"
                 residual_prefix = f"{self.args.output_prefix}/residual_{frame_idx:04d}"
-                
                 Image.fromarray(np.clip(to_save_img, 0, 255).astype(np.uint8)).save(residual_png)
-                
-                # Aplicar códec 2D externo
                 self.transform_codec.encode_fn(residual_png, residual_prefix)
-                
-                # Guardar Side Information (MV + MODES)
-                # MV
-                import gzip
 
-                # MV
+                # Guardar Side Information
                 with gzip.GzipFile(f"{self.args.output_prefix}/frame_{frame_idx:04d}_mv.npy.gz", "w") as f:
                     np.save(f, mv)
-
-                # MODES
                 with gzip.GzipFile(f"{self.args.output_prefix}/frame_{frame_idx:04d}_modes.npy.gz", "w") as f:
                     np.save(f, modes)
 
-                
-                with open(f"{self.args.output_prefix}/frame_{frame_idx:04d}.type","w") as f:
-                    f.write(frame_type)
-                
-                
                 ref_frame = recon.copy()
                 frame_idx += 1
                 if self.args.number_of_frames and frame_idx >= self.args.number_of_frames:
@@ -179,8 +184,9 @@ class CoDec:
             
             if self.args.number_of_frames and frame_idx >= self.args.number_of_frames:
                 break
-        
+
         logging.info("IPP encoding finished")
+
 
     # ----------------- DECODE -----------------
     def decode(self):
