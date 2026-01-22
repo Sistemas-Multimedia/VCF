@@ -28,6 +28,8 @@ parser.parser_encode.add_argument("-S", "--search_range", type=int, default=4)
 parser.parser_encode.add_argument("--lambda_rdo", type=float, default=0.01, help="IPP Lambda for RDO")
 
 parser.parser_decode.add_argument("-o", "--output_prefix", default="/tmp/ipp", help="Input directory")
+parser.parser_decode.add_argument("-G", "--gop_size", type=int, default=10)
+parser.parser_decode.add_argument("-b", "--block_size", type=int, default=16, help="IPP block size")
 
 
 
@@ -60,14 +62,6 @@ class CoDec:
         ref_frame = None
         frame_idx = 0
         
-        header = {
-            "block_size": B,
-            "search_range": SEARCH,
-            "gop_size": GOP,
-            "lambda": LAMBDA,
-            "transform": self.args.transform,
-            "frames": []
-        }
 
         for packet in container.demux():
             for frame in packet.decode():
@@ -167,10 +161,6 @@ class CoDec:
                 with open(f"{self.args.output_prefix}/frame_{frame_idx:04d}.type","w") as f:
                     f.write(frame_type)
                 
-                header["frames"].append({
-                    "index": frame_idx,
-                    "type": frame_type
-                })
                 
                 ref_frame = recon.copy()
                 frame_idx += 1
@@ -179,83 +169,60 @@ class CoDec:
             
             if self.args.number_of_frames and frame_idx >= self.args.number_of_frames:
                 break
-                
-        # Guardar header
-        with open(f"{self.args.output_prefix}/header.json","w") as f:
-            json.dump(header,f,indent=2)
+        
         logging.info("IPP encoding finished")
 
     # ----------------- DECODE -----------------
     def decode(self):
-        header_path = f"{self.args.output_prefix}/header.json"
-        with open(header_path,"r") as f:
-            header = json.load(f)
-            
-        B = header["block_size"]
+        B = self.args.block_size
+        GOP = self.args.gop_size
         ref_frame = None
-        
-        for frame_info in header["frames"]:
-            idx = frame_info["index"]
-            ftype = frame_info["type"]
-            
-            # Archivo TIFF generado por el codificador
-            residual_tiff = f"{self.args.output_prefix}/residual_{idx:04d}"
+        frame_idx = 0
 
-            # Archivo temporal donde decode_fn va a escribir el resultado decodificado
-            residual_decoded_png = f"{self.args.output_prefix}/residual_decoded_{idx:04d}.png"
+        while True:
+            mv_fn = f"{self.args.output_prefix}/frame_{frame_idx:04d}_mv.npy"
+            modes_fn = f"{self.args.output_prefix}/frame_{frame_idx:04d}_modes.npy"
 
-            mv_fn = f"{self.args.output_prefix}/frame_{idx:04d}_mv.npy"
-            modes_fn = f"{self.args.output_prefix}/frame_{idx:04d}_modes.npy"
+            if not os.path.exists(mv_fn) or not os.path.exists(modes_fn):
+                break
 
             mv = np.load(mv_fn)
             modes = np.load(modes_fn)
 
-            # Decodificar usando el archivo TIFF
-            self.transform_codec.decode_fn(residual_tiff, residual_decoded_png)
+            residual_prefix = f"{self.args.output_prefix}/residual_{frame_idx:04d}"
+            residual_decoded_png = f"{self.args.output_prefix}/residual_decoded_{frame_idx:04d}.png"
 
-            # Cargar la imagen decodificada en memoria
+            self.transform_codec.decode_fn(residual_prefix, residual_decoded_png)
             decoded_img = np.array(Image.open(residual_decoded_png)).astype(np.int16)
 
-            
             H, W = decoded_img.shape[:2]
             recon = np.zeros_like(decoded_img)
-            
-            # ---------------- Reconstrucción ----------------
-            if ftype == "I":
-                # En I-Frame, la imagen decodificada son pixels directos
-                recon = decoded_img
+
+            if ref_frame is None or frame_idx % GOP == 0:
+                recon = decoded_img.copy()
             else:
-                # En P-Frame, depende del modo del bloque
                 for y in range(0, H, B):
                     for x in range(0, W, B):
                         by, bx = y // B, x // B
                         mode = modes[by, bx]
-                        
                         block_val = decoded_img[y:y+B, x:x+B]
-                        
-                        if mode == 0: 
-                            # MODO INTRA: La imagen guardada son pixels crudos
+
+                        if mode == 0:
                             recon[y:y+B, x:x+B] = block_val
                         else:
-                            # MODO INTER: La imagen guardada es (residual + 128)
-                            # 1. Recuperar el residuo real (restando 128)
                             residual = block_val - 128
-                            
-                            # 2. Obtener predicción
                             dy, dx = mv[by, bx]
                             pred_block = ref_frame[y+dy:y+dy+B, x+dx:x+dx+B]
-                            
-                            # 3. Reconstruir
                             recon[y:y+B, x:x+B] = pred_block + residual
 
-            # Clip final para asegurar rango válido de imagen
             recon = np.clip(recon, 0, 255)
-            
-            out_fn = f"{self.args.output_prefix}/decoded_{idx:04d}.png"
+            out_fn = f"{self.args.output_prefix}/decoded_{frame_idx:04d}.png"
             Image.fromarray(recon.astype(np.uint8)).save(out_fn)
             logging.info(f"Saved reconstructed frame: {out_fn}")
-            
+
             ref_frame = recon.copy()
+            frame_idx += 1
+
 # ------------------------------------------------------------
 # MAIN
 # ------------------------------------------------------------
