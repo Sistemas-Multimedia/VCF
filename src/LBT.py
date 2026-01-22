@@ -72,7 +72,7 @@ class LearnedBlockTransform:
         self.N = block_size * block_size
         self.model = LBTModel(self.N)
 
-    def train(self, images, epochs=401, lr=None, lambda_v=1.0):
+    def train(self, images, epochs=401, lr=1e-2, lambda_v=1.0):
         blocks = []
         for img in images:
             blocks.append(self._extract_blocks(img))
@@ -81,8 +81,7 @@ class LearnedBlockTransform:
         X = torch.from_numpy(np.concatenate(blocks, axis=0).reshape(-1, self.N)).float()
 
         # Learning rate adaptativo según tamaño de bloque
-        if lr is None:
-            lr = min(1e-2, 1.0 / self.N)  # Reducir lr para bloques grandes
+
 
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
@@ -97,9 +96,6 @@ class LearnedBlockTransform:
             loss = mse
 
             loss.backward()
-            
-            # Evitar explosión de gradientes
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
             
             optimizer.step()
 
