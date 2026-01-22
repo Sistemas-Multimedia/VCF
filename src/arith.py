@@ -72,7 +72,6 @@ class CoDec(EIC.CoDec):
             np.save(f, img.shape)
             pickle.dump({'symbols': symbols, 'counts': counts}, f)
 
-        # TRADUCIDO AL CASTELLANO
         logging.info(f"Tamaño comprimido: {len(bit_stream)} bits")
         return compressed_img
 
