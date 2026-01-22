@@ -198,17 +198,24 @@ class CoDec:
             idx = frame_info["index"]
             ftype = frame_info["type"]
             
-            residual_prefix = f"{self.args.output_prefix}/residual_{idx:04d}"
-            residual_png = f"{self.args.output_prefix}/residual_decoded_{idx:04d}.png"
+            # Archivo TIFF generado por el codificador
+            residual_tiff = f"{self.args.output_prefix}/residual_{idx:04d}"
+
+            # Archivo temporal donde decode_fn va a escribir el resultado decodificado
+            residual_decoded_png = f"{self.args.output_prefix}/residual_decoded_{idx:04d}.png"
+
             mv_fn = f"{self.args.output_prefix}/frame_{idx:04d}_mv.npy"
             modes_fn = f"{self.args.output_prefix}/frame_{idx:04d}_modes.npy"
-            
+
             mv = np.load(mv_fn)
-            modes = np.load(modes_fn) # Cargamos el mapa de modos
-            
-            # Decodificar la imagen (residual o pixels)
-            self.transform_codec.decode_fn(residual_prefix, residual_png)
-            decoded_img = np.array(Image.open(residual_png)).astype(np.int16)
+            modes = np.load(modes_fn)
+
+            # Decodificar usando el archivo TIFF
+            self.transform_codec.decode_fn(residual_tiff, residual_decoded_png)
+
+            # Cargar la imagen decodificada en memoria
+            decoded_img = np.array(Image.open(residual_decoded_png)).astype(np.int16)
+
             
             H, W = decoded_img.shape[:2]
             recon = np.zeros_like(decoded_img)
