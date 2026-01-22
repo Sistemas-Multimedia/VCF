@@ -15,6 +15,7 @@ import importlib
 import parser
 import main
 from III import *
+import gzip
 
 # ------------------------------------------------------------
 # Argumentos específicos IPP
@@ -155,8 +156,17 @@ class CoDec:
                 self.transform_codec.encode_fn(residual_png, residual_prefix)
                 
                 # Guardar Side Information (MV + MODES)
-                np.save(f"{self.args.output_prefix}/frame_{frame_idx:04d}_mv.npy", mv)
-                np.save(f"{self.args.output_prefix}/frame_{frame_idx:04d}_modes.npy", modes)
+                # MV
+                import gzip
+
+                # MV
+                with gzip.GzipFile(f"{self.args.output_prefix}/frame_{frame_idx:04d}_mv.npy.gz", "w") as f:
+                    np.save(f, mv)
+
+                # MODES
+                with gzip.GzipFile(f"{self.args.output_prefix}/frame_{frame_idx:04d}_modes.npy.gz", "w") as f:
+                    np.save(f, modes)
+
                 
                 with open(f"{self.args.output_prefix}/frame_{frame_idx:04d}.type","w") as f:
                     f.write(frame_type)
@@ -180,14 +190,19 @@ class CoDec:
         frame_idx = 0
 
         while True:
-            mv_fn = f"{self.args.output_prefix}/frame_{frame_idx:04d}_mv.npy"
-            modes_fn = f"{self.args.output_prefix}/frame_{frame_idx:04d}_modes.npy"
+            mv_fn = f"{self.args.output_prefix}/frame_{frame_idx:04d}_mv.npy.gz"
+            modes_fn = f"{self.args.output_prefix}/frame_{frame_idx:04d}_modes.npy.gz"
 
             if not os.path.exists(mv_fn) or not os.path.exists(modes_fn):
                 break
 
-            mv = np.load(mv_fn)
-            modes = np.load(modes_fn)
+            # MV
+            with gzip.GzipFile(mv_fn, "r") as f:
+                mv = np.load(f)
+
+            # MODES
+            with gzip.GzipFile(modes_fn, "r") as f:
+                modes = np.load(f)
 
             residual_prefix = f"{self.args.output_prefix}/residual_{frame_idx:04d}"
             residual_decoded_png = f"{self.args.output_prefix}/residual_decoded_{frame_idx:04d}.png"
