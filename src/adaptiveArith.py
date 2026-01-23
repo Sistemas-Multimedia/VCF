@@ -1,4 +1,4 @@
-'''Entropy Encoding of images Arithmetic Coding'''
+'''Entropy Encoding of images Arithmetic Coding with multiple order'''
 import io
 import numpy as np
 import main
@@ -18,15 +18,29 @@ import gzip
 import pickle
 from bitarray import bitarray
 import math
-from adaptive_arith_code.adaptiveArithmeticCode import ArithmeticCodding,build_default_FrequencyTable,EOF
+from adaptive_arith_code.Ppm_compressor import PPMCompressor,PPMDecompressor
+
+default_order = 1
 
 
+parser.parser_encode.add_argument("-m","--model_order",type=parser.int_or_str,
+                                 help="Order of the probabilistic model",default=default_order)
+
+parser.parser_decode.add_argument("-m","--model_order",type=parser.int_or_str,
+                                help="Order of the probabilistic model",default=default_order)
+
+args = parser.parser.parse_known_args()[0]
+
+#TODO: Add parser to determinate the what order to use
 class CoDec(EIC.CoDec):
     
     def __init__(self, args):
         logging.debug(f"trace args={args}")
         super().__init__(args)
         self.file_extension = ".aari" # Extension reference to Adaptive Arithmetic
+
+        # Set the order of the probabilistic model
+        self.order = args.model_order
     
 
     def compress_fn(self, img, fn):
@@ -37,27 +51,15 @@ class CoDec(EIC.CoDec):
         # Flatten the array and convert to a list
         flattened_img = img.flatten().tolist()
 
-        # Add the EOF symbol
-        flattened_img.append(EOF())
+        # Create Encoder, use default EOF and ESC symbol internally
+        encoder = PPMCompressor(model_order=self.order)
 
-        # Build default FrequencyTable
-        # This method initialized a FrequencyTable of 256 values and EOF symbol
-        table_encoder = build_default_FrequencyTable()
+        # Compress the model and return a bitarray
+        bits = encoder.compress(flattened_img)
 
-        # Create Encoder
-        encoder = ArithmeticCodding()
-
-        #set bits list
-        bits = []
-
-        # Encode Symbol a symbol of the img
-        for symbol in flattened_img:
-            encoder.encode_symbol(symbol,table_encoder, bits)  
-            table_encoder.updateFreqs(symbol)
-        encoder.finish(bits)
+        bit_bytes = self.bits_to_bytes(bits)
 
         # Write encoded image and original shape to compressed_img
-        bit_bytes = self.bits_to_bytes(bits)  # Save encoded data as bytes
         compressed_img.write(bit_bytes)
 
         # Compress and save shape and Arithmetic
@@ -75,10 +77,9 @@ class CoDec(EIC.CoDec):
         arith_fn = f"{fn}_adaptive_arith.pkl.gz"
         compressed_img = io.BytesIO(compressed_img)
 
-        # Build default FrequencyTable
-        table_decoder = build_default_FrequencyTable()
+        # Initialize the Descompressor with a determinate order
+        decoder = PPMDecompressor(model_order=self.order)
         
-        decoder = ArithmeticCodding()
         # Load the shape from the compressed file
         with gzip.open(arith_fn, 'rb') as f:
             shape = np.load(f)
@@ -86,11 +87,11 @@ class CoDec(EIC.CoDec):
 
         bits = self.bytes_to_bits(compressed_img.read())
         
-        decoded_symbols = []
-        decoder.decode(bits,table_decoder,decoded_symbols)
+        #Decode the bits, how we use a model_order we can determinate the table used
+        decoded_bits = decoder.decompress(bits)
 
         # Reshape decoded data to original shape
-        img = np.array(decoded_symbols, dtype=np.uint8).reshape(shape)
+        img = np.array(list(decoded_bits), dtype=np.uint8).reshape(shape)
         return img
 
     def decompress(self, compressed_img, fn="/tmp/encoded"):
