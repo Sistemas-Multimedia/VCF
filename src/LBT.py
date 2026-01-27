@@ -36,12 +36,19 @@ disable_subbands = False
 #_parser, parser_encode, parser_decode = parser.create_parser(description=__doc__)
 
 parser.parser_encode.add_argument("-B", "--block_size_DCT", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
+parser.parser_encode.add_argument("--side_info", type=str, help="Ruta para guardar los pesos entrenados (opcional)", default=None)
+parser.parser_encode.add_argument("--epochs", type=int, help="Number of training epochs", default=100)
+parser.parser_encode.add_argument("--lr", type=float, help="Learning rate", default=1e-3)
 parser.parser_encode.add_argument("-t", "--color_transform", type=parser.int_or_str, help=f"Color transform (default: \"{default_CT}\")", default=default_CT)
 parser.parser_encode.add_argument("-p", "--perceptual_quantization", action='store_true', help=f"Use perceptual quantization (default: \"{perceptual_quantization}\")", default=perceptual_quantization)
 parser.parser_encode.add_argument("-L", "--Lambda", type=parser.int_or_str, help="Relative weight between the rate and the distortion. If provided (float), the block size is RD-optimized between {2**i; i=1,2,3,4,5,6,7}. For example, if Lambda=1.0, then the rate and the distortion have the same weight.")
 parser.parser_encode.add_argument("-x", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
 
+
+
+
 parser.parser_decode.add_argument("-B", "--block_size_DCT", type=parser.int_or_str, help=f"Block size (default: {default_block_size})", default=default_block_size)
+parser.parser_decode.add_argument("--side_info", type=str, help="Ruta para cargar los pesos entrenados (opcional)", default=None)
 parser.parser_decode.add_argument("-t", "--color_transform", type=parser.int_or_str, help=f"Color transform (default: \"{default_CT}\")", default=default_CT)
 parser.parser_decode.add_argument("-p", "--perceptual_quantization", action='store_true', help=f"Use perceptual dequantization (default: \"{perceptual_quantization}\")", default=perceptual_quantization)
 parser.parser_decode.add_argument("-x", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
@@ -52,12 +59,15 @@ CT = importlib.import_module(args.color_transform)
 class LBTModel(nn.Module):
     def __init__(self, n_features):
         super(LBTModel, self).__init__()
-        # Definimos encoder y decoder como matrices lineales
+        # Encoder: Input -> Coeficientes
         self.encoder = nn.Linear(n_features, n_features, bias=False)
+        # Decoder: Coeficientes -> Reconstrucción
         self.decoder = nn.Linear(n_features, n_features, bias=False)
 
-        # INICIALIZACIÓN CRÍTICA: Empezamos con la matriz Identidad
-        # Esto asegura que al inicio la imagen pase sin perder información
+        # Inicialización Identidad
+        self.reset_weights()
+
+    def reset_weights(self):
         nn.init.eye_(self.encoder.weight)
         nn.init.eye_(self.decoder.weight)
 
@@ -67,66 +77,96 @@ class LBTModel(nn.Module):
         return x_hat, y
 
 class LearnedBlockTransform:
-    def __init__(self, block_size: int):
+    def __init__(self, block_size: int, epochs: int = 100, lr: float = 1e-3, lambda_gain: float = 0.0):
         self.B = block_size
         self.N = block_size * block_size
         self.model = LBTModel(self.N)
+        self.mean_val = 0.0
 
-    def train(self, images, epochs=401, lr=1e-2, lambda_v=1.0):
-        blocks = []
-        for img in images:
-            blocks.append(self._extract_blocks(img))
+        self.epochs = epochs
+        self.lr = lr
+        self.lambda_gain = lambda_gain
 
-        # Preparar tensores (Num_Bloques, N)
-        X = torch.from_numpy(np.concatenate(blocks, axis=0).reshape(-1, self.N)).float()
+    def encode_image(self, img, side_info_file):
+        """
+        1. Entrena el modelo con 'img'.
+        2. Guarda los pesos en 'side_info_file'.
+        3. Retorna la imagen transformada.
+        """
+        # --- Paso 1: Preparar datos ---
+        self.model.reset_weights() # Reiniciar pesos para entrenar desde cero
+        self.model.train()
+        
+        blocks_flat = self._extract_blocks(img).reshape(-1, self.N)
+        X = torch.from_numpy(blocks_flat).float()
+        
+        # Calcular media actual para centrar
+        self.mean_val = X.mean().item()
+        X = X - self.mean_val
 
-        # Learning rate adaptativo según tamaño de bloque
+        # --- Paso 2: Entrenamiento (Interno) ---
+        optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
 
-
-        optimizer = optim.Adam(self.model.parameters(), lr=lr)
-
-        print(f"Iniciando entrenamiento (N={self.N}, lr={lr:.6f})...")
-        for e in range(epochs):
+        for _ in range(self.epochs):
             optimizer.zero_grad()
-
             x_hat, y = self.model(X)
+            
+            # Loss: MSE + Coding Gain
+            mse_loss = torch.mean((x_hat - X)**2)
 
-            # Pérdida: Solo error de reconstrucción (el término 1/var causa problemas)
-            mse = torch.mean((x_hat - X)**2)
-            loss = mse
+            if self.lambda_gain > 0:
+                variances = torch.var(y, dim=0, unbiased=False) + 1e-6
+                coding_gain_loss = torch.mean(torch.log(variances))
+                loss = mse_loss + self.lambda_gain * coding_gain_loss
+            else:
+                loss = mse_loss
 
             loss.backward()
-            
             optimizer.step()
 
-            if e % 50 == 0:
-                print(f"Epoch {e:3d} | Loss: {loss.item():.6f} | MSE: {mse.item():.8f}")
+        # --- Paso 3: Guardar Side Info ---
+        # Guardamos pesos y la media necesaria para decodificar
+        torch.save({
+            'state_dict': self.model.state_dict(),
+            'mean_val': self.mean_val
+        }, side_info_file)
 
-    def encode_blocks(self, img):
+        # --- Paso 4: Codificación (Inferencia) ---
         self.model.eval()
         with torch.no_grad():
-            blocks = self._extract_blocks(img).reshape(-1, self.N)
-            X = torch.from_numpy(blocks).float()
-            y = self.model.encoder(X)
-        return y.numpy()
+            y_coeffs = self.model.encoder(X)
+            y_numpy = y_coeffs.numpy()
 
-    def decode_blocks(self, coeffs, shape):
+        H, W, C = img.shape
+        return self._reconstruct_map(y_numpy, (H, W, C))
+
+    def decode_image(self, coeffs_img, shape, side_info_file):
+        """
+        1. Carga pesos desde 'side_info_file'.
+        2. Retorna imagen reconstruida.
+        """
+        # --- Paso 1: Cargar Modelo ---
+        if not os.path.exists(side_info_file):
+            raise FileNotFoundError(f"No se encuentra el archivo de pesos: {side_info_file}")
+            
+        checkpoint = torch.load(side_info_file)
+        self.model.load_state_dict(checkpoint['state_dict'])
+        self.mean_val = checkpoint['mean_val']
+        
         self.model.eval()
-        with torch.no_grad():
-            Y = torch.from_numpy(coeffs).float()
-            x_recon = self.model.decoder(Y).numpy()
 
+        # --- Paso 2: Decodificación ---
         H, W, C = shape
-        out = np.zeros(shape, dtype=np.float64)
-        idx = 0
-        for ch in range(C):
-            for y in range(0, H, self.B):
-                for x in range(0, W, self.B):
-                    block = x_recon[idx].reshape(self.B, self.B)
-                    ph, pw = min(self.B, H - y), min(self.B, W - x)
-                    out[y:y+ph, x:x+pw, ch] = block[:ph, :pw]
-                    idx += 1
-        return out
+        coeffs_flat = self._extract_blocks(coeffs_img).reshape(-1, self.N)
+        
+        with torch.no_grad():
+            Y = torch.from_numpy(coeffs_flat).float()
+            x_recon = self.model.decoder(Y)
+            # Sumar la media guardada
+            x_recon = x_recon + self.mean_val
+            x_numpy = x_recon.numpy()
+
+        return self._reconstruct_map(x_numpy, (H, W, C))
 
     def _extract_blocks(self, img):
         if img.ndim == 2: img = img[:, :, np.newaxis]
@@ -136,29 +176,26 @@ class LearnedBlockTransform:
             for y in range(0, H, self.B):
                 for x in range(0, W, self.B):
                     block = img[y:y+self.B, x:x+self.B, ch]
-                    padded = np.zeros((self.B, self.B))
-                    padded[:block.shape[0], :block.shape[1]] = block
-                    blocks.append(padded)
+                    if block.shape[0] < self.B or block.shape[1] < self.B:
+                        padded = np.zeros((self.B, self.B))
+                        padded[:block.shape[0], :block.shape[1]] = block
+                        blocks.append(padded)
+                    else:
+                        blocks.append(block)
         return np.array(blocks)
 
-    def encode_image(self, img):
-        coeffs = self.encode_blocks(img)
-        H, W, C = img.shape
-        out = np.zeros((H, W, C), dtype=np.float64)
+    def _reconstruct_map(self, flat_blocks, shape):
+        H, W, C = shape
+        out = np.zeros(shape, dtype=np.float32)
         idx = 0
         for ch in range(C):
             for y in range(0, H, self.B):
                 for x in range(0, W, self.B):
-                    block = coeffs[idx].reshape(self.B, self.B)
                     ph, pw = min(self.B, H - y), min(self.B, W - x)
-                    out[y:y+ph, x:x+pw, ch] = block[:ph, :pw]
+                    block_flat = flat_blocks[idx]
+                    out[y:y+ph, x:x+pw, ch] = block_flat.reshape(self.B, self.B)[:ph, :pw]
                     idx += 1
         return out
-
-    def decode_image(self, coeffs_img, shape):
-        blocks = self._extract_blocks(coeffs_img)
-        coeffs = blocks.reshape(-1, self.N)
-        return self.decode_blocks(coeffs, shape)
 
 class CoDec(CT.CoDec):
 
@@ -213,8 +250,22 @@ class CoDec(CT.CoDec):
         else:
             self.offset = 0
 
-        self.lbt = LearnedBlockTransform(self.block_size)
-        self.trained = False
+        epochs = getattr(args, 'epochs', 100)
+        lr = getattr(args, 'lr', 1e-3)
+        lambda_gain = 0.0
+        if hasattr(args, 'Lambda') and args.Lambda is not None:
+            try:
+                lambda_gain = float(args.Lambda)
+            except ValueError:
+                logging.warning("Valor de Lambda inválido, usando 0.0")
+
+        # 3. Instanciar LBT con los parámetros
+        self.lbt = LearnedBlockTransform(
+            self.block_size, 
+            epochs=epochs, 
+            lr=lr, 
+            lambda_gain=lambda_gain
+        )
 
 
     def pad_and_center_to_multiple_of_block_size(self, img):
@@ -333,16 +384,16 @@ class CoDec(CT.CoDec):
         #
         # Spatial transform (LBT).
         #
-        if not self.trained:
-            self.lbt.train([CT_img])
-            self.trained = True
-        DCT_img = self.lbt.encode_image(CT_img)
+        if self.args.side_info is not None:
+            side_info_path = self.args.side_info
+        else:
+            side_info_path = f"{out_fn}.weights.pth"
+        
+        logging.debug(f"Guardando pesos LBT en: {side_info_path}")
 
-        # Esto no hace falta aquí ##########################
-        subband_y_size = int(img.shape[0]/self.block_size)
-        subband_x_size = int(img.shape[1]/self.block_size)
-        logging.debug(f"subbband_y_size={subband_y_size}, subband_x_size={subband_x_size}")
+        DCT_img = self.lbt.encode_image(CT_img, side_info_path)
 
+        
         #
         # Perceptual quantization.
         #
@@ -393,6 +444,7 @@ class CoDec(CT.CoDec):
         #
         # Compress in memory.
         #
+        decom_k = np.clip(decom_k, 0, 255)
         decom_k = decom_k.astype(np.uint8)
         #print("----------_", decom_k, decom_k.shape)
         #decom_k = np.clip(decom_k, 0, 255).astype(np.uint8)
@@ -471,7 +523,14 @@ class CoDec(CT.CoDec):
 
         #
         # Inverse spatial transform.
-        CT_y = self.lbt.decode_image(DCT_y, DCT_y.shape)
+        if self.args.side_info is not None:
+            side_info_path = self.args.side_info
+        else:
+            side_info_path = f"{in_fn}.weights.pth"
+
+        logging.debug(f"Cargando pesos LBT desde: {side_info_path}")
+        
+        CT_y = self.lbt.decode_image(DCT_y, DCT_y.shape, side_info_path)
 
         #
         # Restore the original size of the image.
