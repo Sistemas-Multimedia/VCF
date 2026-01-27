@@ -1,4 +1,0 @@
-bc
-ffmpeg
-optipng
-imagemagick
