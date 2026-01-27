@@ -1,50 +1,78 @@
-# Visual Coding Framework
-A programming environment to develop and test image and video compression algorithms.
+# Proyecto de Códecs Multimedia: IPP y NLM
 
-## Install and configuration
+**Curso:** Sistemas Multimedia  
+**Autores:**  
+- Rafael de Jesús Bautista Hernández  
+- Saúl David Ramos Pacheco  
+- Alex César Taquila Camasca  
 
-Supposing that a Python interpreter and Git are available:
+Este proyecto implementa dos códecs de procesamiento multimedia:
 
-      python -m venv ~/envs/VCF
-      git clone git@github.com:Sistemas-Multimedia/VCF.git
-      cd VCF
-      source ~/envs/VCF/bin/activate
-      pip install -r requirements
+1. **IPP (Intra + Predicción Temporal con Motion Vectors)**  
+2. **NLM (Non-Local Means / Filtro Bilateral Aproximado)**  
 
-## Usage
+Cada códec cuenta con:
+- Un archivo fuente único (`IPP.py` y `NLM.py`) generado desde su respectivo notebook.
+- Un notebook demostrativo (`IPP.ipynb` y `NLM.ipynb`) que explica su funcionamiento y ejecución.
+- Uso de la carpeta `frames/` como entrada.
+- Resultados almacenados en `compressed/` y `results/`.
 
-### Image coding (example)
+La estructura del proyecto respeta la plantilla proporcionada por el profesor.
 
-      cd src
-      python PNG.py encode
-      display /tmp/encoded.png
-      python PNG.py decode
-      display /tmp/decoded.png
+---
 
-### Video coding (example)
+## Estructura del Proyecto
 
-      cd src
-      python III.py encode
-      ffplay /tmp/encoded_%04d.tif
-      python III.py decode
-      ffplay /tmp/decoded_%04d.png
+VCF
+    /compressed
+    /frames
+    /notebooks
+        IPP.ipynb
+        NLM.ipynb
+    /results
+    /src
+        IPP.py
+        NLM.py
+    /venv
+    README.md
+    report.md
+    requirements.txt
+    
+## Instalación de dependencias
 
-## Codecs organization
+Ejecutar:
 
-	+---------------------+        +----+
-	| temporal transforms |    III |-T,N|, [IPP] (9), [IBP] (10), [MCTF] (10).
-	+---------------------+--+     +---++-------+
-	| spatial transforms  |-T| 2D-DCT* |-B,p,L,x|, 2D-DWT, [LBT] (10), no_spatial_transform.
-	+---------------------+--+         +--------+
-	|  color transforms   |-t| YCoCg*, YCrCb, color-DCT, no_color_transform.
-	+---------------------+--+           +--+           +------+     +----+           +--+
-	|     quantizers      |-a| deadzone* |-q|, LloydMax |-q,m,n|, VQ |-q,b|, color-VQ |-q|.
-	+---------------------+--+           +--+           ++--+--+     +----+           +--+
-	|  decoding filters   |-f| no_filter*, gaussian_blur |-s|, [NLM] (1), [BM3D] (3)
-	+---------------------+--+                           +--+
-	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, [adaptive_Huffman] (4), [arith] (4), [adaptive_arith] (5).
-	+---------------------+--+
+```bash
+pip install -r requirements.txt
+numpy
+scipy
+pillow
+scikit-image
+matplotlib
 
-	...* = default option
-	[...] = to be implemented
-	(.) = points for the evaluation of the subject
+
+## Ejecucion del  Codec IPP
+
+El archivo IPP.py se genera desde notebooks/IPP.ipynb con el %%writefile ../src/IPP.py del notebook
+Codificar (frames → compressed/) - python src/IPP.py encode
+Decodificar (compressed → results/) - python src/IPP.py decode
+python src/IPP.py test - python src/IPP.py test
+
+
+## Ejecucion del  Codec NLM
+El archivo NLM.py se genera desde notebooks/NLM.ipynb con el %%writefile ../src/NLM.py
+Codificar (frames → compressed/) - python src/NLM.py encode
+Aplicar NLM (compressed → results/) - python src/NLM.py decode
+Evaluar PSNR - python src/NLM.py test
+Generar comparaciones visuales - python src/NLM.py compare
+
+
+## Notebooks 
+Cada notebook contiene:
+- Explicación del códec
+- Generacion del archivo fuente con %%writefile
+- Ejecución paso a paso
+- Visualización de resultados
+- Comparaciones visuales
+
+ 
