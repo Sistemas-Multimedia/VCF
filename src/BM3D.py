@@ -3,13 +3,11 @@ import numpy as np
 from PIL import Image
 
 def read_image_rgb(path: str) -> np.ndarray:
-    """Lee imagen y convierte a float32 en rango [0,1]"""
     img = Image.open(path).convert("RGB")
-    arr = np.asarray(img, dtype=np.float32) / 255.0  # [0,1]
+    arr = np.asarray(img, dtype=np.float32) / 255.0
     return arr
 
 def save_image_rgb(path: str, img01: np.ndarray) -> None:
-    """Guarda imagen desde rango [0,1] a uint8"""
     img01 = np.clip(img01, 0.0, 1.0)
     out = (img01 * 255.0 + 0.5).astype(np.uint8)
     Image.fromarray(out, mode="RGB").save(path)
@@ -45,7 +43,7 @@ def main():
 
     # 3) Guardar
     save_image_rgb(args.out, y_hat)
-    print(f"✓ Imagen guardada en: {args.out}")
+    print(f"Imagen guardada en: {args.out}")
 
 if __name__ == "__main__":
     main()

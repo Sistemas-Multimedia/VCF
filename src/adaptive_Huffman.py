@@ -38,11 +38,6 @@ import heapq
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple, List
 
-
-# -----------------------------
-# Construcción del árbol de Huffman
-# -----------------------------
-
 @dataclass
 class _Node:
     """Nodo del árbol de Huffman. Puede ser hoja (con símbolo) o nodo interno."""
@@ -56,9 +51,10 @@ def _build_huffman_tree_from_freq(freqs: Dict[int, int]) -> _Node:
     """
     Construye el árbol de Huffman a partir de las frecuencias de los símbolos.
     Usa un heap (cola de prioridad) para combinar los nodos de menor frecuencia.
+
     """
     heap: List[Tuple[int, int, _Node]] = []
-    uid = 0  # ID único para que el heap no se confunda con frecuencias iguales
+    uid = 0
     
     # Creamos una hoja por cada símbolo
     for sym, f in freqs.items():
@@ -68,7 +64,7 @@ def _build_huffman_tree_from_freq(freqs: Dict[int, int]) -> _Node:
     if not heap:
         raise ValueError("Empty frequency table")
 
-    # Truco: si solo hay 1 símbolo, necesitamos al menos 1 bit,y
+    # si solo hay 1 símbolo, necesitamos al menos 1 bit,y
     # para que el código tenga al menos 1 bit
     if len(heap) == 1:
         f, _, only = heap[0]
@@ -94,7 +90,7 @@ def _build_codebook(root: _Node) -> Dict[int, bitarray]:
     codes: Dict[int, bitarray] = {}
 
     def dfs(node: _Node, path: bitarray) -> None:
-        # Llegamos a una hoja → guardar código
+        # Llegamos a una hoja y guardamos el código
         if node.sym is not None:
             if len(path) == 0:
                 codes[node.sym] = bitarray("0")  # caso 1 símbolo
@@ -153,7 +149,6 @@ class _ContextModel:
         self._counts: Dict[Tuple[int, ...], Dict[int, int]] = {}  # Contadores por contexto
 
     def ctx_init(self) -> List[int]:
-        """Contexto inicial con valores PAD."""
         return [self.PAD] * self.order
 
     def freqs(self, ctx: Tuple[int, ...]) -> Dict[int, int]:
@@ -212,12 +207,12 @@ class CoDec(EIC.CoDec):
 
             # Actualizar frecuencias y deslizar contexto
             model.update(ctx, int(s))
-            # Deslizamos el contexto: quitamos el más antiguo y añadimos el actual
+
             if self.order > 0:
                 ctx_list.pop(0)
                 ctx_list.append(int(s))
 
-        # Escribimos los bits como bytes (puede añadir padding al final)
+        # Escribimos los bits como bytes en el archivo comprimido
         compressed_img.write(out_bits.tobytes())
 
         # Guardamos los metadatos: dimensiones, orden y número exacto de bits
@@ -227,7 +222,7 @@ class CoDec(EIC.CoDec):
             pickle.dump(
                 {
                     "order": self.order,
-                    "nbits": len(out_bits)  # Bits válidos
+                    "nbits": len(out_bits)
                 },
                 f
             )
@@ -271,7 +266,7 @@ class CoDec(EIC.CoDec):
 
         # Decodificar símbolo por símbolo (mismo proceso que encoder)
         for _ in range(total_symbols):
-            # Mismo contexto que usó el codificador en este punto
+
             ctx = tuple(ctx_list) if order > 0 else tuple()
 
             # Reconstruimos el árbol con las mismas frecuencias
@@ -283,7 +278,7 @@ class CoDec(EIC.CoDec):
 
             # Actualizamos el modelo igual que hizo el codificador
             model.update(ctx, sym)
-            # Deslizamos el contexto
+
             if order > 0:
                 ctx_list.pop(0)
                 ctx_list.append(sym)
