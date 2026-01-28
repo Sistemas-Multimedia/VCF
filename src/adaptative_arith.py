@@ -5,7 +5,6 @@ import numpy as np
 from bitarray import bitarray
 import logging
 
-# Preservar documentación ANTES de importar parser
 with open("/tmp/description.txt", 'w') as f:
     f.write(__doc__)
     
@@ -22,7 +21,7 @@ class AdaptiveModel:
         self.num_symbols = num_symbols
         self.max_freq = max_freq
         
-        # Inicializamos todo a 1 (Regla de Laplace) para evitar prob 0
+        # Inicializamos todo a 1
         self.freqs = [1] * num_symbols
         # Cumulative freqs: cumulative[i] es el inicio del rango del simbolo i
         # cumulative[i+1] es el final del rango del simbolo i
@@ -30,7 +29,6 @@ class AdaptiveModel:
         self._update_cumulative()
 
     def _update_cumulative(self):
-        """Recalcula los rangos acumulados (O(N) - optimizable con Fenwick Tree)"""
         cum = 0
         for i in range(self.num_symbols):
             self.cumulative[i] = cum
@@ -39,10 +37,9 @@ class AdaptiveModel:
         self.total = cum
 
     def update(self, symbol):
-        """El corazón del sistema adaptativo: incrementar y posiblemente escalar"""
         self.freqs[symbol] += 1
         
-        # Si el total supera el máximo, dividimos todo por 2 (Scaling/Halving)
+        # Si el total supera el máximo, dividimos todo por 2
         if self.total >= self.max_freq:
             for i in range(self.num_symbols):
                 # Nos aseguramos de no bajar nunca a 0
@@ -57,12 +54,6 @@ class AdaptiveModel:
                 self.total)
 
     def get_symbol_from_scaled_value(self, scaled_value):
-        """
-        Busca a qué símbolo corresponde un valor dentro del rango total.
-        Equivalente a la búsqueda inversa del decodificador.
-        """
-        # Búsqueda lineal (Simple pero lenta). 
-        # En producción se usaría Búsqueda Binaria (bisect).
         for i in range(self.num_symbols):
             if scaled_value < self.cumulative[i+1]:
                 return i, self.cumulative[i], self.cumulative[i+1]
@@ -83,7 +74,6 @@ class CoDec(EIC.CoDec):
         
         flat_img = img.flatten().astype(np.int32)
         
-        # --- HEADER ESTRICTO ---
         # 1. Num Dimensiones (uint32)
         # 2. Shape (N * uint32)
         shape = np.array(img.shape, dtype=np.uint32)
@@ -102,10 +92,7 @@ class CoDec(EIC.CoDec):
 
     def decompress_fn(self, compressed_bytes, fn):
         buffer = io.BytesIO(compressed_bytes)
-        
-        # --- LECTURA DE HEADER CORREGIDA ---
-        # Debe ser simétrica a compress_fn
-        
+                
         # 1. Leer número de dimensiones (4 bytes)
         try:
             num_dims_data = buffer.read(4)
@@ -117,7 +104,7 @@ class CoDec(EIC.CoDec):
             shape = tuple(np.frombuffer(shape_data, dtype=np.uint32))
         except Exception as e:
             logging.error(f"Error leyendo cabecera: {e}")
-            return np.zeros((10,10), dtype=np.uint8) # Fallback seguro
+            return np.zeros((10,10), dtype=np.uint8)
 
         num_symbols = int(np.prod(shape))
         
@@ -198,18 +185,15 @@ class CoDec(EIC.CoDec):
             range_ = high - low
             total_freq = model.total
             
-            # Fórmula robusta para obtener el valor escalado
-            # Usamos offset + 1 para evitar problemas de redondeo en el límite inferior
+            # Usamos offset+1
             offset = value - low
             scaled_value = ((offset + 1) * total_freq - 1) // range_
             
-            # Clamp por seguridad (a veces la división entera juega malas pasadas en los bordes)
             if scaled_value >= total_freq:
                 scaled_value = total_freq - 1
 
             symbol, s_low, s_high = model.get_symbol_from_scaled_value(scaled_value)
             
-            # Debugging crítico: Si esto falla, el modelo diverge
             if symbol == -1:
                 logging.error(f"FATAL: Símbolo no encontrado para valor {scaled_value} (Total: {total_freq})")
                 break

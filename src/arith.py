@@ -8,7 +8,6 @@ import logging
 import numpy as np
 from bitarray import bitarray
 
-# Preservar documentación
 with open("/tmp/description.txt", 'w') as f:
     f.write(__doc__)
 
@@ -26,9 +25,6 @@ class CoDec(EIC.CoDec):
         self.QUARTER = self.HALF >> 1
         self.THREE_QUARTER = self.QUARTER * 3
         
-        # --- SOLUCIÓN: Usar potencia de 2 (2^16 = 65536) ---
-        # Esto permite sustituir la división lenta (/) por bitshift rápido (>>)
-        # y evita los errores de redondeo que rompen la imagen.
         self.PRECISION_BITS = 16 
         self.TOTAL_FREQ = 1 << self.PRECISION_BITS
 
@@ -54,7 +50,7 @@ class CoDec(EIC.CoDec):
         flat_img = img.flatten().astype(np.int32)
         symbols, raw_counts = np.unique(flat_img, return_counts=True)
         
-        # 1. NORMALIZAR (Clave para velocidad y precisión)
+        # 1. NORMALIZAR
         counts = self._normalize_counts(raw_counts)
         
         highs = np.cumsum(counts)
@@ -85,7 +81,6 @@ class CoDec(EIC.CoDec):
         symbols = stats['symbols']
         counts = stats['counts']
 
-        # --- TABLAS RÁPIDAS ---
         # Tabla inversa (Lookup Table) para decodificación O(1)
         lookup_table = np.repeat(symbols, counts).astype(np.uint8)
         lookup_bytes = lookup_table.tobytes()
@@ -193,7 +188,6 @@ class CoDec(EIC.CoDec):
             if scaled_value >= TOTAL_FREQ:
                 scaled_value = TOTAL_FREQ - 1
 
-            # Búsqueda O(1)
             symbol = lookup_bytes[scaled_value]
             decoded[i] = symbol
 
