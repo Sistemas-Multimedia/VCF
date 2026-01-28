@@ -38,6 +38,16 @@ class CoDec(no_filter.CoDec):
         logging.debug(f"args = {self.args}")
         self.args = args
 
+    def encode(self):
+        """
+        Método de codificación con corrección de argumentos.
+        Necesario porque la clase base usa defaults incorrectos para este entorno.
+        """
+        img = self.encode_read(self.args.original)
+        compressed_img = self.compress(img)
+        output_size = self.encode_write(compressed_img, self.args.encoded)
+        return output_size
+
     def decode(self):
         """
         Método de decodificación que aplica el filtro después de descomprimir los datos.

@@ -21,12 +21,12 @@ ENCODED = "/tmp/encoded" # File extension decided in run-time
 DECODED = "/tmp/decoded.png"
 
 # Encoder parser
-parser.parser_encode.add_argument("-o", "--original", "-i", "--input", type=parser.int_or_str, help=f"Input image (default: {ORIGINAL})", default=ORIGINAL)
-parser.parser_encode.add_argument("-e", "--encoded", "-o_alt", "--output", type=parser.int_or_str, help=f"Output image (default: {ENCODED})", default=f"{ENCODED}")
+parser.parser_encode.add_argument("-o", "--original", type=parser.int_or_str, help=f"Input image (default: {ORIGINAL})", default=ORIGINAL)
+parser.parser_encode.add_argument("-e", "--encoded", type=parser.int_or_str, help=f"Output image (default: {ENCODED})", default=f"{ENCODED}")
 
 # Decoder parser
-parser.parser_decode.add_argument("-e", "--encoded", "-i", "--input", type=parser.int_or_str, help=f"Input code-stream (default: {ENCODED})", default=f"{ENCODED}")
-parser.parser_decode.add_argument("-d", "--decoded", "-o", "--output", type=parser.int_or_str, help=f"Output image (default: {DECODED})", default=f"{DECODED}")    
+parser.parser_decode.add_argument("-e", "--encoded", type=parser.int_or_str, help=f"Input code-stream (default: {ENCODED})", default=f"{ENCODED}")
+parser.parser_decode.add_argument("-d", "--decoded", type=parser.int_or_str, help=f"Output image (default: {DECODED})", default=f"{DECODED}")    
 
 class CoDec:
     
@@ -60,9 +60,7 @@ class CoDec:
         self.img_shape = img.shape
         return img
 
-    def encode_read(self, fn=None):
-        if fn is None:
-            fn = self.args.original
+    def encode_read(self, fn="/tmp/original.png"):
         return self.encode_read_fn(fn)
 
     def encode_write_fn(self, codestream, fn):
@@ -76,9 +74,7 @@ class CoDec:
         logging.info(f"Written {output_size} bytes in {fn + self.file_extension}")
         return output_size
 
-    def encode_write(self, codestream, fn=None):
-        if fn is None:
-            fn = self.args.encoded
+    def encode_write(self, codestream, fn="/tmp/encoded"):
         return self.encode_write_fn(codestream, fn)
 
     def encode(self):
@@ -89,23 +85,13 @@ class CoDec:
         return output_size
 
     def decode_read_fn(self, fn):
-        if os.path.exists(fn):
-            full_fn = fn
-        elif os.path.exists(fn + self.file_extension):
-            full_fn = fn + self.file_extension
-        else:
-            # Fallback to extensioned path to trigger FileNotFoundError with the expected name
-            full_fn = fn + self.file_extension
-            
-        input_size = os.path.getsize(full_fn)
+        input_size = os.path.getsize(fn + self.file_extension)
         self.total_input_size += input_size
-        logging.debug(f"Read {input_size} bytes from {full_fn}")
-        codestream = open(full_fn, "rb").read()
+        logging.debug(f"Read {input_size} bytes from {fn + self.file_extension}")
+        codestream = open(fn + self.file_extension, "rb").read()
         return codestream
 
-    def decode_read(self, fn=None):
-        if fn is None:
-            fn = self.args.encoded
+    def decode_read(self, fn="/tmp/encoded"):
         return self.decode_read_fn(fn)
 
     def decode_write_fn(self, img, fn):
@@ -121,9 +107,7 @@ class CoDec:
         logging.debug(f"Written {output_size} bytes in {fn} with shape {img.shape} and type {img.dtype}")
         return output_size
 
-    def decode_write(self, img, fn=None):
-        if fn is None:
-            fn = self.args.decoded
+    def decode_write(self, img, fn="/tmp/decoded.png"):
         return self.decode_write_fn(img, fn)
 
     def decode(self):
