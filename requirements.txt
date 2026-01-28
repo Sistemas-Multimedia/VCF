@@ -6,6 +6,8 @@ scikit-learn
 pywavelets
 netpbmfile[all]
 bitarray
+matplotlib
+scipy
 information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory@main#egg=information_theory
 huffman_coding @ git+https://github.com/vicente-gonzalez-ruiz/huffman_coding
 DCT2D @ git+https://github.com/vicente-gonzalez-ruiz/DCT2D@master#egg=DCT2D
