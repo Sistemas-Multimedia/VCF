@@ -15,10 +15,32 @@ try:
 except:
     pass
 
-with open("/tmp/description.txt", 'w') as f:
+import tempfile
+import builtins
+
+# Create a valid temporary file path
+temp_desc_path = os.path.join(tempfile.gettempdir(), "description.txt")
+
+# Write the description to the valid temporary file
+with open(temp_desc_path, 'w', encoding='utf-8') as f:
     f.write(__doc__)
 
-import parser
+# Monkeypatch open to redirect /tmp/description.txt to our valid temp file
+# This is necessary because parser.py (which we cannot edit) hardcodes /tmp/description.txt
+_original_open = builtins.open
+
+def _redirect_open(file, *args, **kwargs):
+    if file == "/tmp/description.txt":
+        return _original_open(temp_desc_path, *args, **kwargs)
+    return _original_open(file, *args, **kwargs)
+
+builtins.open = _redirect_open
+
+try:
+    import parser
+finally:
+    # Restore original open
+    builtins.open = _original_open
 import importlib
 import struct
 import cv2
