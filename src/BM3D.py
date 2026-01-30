@@ -101,25 +101,25 @@ class CoDec(no_filter.CoDec):
         """
         # Leer los datos comprimidos
         compressed_k = self.decode_read(self.args.encoded)
-        
+
         # Descomprimir los datos (normalmente llama a los decodificadores de transformación espacial/color)
         k = self.decompress(compressed_k)
         logging.info(f"Forma de la imagen descomprimida: {k.shape}, tipo de dato: {k.dtype}")
-        
+
         # Aplicar el filtro BM3D
         y = self.filter(k)
-        
+
         # Escribir la imagen de salida
         output_size = self.decode_write(y, self.args.decoded)
         return output_size
-            
+
     def filter(self, img):
         """
         Aplica el filtrado BM3D (denoising/deblurring) a la imagen.
         Soporta imágenes monocromáticas, RGB y multicanal.
         """
         logging.info(f"Aplicando filtro BM3D (sigma_bm3d={self.args.sigma_bm3d}, perfil='{self.args.profile_bm3d}')")
-        
+
         # Validación de parámetros
         if self.args.sigma_bm3d < 0:
             logging.warning(f"Sigma inválido ({self.args.sigma_bm3d}). Ajustando a 0.")
@@ -128,7 +128,7 @@ class CoDec(no_filter.CoDec):
         # Normalizar la imagen al rango [0, 1] para el procesamiento BM3D
         img_float = img.astype(np.float32) / 255.0
         sigma_normalized = self.args.sigma_bm3d / 255.0
-        
+
         # Manejar PSD para ruido correlacionado
         if self.args.psd_bm3d and os.path.exists(self.args.psd_bm3d):
             try:
@@ -157,7 +157,7 @@ class CoDec(no_filter.CoDec):
             'vn': bm3d.BM3DProfileVN()
         }
         selected_profile = profile_map.get(self.args.profile_bm3d, bm3d.BM3DProfile())
-        
+
         try:
             # Verificar si la imagen es en color (3 canales) o escala de grises
             if len(img.shape) == 3:
@@ -186,7 +186,7 @@ class CoDec(no_filter.CoDec):
                 else:
                     logging.info("Entrada reconocida como escala de grises. Usando bm3d.")
                     denoised = bm3d.bm3d(img_float, noise_spec, profile=selected_profile)
-            
+
             # Recortar y convertir de nuevo a uint8 [0, 255]
             result = (np.clip(denoised, 0, 1) * 255).astype(np.uint8)
             return result

@@ -6,7 +6,7 @@ import numpy as np
 def show_images(original_path, encoded_path, decoded_path, title):
     """
     Función para visualizar y comparar las imágenes original, codificada y decodificada.
-    
+
     Parámetros:
         original_path: ruta a la imagen original
         encoded_path: ruta a la imagen codificada (coeficientes)
@@ -15,7 +15,7 @@ def show_images(original_path, encoded_path, decoded_path, title):
     """
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
     fig.suptitle(title, fontsize=16)
-    
+
     # Mostrar imagen original
     if os.path.exists(original_path):
         img = cv2.cvtColor(cv2.imread(original_path), cv2.COLOR_BGR2RGB)
@@ -24,7 +24,7 @@ def show_images(original_path, encoded_path, decoded_path, title):
     else:
         axs[0].text(0.5, 0.5, 'No encontrada', ha='center')
     axs[0].axis('off')
-    
+
     # Mostrar imagen codificada (Coeficientes)
     # Nota: Se muestra el archivo de coeficientes como imagen. Puede parecer ruido o bloques.
     if os.path.exists(encoded_path):
@@ -41,7 +41,7 @@ def show_images(original_path, encoded_path, decoded_path, title):
                  axs[1].text(0.5, 0.5, 'No se pudo leer TIF', ha='center')
         except Exception as e:
              axs[1].text(0.5, 0.5, f'Error: {e}', ha='center')
-        
+
         # Calcular y mostrar tamaños de archivos
         weights_path = encoded_path.replace('.tif', '_weights.bin')
         w_size = os.path.getsize(weights_path) if os.path.exists(weights_path) else 0
@@ -51,7 +51,7 @@ def show_images(original_path, encoded_path, decoded_path, title):
     else:
         axs[1].text(0.5, 0.5, 'No encontrada', ha='center')
     axs[1].axis('off')
-    
+
     # Mostrar imagen decodificada (reconstruida)
     if os.path.exists(decoded_path):
         img_dec = cv2.cvtColor(cv2.imread(decoded_path), cv2.COLOR_BGR2RGB)
@@ -60,7 +60,7 @@ def show_images(original_path, encoded_path, decoded_path, title):
     else:
         axs[2].text(0.5, 0.5, 'No encontrada', ha='center')
     axs[2].axis('off')
-    
+
     plt.tight_layout()
     plt.show()
 
@@ -75,15 +75,15 @@ def show_results_bm3d(img_name, original_path, filtered_paths):
     """Muestra los resultados: Original + 3 filtradas (BM3D)."""
     # Configuración de niveles
     levels = ['Baja', 'Media', 'Alta']
-    
+
     fig, axes = plt.subplots(1, 4, figsize=(20, 5))
-    
+
     # Imagen Original
     axes[0].imshow(load_rgb(original_path))
     axes[0].set_title(f"Original ({img_name})", fontsize=12, fontweight='bold')
     axes[0].axis('on')
     axes[0].set_xticks([]); axes[0].set_yticks([])
-    
+
     # Resultados Filtrados (BM3D)
     for i in range(3):
         if i < len(filtered_paths):
@@ -91,7 +91,7 @@ def show_results_bm3d(img_name, original_path, filtered_paths):
             axes[i+1].set_title(f"BM3D - {levels[i]}", fontsize=12)
             axes[i+1].axis('on')
             axes[i+1].set_xticks([]); axes[i+1].set_yticks([])
-        
+
     plt.tight_layout()
     plt.suptitle(f"Resultados: {img_name}", fontsize=16, y=1.05)
     plt.show()
@@ -100,15 +100,15 @@ def show_results_nlm(img_name, original_path, filtered_paths):
     """Muestra los resultados: Original + 3 filtradas (NLM)."""
     # Configuración de niveles
     levels = ['Baja', 'Media', 'Alta']
-    
+
     fig, axes = plt.subplots(1, 4, figsize=(20, 5))
-    
+
     # Imagen Original
     axes[0].imshow(load_rgb(original_path))
     axes[0].set_title(f"Original ({img_name})", fontsize=12, fontweight='bold')
     axes[0].axis('on')
     axes[0].set_xticks([]); axes[0].set_yticks([])
-    
+
     # Resultados Filtrados (NLM)
     for i in range(3):
         if i < len(filtered_paths):
@@ -116,7 +116,7 @@ def show_results_nlm(img_name, original_path, filtered_paths):
             axes[i+1].set_title(f"NLM - {levels[i]}", fontsize=12)
             axes[i+1].axis('on')
             axes[i+1].set_xticks([]); axes[i+1].set_yticks([])
-        
+
     plt.tight_layout()
     plt.suptitle(f"Resultados: {img_name}", fontsize=16, y=1.05)
     plt.show()
