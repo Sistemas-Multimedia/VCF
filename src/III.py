@@ -8,8 +8,8 @@ import main
 import logging
 import numpy as np
 import cv2 as cv # pip install opencv-python
-with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
-    f.write(__doc__)
+import platform_utils as pu
+pu.ensure_description_file(__doc__)  # Crear description.txt antes de importar parser
 import parser
 import entropy_video_coding as EVC
 #from entropy_video_coding import Video
@@ -78,9 +78,9 @@ class CoDec(EVC.CoDec):
             for frame in packet.decode():
                 img = frame.to_image()
                 #img_fn = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
-                img_fn = f"/tmp/original_%04d.png" % img_counter
+                img_fn = pu.get_original_frame_path(img_counter)
                 img_fnNOPNG = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d" % img_counter
-                #img_fnNOPNG = f"/tmp/original_%04d" % img_counter
+                #img_fnNOPNG = pu.get_original_frame_path(img_counter)[:-4]  # Sin .png
                 img.save(img_fn)
                 if __debug__:
                     O_bytes = os.path.getsize(img_fn)
@@ -113,7 +113,7 @@ class CoDec(EVC.CoDec):
     def decode(self):
         '''
         img_fns = []
-        for fn in os.listdir("/tmp/"):
+        for fn in os.listdir(pu.get_vcf_temp_dir()):
             if is_valid_name(fn):
                 img_fns.append(fn)
         sorted_img_fns = sorted(img_fns)
@@ -125,8 +125,8 @@ class CoDec(EVC.CoDec):
         for i in range(self.args.number_of_frames):
             img_fn = f"{EVC.DECODE_OUTPUT_PREFIX}_%04d.png" % img_counter
             img_fnNOPNG = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d" % img_counter
-            #img_fn = f"/tmp/original_%04d.png" % img_counter
-            #img_fnNOPNG = f"/tmp/original_%04d" % img_counter
+            #img_fn = pu.get_original_frame_path(img_counter)
+            #img_fnNOPNG = pu.get_original_frame_path(img_counter)[:-4]
             #logging.info(img_fn)
             #self.transform_codec.args.input = img_fn[:-4]
             #self.input = img_fn[:-4]

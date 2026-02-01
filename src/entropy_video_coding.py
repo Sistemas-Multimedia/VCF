@@ -3,7 +3,7 @@
 import os
 import io
 from skimage import io as skimage_io # pip install scikit-image
-from PIL import Image # pip install 
+from PIL import Image # pip install
 import numpy as np
 import logging
 #import subprocess
@@ -16,15 +16,16 @@ import av
 import math
 
 from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
+import platform_utils as pu
 
 #import entropy_image_coding as EIC
 
-# Default IOs
-ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/videos/mobile_352x288x30x420x300.mp4"
-ENCODE_OUTPUT_PREFIX = "/tmp/encoded"  # File extension decided in run-time
+# Default IOs (multiplataforma)
+ENCODE_INPUT = pu.ENCODE_INPUT
+ENCODE_OUTPUT_PREFIX = pu.ENCODE_OUTPUT_PREFIX  # File extension decided in run-time
 DECODE_INPUT_PREFIX = ENCODE_OUTPUT_PREFIX
-DECODE_OUTPUT_PREFIX = "/tmp/decoded"
-DECODE_OUTPUT = "/tmp/decoded.mp4"
+DECODE_OUTPUT_PREFIX = pu.DECODE_OUTPUT_PREFIX
+DECODE_OUTPUT = pu.DECODE_OUTPUT
 
 N_FRAMES = 3
 
@@ -96,8 +97,8 @@ class CoDec:
                 logging.info(f"Video width (columns) = {width}")
                 total_RMSE = 0
                 for i in range(N_frames):
-                    x = self.encode_read_fn(f"file:///tmp/original_{i:04d}.png")
-                    y = self.encode_read_fn(f"file:///tmp/decoded_{i:04d}.png")
+                    x = self.encode_read_fn(pu.get_file_uri(pu.get_original_frame_path(i)))
+                    y = self.encode_read_fn(pu.get_file_uri(pu.get_decoded_frame_path(i)))
                     img_RMSE = distortion.RMSE(x, y)
                     logging.debug(f"image RMSE = {img_RMSE}")
                     total_RMSE += img_RMSE
@@ -211,7 +212,7 @@ class CoDec:
     def UNUSED_encode_read(self, fn):
         vid = self.encode_read_fn(self.args.input)
         if __debug__:
-            self.decode_write_fn(vid, "/tmp/original.avi") # Save a copy for comparing later
+            self.decode_write_fn(vid, pu.get_temp_path("original.avi")) # Save a copy for comparing later
             self.total_output_size = 0
         return vid
 
@@ -224,14 +225,14 @@ class CoDec:
 
     def UNUSED_read_video(self, fn):
         '''"Read" the video <fn>, which can be a URL. The video is
-        saved in "/tmp/<fn>".'''
-    
+        saved in the temp directory.'''
+
         if self.is_http_url(fn):
             response = requests.get(fn, stream=True)
             if response.status_code == 200: # If the download was successful
                 input_size = 0
-                #file_path = os.path.join("/tmp", fn)
-                file_path = "/tmp/original.avi"
+                #file_path = os.path.join(pu.get_vcf_temp_dir(), fn)
+                file_path = pu.get_temp_path("original.avi")
                 with open(file_path, 'wb') as file:
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
@@ -321,11 +322,11 @@ class CoDec:
             if not ret:
                 break # Break the loop if the video has ended
 
-            # Write the frame in /tmp/VCF_input
-            img_fn = os.path.join("/tmp", f"img_{img_counter:0{digits}d}.png")
+            # Write the frame in temp directory
+            img_fn = os.path.join(pu.get_vcf_temp_dir(), f"img_{img_counter:0{digits}d}.png")
             img_counter += 1
             cv2.imwrite(img_fn, img)
-        return Video(N_frames, img.shape[0], img.shape[1], "/tmp/img_")
+        return Video(N_frames, img.shape[0], img.shape[1], pu.FRAME_PREFIX)
 
     def UNUSED_encode_read_fn(self, fn):
         '''Read the video <fn>.'''
@@ -350,10 +351,10 @@ class CoDec:
             for i, img in enumerate(reader):
                 frame_array = np.array(img)        
 
-                # Write the frame in /tmp/img_
-                img_fn = os.path.join("/tmp", f"img_{img_counter:0{digits}d}.png")
+                # Write the frame in temp directory
+                img_fn = os.path.join(pu.get_vcf_temp_dir(), f"img_{img_counter:0{digits}d}.png")
                 img_counter += 1
                 cv2.imwrite(img_fn, img)
             N_frames = len(reader)
             logging.info(f"")
-        return Video(N_frames, img.shape[0], img.shape[1], "/tmp/frame_")
+        return Video(N_frames, img.shape[0], img.shape[1], pu.FRAME_PREFIX)

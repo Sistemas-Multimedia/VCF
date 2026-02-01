@@ -7,19 +7,19 @@ import main
 import logging
 import numpy as np
 import cv2 as cv # pip install opencv-python
-with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
-    f.write(__doc__)
+import platform_utils as pu
+pu.ensure_description_file(__doc__)  # Crear description.txt antes de importar parser
 import parser
 import entropy_video_coding as EVC
 from entropy_video_coding import Video
 import av  # pip install av
 from PIL import Image
 
-# Default IOs
-ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/videos/mobile_352x288x30x420x300.mp4"
-ENCODE_OUTPUT_PREFIX = "/tmp/encoded"
+# Default IOs (multiplataforma)
+ENCODE_INPUT = pu.ENCODE_INPUT
+ENCODE_OUTPUT_PREFIX = pu.ENCODE_OUTPUT_PREFIX
 DECODE_INPUT_PREFIX = ENCODE_OUTPUT_PREFIX
-DECODE_OUTPUT = "/tmp/decoded.mp4"
+DECODE_OUTPUT = pu.DECODE_OUTPUT
 
 N_FRAMES = 16
 
@@ -98,8 +98,9 @@ class CoDec(EVC.CoDec):
 
     def decompress(self):
         '''Input a sequence of PNG images and output a H.264 AVI-file with lossless encoding.'''
-        imgs = sorted(os.path.join("/tmp", file)
-            for file in os.listdir("/tmp")
+        temp_dir = pu.get_vcf_temp_dir()
+        imgs = sorted(os.path.join(temp_dir, file)
+            for file in os.listdir(temp_dir)
                 if file.lower().startswith("encoded".lower()) and file.lower().endswith(".png".lower()))
         
         #imgs = [i for i in os.listdir(self.args.input) if i.lower().endswith('.png')]

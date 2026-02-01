@@ -3,7 +3,7 @@
 import os
 import io
 from skimage import io as skimage_io # pip install scikit-image
-from PIL import Image # pip install 
+from PIL import Image # pip install
 import numpy as np
 import logging
 import subprocess
@@ -11,14 +11,15 @@ import cv2 as cv # pip install opencv-python
 import main
 import urllib
 import math
+import platform_utils as pu
 import parser
 
-# Default IO images
+# Default IO images (multiplataforma)
 #ENCODE_INPUT = "http://www.hpca.ual.es/~vruiz/images/lena.png"
-ORIGINAL = "/tmp/original.png"
-ENCODED = "/tmp/encoded" # File extension decided in run-time
+ORIGINAL = pu.ORIGINAL
+ENCODED = pu.ENCODED  # File extension decided in run-time
 #DECODE_INPUT = ENCODE_OUTPUT
-DECODED = "/tmp/decoded.png"
+DECODED = pu.DECODED
 
 # Encoder parser
 parser.parser_encode.add_argument("-o", "--original", type=parser.int_or_str, help=f"Input image (default: {ORIGINAL})", default=ORIGINAL)

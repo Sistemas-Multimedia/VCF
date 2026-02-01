@@ -1,5 +1,6 @@
 '''Parsing of the command line arguments.'''
 import argparse
+import platform_utils as pu
 
 def int_or_str(text):
     '''If text represents an integer, returns an integer.'''
@@ -53,7 +54,7 @@ class CustomArgumentParser(argparse.ArgumentParser):
         exit(status)
 
 description = None
-with open("/tmp/description.txt", 'r') as f:
+with open(pu.get_temp_path("description.txt"), 'r') as f:
     description = f.readline()
         
 #def create_parser(description):
