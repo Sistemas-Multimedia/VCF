@@ -15,3 +15,4 @@ DWT2D @ git+https://github.com/vicente-gonzalez-ruiz/DWT2D@master#egg=DWT2D
 #jupyterlab
 ipykernel
 nbformat
+torch
