@@ -45,8 +45,7 @@ parser.parser_decode.add_argument("-p", "--perceptual_quantization", action='sto
 parser.parser_decode.add_argument("-x", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
 
 args = parser.parser.parse_known_args()[0]
-CT = importlib.import_module(args.color_transform)
-
+j
 class CoDec(CT.CoDec):
 
     def __init__(self, args):
