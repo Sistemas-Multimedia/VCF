@@ -5,9 +5,6 @@ Implementation features:
 - Hierarchical B-frame structure
 - Integration with VCF spatial transforms (2D-DCT, 2D-DWT, etc.)
 - Reuses VCF quantizers, color transforms, and entropy codecs
-
-Author: Youssef Zerbouh, Hamza El Qadiri
-Date: 2026-02-04
 '''
 
 import sys
