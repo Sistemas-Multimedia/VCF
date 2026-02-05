@@ -45,7 +45,14 @@ parser.parser_decode.add_argument("-p", "--perceptual_quantization", action='sto
 parser.parser_decode.add_argument("-x", "--disable_subbands", action='store_true', help=f"Disable the coefficients reordering in subbands (default: \"{disable_subbands}\")", default=disable_subbands)
 
 args = parser.parser.parse_known_args()[0]
-j
+try:
+    print("-> Denoising filter =", args.filter) # Don't delete this !
+    denoiser = importlib.import_module(args.filter)
+except AttributeError:
+    # Remember that the filter is only active when decoding, and the import
+    denoiser = importlib.import_module("no_filter")
+CT = importlib.import_module(args.color_transform)
+
 class CoDec(CT.CoDec):
 
     def __init__(self, args):
@@ -451,11 +458,13 @@ class CoDec(CT.CoDec):
             if np.min(y) < 0:
                 logging.warning(f"y[{np.unravel_index(np.argmin(y),y.shape)}]={np.min(y)}")
 
+        fy = denoiser.CoDec.filter(self, y)
+
         #
         # Write the image.
         #
-        y = np.clip(y, 0, 255).astype(np.uint8)
-        output_size = self.decode_write_fn(y, out_fn)
+        fy = np.clip(fy, 0, 255).astype(np.uint8)
+        output_size = self.decode_write_fn(fy, out_fn)
         return output_size
 
     def decode(self, in_fn="/tmp/encoded", out_fn="/tmp/decoded.png"):
