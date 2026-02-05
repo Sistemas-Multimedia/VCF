@@ -30,7 +30,7 @@ class CoDec(EIC.CoDec):
         iio.imwrite(compressed_img, img, plugin="pillow", extension=".png")
         return compressed_img
 
-    def compress(self, img, fn=="/tmp/encoded"):
+    def compress(self, img, fn="/tmp/encoded"):
         return self.compress_fn(img, fn)
 
     # pip install imageio-freeimage (not necessary now)
