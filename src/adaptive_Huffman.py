@@ -1,18 +1,6 @@
+
 '''
-# Huffman adaptativo con contexto para compresión de imágenes
-# 
-# La diferencia con Huffman normal: aquí vamos actualizando las frecuencias
-# sobre la marcha, símbolo por símbolo. El codificador y decodificador empiezan
-# con las mismas frecuencias iniciales y van actualizando igual → no hace falta
-# guardar el árbol completo, solo los metadatos básicos.
-#
-# El parámetro --order controla cuántos símbolos previos usamos como "contexto":
-#   order=0 → sin contexto, solo adaptativo normal
-#   order=1 → mira el píxel anterior
-#   order=2 → mira los 2 píxeles anteriores, etc.
-#
-# Usamos suavizado de Laplace (todos empiezan con frecuencia 1) para evitar
-# problemas cuando aparece un contexto nuevo por primera vez.
+# Huffman adaptativo
 '''
 
 import io
@@ -55,7 +43,7 @@ def _build_huffman_tree_from_freq(freqs: Dict[int, int]) -> _Node:
     """
     heap: List[Tuple[int, int, _Node]] = []
     uid = 0
-    
+
     # Creamos una hoja por cada símbolo
     for sym, f in freqs.items():
         heapq.heappush(heap, (f, uid, _Node(freq=f, sym=sym)))
@@ -97,7 +85,7 @@ def _build_codebook(root: _Node) -> Dict[int, bitarray]:
             else:
                 codes[node.sym] = path.copy()
             return
-        
+
         # Nodo interno → seguir bajando
         assert node.left is not None and node.right is not None
         path.append(False)  # Izquierda = 0
@@ -118,7 +106,7 @@ def _decode_one_symbol(bits: bitarray, start_idx: int, root: _Node) -> Tuple[int
     """
     node = root
     i = start_idx
-    
+
     # Navegamos por el árbol hasta encontrar una hoja
     while node.sym is None:
         if i >= len(bits):
@@ -128,7 +116,7 @@ def _decode_one_symbol(bits: bitarray, start_idx: int, root: _Node) -> Tuple[int
         node = node.right if b else node.left  # 1=derecha, 0=izquierda
         if node is None:
             raise ValueError("Invalid bitstream (null branch)")
-    
+
     return node.sym, i
 
 
