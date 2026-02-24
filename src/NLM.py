@@ -14,9 +14,9 @@ default_h = 10
 default_templateWindowSize = 7
 default_searchWindowSize = 21
 
-parser.parser_decode.add_argument("--nlm_h", type=parser.int_or_str, help=f"NLM h parameter (default: {default_h})", default=default_h)
-parser.parser_decode.add_argument("--nlm_templateWindowSize", type=parser.int_or_str, help=f"NLM templateWindowSize (default: {default_templateWindowSize})", default=default_templateWindowSize)
-parser.parser_decode.add_argument("--nlm_searchWindowSize", type=parser.int_or_str, help=f"NLM searchWindowSize (default: {default_searchWindowSize})", default=default_searchWindowSize)
+parser.parser_decode.add_argument("-H", "--nlm_h", type=parser.int_or_str, help=f"NLM h parameter (default: {default_h})", default=default_h)
+parser.parser_decode.add_argument("-t", "--nlm_templateWindowSize", type=parser.int_or_str, help=f"NLM templateWindowSize (default: {default_templateWindowSize})", default=default_templateWindowSize)
+parser.parser_decode.add_argument("-s", "--nlm_searchWindowSize", type=parser.int_or_str, help=f"NLM searchWindowSize (default: {default_searchWindowSize})", default=default_searchWindowSize)
 import no_filter
 
 args = parser.parser.parse_known_args()[0]
