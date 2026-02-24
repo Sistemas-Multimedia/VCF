@@ -42,7 +42,7 @@ Supposing that a Python interpreter and Git are available:
 	+---------------------+--+
 	|  decoding filters   |-f| no_filter*, gaussian_blur [-s], [NLM] (1), [BM3D] (3)
 	+---------------------+--+
-	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, [adaptive_Huffman] (4), CBAAC [-o].
+	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, CBAHC [-o], CBAAC [-o].
 	+---------------------+--+
 
 	...* = default option
