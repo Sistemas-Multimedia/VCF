@@ -38,11 +38,11 @@ Supposing that a Python interpreter and Git are available:
 	+---------------------+--+
 	|  color transforms   |-t| YCoCg*, YCrCb, color-DCT, no_color_transform.
 	+---------------------+--+
-	|     quantizers      |-a| deadzone* [-q], LloydMax [-q,m,n], VQ [-q,b], color-VQ [-q].
+	|     quantizers      |-a| deadzone* [q], LloydMax [q,m,n], VQ [q,b], color-VQ [q].
 	+---------------------+--+
-	|  decoding filters   |-f| no_filter*, gaussian_blur [-s], [NLM] (1), [BM3D] (3)
+	|  decoding filters   |-f| no_filter*, gaussian_blur [s], NLM [H,t,s], [BM3D] [s]
 	+---------------------+--+
-	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, CBAHC [-o], CBAAC [-o].
+	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, CBAHC [o], CBAAC [o].
 	+---------------------+--+
 
 	...* = default option
