@@ -46,5 +46,3 @@ Supposing that a Python interpreter and Git are available:
 	+---------------------+--+
 
 	...* = default option
-	[...] = to be implemented
-	(.) = points for the evaluation of the subject
