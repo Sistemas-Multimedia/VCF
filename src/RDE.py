@@ -77,7 +77,7 @@ def main():
 
     parser.add_argument(
         "-c", "--codestream",
-        type=str, help="Codestream (default: %(default)s)", default="/tmp/encoded.tif")
+        type=str, help="Codestream (default: %(default)s)", default="/tmp/encoded*")
 
     parser.add_argument(
         "-d", "--decoded",
@@ -95,7 +95,7 @@ def main():
     codestream_bytes = 0
     for i in codestream_files:
         file_length = get_file_size(i)
-        print("Code-stream file:", i, "length:", file_length) 
+        print("RDE: Code-stream file:", i, "length:", file_length) 
         codestream_bytes += file_length
 
     decoded_bytes = get_file_size(args.decoded)
@@ -103,19 +103,19 @@ def main():
     original_bpp = original_bytes*8/number_of_pixels
     codestream_bpp = codestream_bytes*8/number_of_pixels
     decoded_bpp = decoded_bytes*8/number_of_pixels
-    print("Original image:", args.original, original_bytes, f"bytes ({original_bpp:.2f}) bits/pixel")
-    print("Code-stream:", codestream_files, codestream_bytes, f"bytes ({codestream_bpp:.2f}) bits/pixel")
-    print("Decoded image:", args.decoded, decoded_bytes, f"bytes ({decoded_bpp:.2f}) bits/pixel")
+    print("RDE: Original image:", args.original, original_bytes, f"bytes ({original_bpp:.2f}) bits/pixel")
+    print("RDE: Code-stream:", codestream_files, codestream_bytes, f"bytes ({codestream_bpp:.2f}) bits/pixel")
+    print("RDE: Decoded image:", args.decoded, decoded_bytes, f"bytes ({decoded_bpp:.2f}) bits/pixel")
     
-    print("Images shape:", shape)
-    print(f"Distortion (RMSE): {RMSE:.2f}")
+    print("RDE: Images shape:", shape)
+    print(f"RDE: Distortion (RMSE): {RMSE:.2f}")
     #number_of_output_bytes = get_file_size(args.codestream)
     #number_of_output_bits = number_of_output_bytes*8
     #number_of_pixels = shape[0]*shape[1]
     #BPP = number_of_output_bits/number_of_pixels
     #print(f"Rate (bits/pixel): {BPP:.2f}")
     J = codestream_bpp + RMSE
-    print(f"J = R + D = {J:.2f}")
+    print(f"RDE: J = R + D = {J:.2f}")
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-'''III... coding: runs a 2D image codec for each image of a sequence.'''
+'''III coding: runs a 2D image codec for each image of a sequence.'''
 
 import sys
 import io

@@ -41,6 +41,10 @@ class CoDec:
         self.total_input_size = 0
         self.total_output_size = 0
 
+    def __del__(self):
+        logging.info(f"Input bytes = {self.total_input_size}")
+        logging.info(f"Output bytes = {self.total_output_size}")
+
     def bye(self):
         logging.debug("trace")
 
@@ -54,8 +58,8 @@ class CoDec:
             req = urllib.request.Request(fn, method='HEAD')
             f = urllib.request.urlopen(req)
             input_size = int(f.headers['Content-Length'])
-            self.total_input_size += input_size
             img = skimage_io.imread(fn) # https://scikit-image.org/docs/stable/api/skimage.io.html#skimage.io.imread
+        self.total_input_size += input_size
         logging.debug(f"Read {input_size} bytes from {fn} with shape {img.shape} and type={img.dtype}")
         self.img_shape = img.shape
         return img
