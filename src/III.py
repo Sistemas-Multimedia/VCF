@@ -11,12 +11,13 @@ import cv2 as cv # pip install opencv-python
 with open("/tmp/description.txt", 'w') as f:  # Used by parser.py
     f.write(__doc__)
 import parser
-import entropy_video_coding as EVC
+import video_coding as EVC
 #from entropy_video_coding import Video
 import av  # pip install av
 from PIL import Image
 import importlib
 import re
+import imageio.v3 as iio
 
 # Encoder parser
 parser.parser_encode.add_argument("-T", "--transform", type=str, 
@@ -70,19 +71,22 @@ class CoDec(EVC.CoDec):
         fn = self.args.original
         logging.info(f"Encoding {fn}")
         container = av.open(fn)
+        stream = container.streams.video[0]
         img_counter = 0
         exit = False
-        for packet in container.demux():
+        for packet in container.demux(stream):
             if __debug__:
                 self.total_input_size += packet.size
             for frame in packet.decode():
                 print(len(packet.decode()))
                 img = frame.to_image()
+                imga = np.array(img.convert("RGB"))
                 #img_fn = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d.png" % img_counter
                 img_fn = f"/tmp/original_%04d.png" % img_counter
                 img_fnNOPNG = f"{EVC.ENCODE_OUTPUT_PREFIX}_%04d" % img_counter
                 #img_fnNOPNG = f"/tmp/original_%04d" % img_counter
-                img.save(img_fn)
+                #img.save(img_fn)
+                iio.imwrite(img_fn, imga)
                 if __debug__:
                     O_bytes = os.path.getsize(img_fn)
                     #self.total_output_size += O_bytes
@@ -95,7 +99,7 @@ class CoDec(EVC.CoDec):
                 #self.transform_codec.encode_javi(img_array)
                 #logging.info(f"Generated {}")
                 #O_bytes = self.transform_codec.encode()
-                O_bytes = self.transform_codec.encode_fn(img_fn, img_fnNOPNG)
+                #O_bytes = self.transform_codec.encode_fn(img_fn, img_fnNOPNG)
                 #logging.info(f"O_bytes={O_bytes}")
                 #O_bytes = os.path.getsize(img_fnNOPNG + ".TIFF") # Esto no debería estar aqui!
                 self.total_output_size += O_bytes
