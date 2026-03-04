@@ -32,9 +32,9 @@ Supposing that a Python interpreter and Git are available:
 ## Codecs organization
 
 	+---------------------+
-	| temporal transforms |    III [-T,N], [IPP] (9), [IBP] (10), [MCTF] (10).
+	| temporal transforms |    III [T,N], [IPP] (9), [IBP] (10), [MCTF] (10).
 	+---------------------+--+
-	| spatial transforms  |-T| 2D-DCT* [-B,p,L,x], 2D-DWT [l,w], 2D-KLT [-B,x], [LBT] (10), no_spatial_transform.
+	| spatial transforms  |-T| 2D-DCT* [B,p,L,x], 2D-DWT [l,w], 2D-KLT [B,x], 2D-MDCT [B,x], [LBT] (10), no_spatial_transform.
 	+---------------------+--+
 	|  color transforms   |-t| YCoCg*, YCrCb, color-DCT, no_color_transform.
 	+---------------------+--+
