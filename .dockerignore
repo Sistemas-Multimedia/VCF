@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+.cursor
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.ipynb_checkpoints
+
+# Virtual environments
+venv
+env
+ENV
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# Test outputs
+*.avi
+*.mp4
+*.png
+*.tif
+*.npz
+encoded*
+decoded*
+
+# BUT allow requirements.txt
+!requirements.txt
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db

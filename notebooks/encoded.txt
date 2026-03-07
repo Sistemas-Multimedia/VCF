@@ -1,0 +1,7 @@
+coastguard_352x288x30x420x300.avi
+8
+288
+352
+0.14325875946969696
+./encoded_original
+/tmp/decoded
