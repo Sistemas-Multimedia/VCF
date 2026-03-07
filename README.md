@@ -31,20 +31,18 @@ Supposing that a Python interpreter and Git are available:
 
 ## Codecs organization
 
-	+---------------------+        +----+
-	| temporal transforms |    III |-T,N|, [IPP] (9), [IBP] (10), [MCTF] (10).
-	+---------------------+--+     +---++-------+
-	| spatial transforms  |-T| 2D-DCT* |-B,p,L,x|, 2D-DWT, [LBT] (10), no_spatial_transform.
-	+---------------------+--+         +--------+
+	+---------------------+
+	| temporal transforms |    III [T,N], [IPP] (9), [IBP] (10), [MCTF] (10).
+	+---------------------+--+
+	| spatial transforms  |-T| 2D-DCT* [B,p,L,x], 2D-DWT [l,w], 2D-KLT [B,x], 2D-MDCT [B,x], [LBT] (10), no_spatial_transform.
+	+---------------------+--+
 	|  color transforms   |-t| YCoCg*, YCrCb, color-DCT, no_color_transform.
-	+---------------------+--+           +--+           +------+     +----+           +--+
-	|     quantizers      |-a| deadzone* |-q|, LloydMax |-q,m,n|, VQ |-q,b|, color-VQ |-q|.
-	+---------------------+--+           +--+           ++--+--+     +----+           +--+
-	|  decoding filters   |-f| no_filter*, gaussian_blur |-s|, [NLM] (1), [BM3D] (3)
-	+---------------------+--+                           +--+
-	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, [adaptive_Huffman] (4), [arith] (4), [adaptive_arith] (5).
+	+---------------------+--+
+	|     quantizers      |-a| deadzone* [q], LloydMax [q,m,n], VQ [q,b], color-VQ [q].
+	+---------------------+--+
+	|  decoding filters   |-f| no_filter*, gaussian_blur [s], NLM [H,t,s], [BM3D] [s]
+	+---------------------+--+
+	|   entropy codecs    |-c| TIFF*, PNG, Huffman, PNM, CBAHC [o], CBAAC [o].
 	+---------------------+--+
 
 	...* = default option
-	[...] = to be implemented
-	(.) = points for the evaluation of the subject

@@ -2,7 +2,7 @@ def main(parser, logging, CoDec):
     #parser.description = __doc__
     args = parser.parse_known_args()[0]
     #args = parser.parse_args()
-    print("main", args) # Be careful, you cannot use logging here, because logging is configured below!
+    #print("main", args) # Be careful, you cannot use logging here, because logging is configured below!
 
     if args.debug:
         #FORMAT = "%(asctime)s p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s"
@@ -11,6 +11,8 @@ def main(parser, logging, CoDec):
     else:
         FORMAT = "(%(levelname)s) %(module)s: %(message)s"
         logging.basicConfig(format=FORMAT, level=logging.INFO)
+
+    logging.info(f"{args}")
 
     # If parameters "encode" of "decode" are undefined, the following
     # block causes an AttributeError exception.
