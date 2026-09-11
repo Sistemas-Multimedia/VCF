@@ -63,9 +63,11 @@ class CustomArgumentParser_deleteme(argparse.ArgumentParser):
         #print("\nThis help only shows information about the top-level parameters.\nTo get information about lower-level parameters, use:\n\"python lower-level_module.py {encode|decode} -h\".\nSee docs/README.md to discover the available modules and their usage level.")
         exit(status)
 
-description = None
-with open("/tmp/description.txt", 'r') as f:
-    description = f.readline()
+try:
+    with open("/tmp/description.txt", 'r') as f:
+        description = f.readline()
+except FileNotFoundError:
+    description = None
         
 #def create_parser(description):
 # Main parameter of the arguments parser: "encode" or "decode"
