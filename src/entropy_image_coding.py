@@ -81,10 +81,17 @@ class CoDec:
     def encode_write(self, codestream, fn="/tmp/encoded"):
         return self.encode_write_fn(codestream, fn)
 
-    def encode(self):
+    def __encode(self):
         img = self.encode_read()
         compressed_img = self.compress(img)
         output_size = self.encode_write(compressed_img)
+        self.img_shape = img.shape
+        return output_size
+
+    def encode(self):
+        img = self.encode_read(self.args.original)
+        compressed_img = self.compress(img)
+        output_size = self.encode_write(compressed_img, self.args.encoded)
         self.img_shape = img.shape
         return output_size
 
@@ -114,8 +121,14 @@ class CoDec:
     def decode_write(self, img, fn="/tmp/decoded.png"):
         return self.decode_write_fn(img, fn)
 
-    def decode(self):
+    def __decode(self):
         compressed_img = self.decode_read()
         img = self.decompress(compressed_img)
         output_size = self.decode_write(img)
+        return output_size
+
+    def decode(self):
+        compressed_img = self.decode_read(self.args.encoded)
+        img = self.decompress(compressed_img)
+        output_size = self.decode_write(img, self.args.decoded)
         return output_size
