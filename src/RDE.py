@@ -55,6 +55,7 @@ def calculate_rmse(image1_path, image2_path):
 
     return rmse, arr1.shape
 
+'''
 def __get_file_size(file_path):
     file_size = 0
     try:
@@ -65,6 +66,7 @@ def __get_file_size(file_path):
         file_size = int(f.headers['Content-Length'])
     finally:
         return file_size
+'''
 
 def get_file_size(file_path):
     if file_path.startswith(("http://", "https://")):
