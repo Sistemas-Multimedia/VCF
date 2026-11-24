@@ -6,7 +6,8 @@ from skimage import io as skimage_io # pip install scikit-image
 import argparse
 import numpy as np
 from PIL import Image
-import urllib
+#import urllib
+import urllib.request
 import glob
 
 def calculate_rmse(image1_path, image2_path):
@@ -54,7 +55,7 @@ def calculate_rmse(image1_path, image2_path):
 
     return rmse, arr1.shape
 
-def get_file_size(file_path):
+def __get_file_size(file_path):
     file_size = 0
     try:
         file_size = os.path.getsize(file_path)
@@ -65,6 +66,17 @@ def get_file_size(file_path):
     finally:
         return file_size
 
+def get_file_size(file_path):
+    if file_path.startswith(("http://", "https://")):
+        req = urllib.request.Request(file_path, method="HEAD")
+        with urllib.request.urlopen(req) as f:
+            content_length = f.headers.get("Content-Length")
+            if content_length is None:
+                raise ValueError(f"Server did not provide Content-Length for {file_path}")
+            return int(content_length)
+
+    return os.path.getsize(file_path)
+    
 def main():
     # 1. Setup Argument Parser 
     parser = argparse.ArgumentParser(
