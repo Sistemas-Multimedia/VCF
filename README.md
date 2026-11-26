@@ -44,3 +44,4 @@ Only the specific parameters of the codec have been indicated. This means, for e
 	cd src
 	python III.py encode -T 2D-DWT -l 3 -t YCrCb -a color-VQ -q 16 -f no_filter -c PNG
 	
+ 
