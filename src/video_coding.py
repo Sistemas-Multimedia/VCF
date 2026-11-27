@@ -12,7 +12,7 @@ import main
 import urllib
 from urllib.parse import urlparse
 #import requests
-import av
+import av # pip install av
 import math
 
 from information_theory import distortion # pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"

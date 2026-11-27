@@ -36,13 +36,22 @@ args = parser.parser.parse_known_args()[0]
 if __debug__:
     if args.debug:
         print(f"III: Importing {args.transform}")
-
+'''
 try:
     transform = importlib.import_module(args.transform)
 except ImportError as e:
     print(f"Error: Could not find {args.transform} module ({e})")
     print(f"Make sure '2D-{args.transform}.py' is in the same directory as III.py")
     sys.exit(1)
+'''
+
+try:
+    transform = importlib.import_module(args.transform)
+except ModuleNotFoundError as e:
+    if e.name == args.transform:
+        print(f"Error: Could not find '{args.transform}.py' in the same directory as III.py")
+        sys.exit(1)
+    raise
 
 def is_valid_name(name):
         pattern = r'^encoded_\d{4}\.png$'
